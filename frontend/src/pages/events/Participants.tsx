@@ -34,6 +34,7 @@ function ParticipantRow({
     onApprove,
     onShowQR,
     onDelete,
+    onResendWhatsApp,
     eventDate,
     eventTime
 }: {
@@ -42,6 +43,7 @@ function ParticipantRow({
     onApprove: (id: string) => void
     onShowQR: (participant: ParticipantType) => void
     onDelete: (id: string, name: string) => void
+    onResendWhatsApp: (id: string) => void
     eventDate?: string
     eventTime?: string
 }) {
@@ -170,17 +172,16 @@ function ParticipantRow({
                         </button>
                     )}
 
-                    {/* WhatsApp Send link for paid participants with phone */}
+                    {/* Resend WhatsApp button for paid participants with phone */}
                     {participant.payment_status === 'paid' && participant.phone && (
-                        <a
-                            href={waLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            onClick={() => onResendWhatsApp(participant.registration_id)}
                             className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
+                            title="Resend WhatsApp notification with QR code link"
                         >
                             <span className="material-symbols-outlined text-[16px]">send</span>
-                            Send WA
-                        </a>
+                            Resend WA
+                        </button>
                     )}
 
                     {/* Delete button */}
@@ -251,6 +252,15 @@ export default function Participants() {
             fetchData() // Refresh data
         } catch (err: any) {
             alert(err.message)
+        }
+    }
+
+    const handleResendWhatsApp = async (registrationId: string) => {
+        try {
+            const result = await participantsAPI.resendWhatsApp(registrationId)
+            alert(`WhatsApp sent successfully to ${result.phone}`)
+        } catch (err: any) {
+            alert(`Failed to send WhatsApp: ${err.message}`)
         }
     }
 
@@ -368,7 +378,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onDelete={handleDelete} eventDate={event?.event_date} eventTime={event?.event_time} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onDelete={handleDelete} onResendWhatsApp={handleResendWhatsApp} eventDate={event?.event_date} eventTime={event?.event_time} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>

@@ -125,6 +125,12 @@ export const participantsAPI = {
             { method: 'POST' }
         ),
 
+    resendWhatsApp: (id: string) =>
+        fetchAPI<{ message: string; phone: string; registration_id: string }>(
+            `/api/participants/${id}/resend-whatsapp`,
+            { method: 'POST' }
+        ),
+
     delete: (id: string) =>
         fetchAPI<{ message: string }>(
             `/api/participants/${id}`,
