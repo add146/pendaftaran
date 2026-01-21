@@ -152,6 +152,36 @@ participants.post('/register', async (c) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode).run()
 
+    // Send WhatsApp notification if phone number provided
+    if (phone) {
+        const { sendWhatsAppMessage, generateRegistrationMessage, generatePaymentPendingMessage } = await import('../lib/whatsapp')
+        const ticketLink = `${c.req.url.split('/api')[0]}/ticket/${registrationId}`
+
+        if (paymentStatus === 'paid') {
+            // Free event - send registration success with QR link
+            const message = generateRegistrationMessage({
+                eventTitle: event.title,
+                fullName: full_name,
+                registrationId,
+                ticketLink,
+                ticketName,
+                ticketPrice
+            })
+            await sendWhatsAppMessage(c.env.DB, phone, message)
+        } else {
+            // Paid event - send payment pending message
+            const message = generatePaymentPendingMessage({
+                eventTitle: event.title,
+                fullName: full_name,
+                ticketPrice,
+                bankName: event.bank_name || undefined,
+                accountHolder: event.account_holder_name || undefined,
+                accountNumber: event.account_number || undefined
+            })
+            await sendWhatsAppMessage(c.env.DB, phone, message)
+        }
+    }
+
     return c.json({
         id: participantId,
         registration_id: registrationId,

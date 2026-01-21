@@ -160,6 +160,33 @@ payments.post('/notification', async (c) => {
         await c.env.DB.prepare(`
             UPDATE participants SET payment_status = ? WHERE id = ?
         `).bind(status, payment.participant_id).run()
+
+        // Send WhatsApp notification if payment is successful
+        if (status === 'paid') {
+            const participant = await c.env.DB.prepare(`
+                SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+                FROM participants p
+                LEFT JOIN events e ON p.event_id = e.id
+                LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+                WHERE p.id = ?
+            `).bind(payment.participant_id).first() as any
+
+            if (participant && participant.phone) {
+                const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+                const ticketLink = `${c.req.url.split('/api')[0]}/ticket/${participant.registration_id}`
+
+                const message = generateRegistrationMessage({
+                    eventTitle: participant.event_title,
+                    fullName: participant.full_name,
+                    registrationId: participant.registration_id,
+                    ticketLink,
+                    ticketName: participant.ticket_name,
+                    ticketPrice: participant.ticket_price
+                })
+
+                await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+            }
+        }
     }
 
     return c.json({ status: 'ok' })
