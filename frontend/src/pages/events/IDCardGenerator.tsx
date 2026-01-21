@@ -44,7 +44,9 @@ export default function IDCardGenerator() {
                             ></div>
 
                             {/* The ID Card (Portrait Lanyard) */}
-                            <div className={`relative bg-white rounded-xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-gray-100 z-10 ${orientation === 'portrait' ? 'w-[320px] h-[520px]' : 'w-[520px] h-[320px]'
+                            <div className={`relative bg-white rounded-xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-gray-100 z-10 ${orientation === 'portrait'
+                                ? 'flex-col w-[320px] h-[520px]'
+                                : 'flex-row w-[520px] h-[320px]'
                                 }`}>
                                 {/* Lanyard Hole */}
                                 {showPunchHole && (
@@ -53,53 +55,118 @@ export default function IDCardGenerator() {
                                     </div>
                                 )}
 
-                                {/* Header */}
-                                <div className="bg-primary h-[140px] flex flex-col items-center justify-end pb-4 px-4 text-center text-white relative">
-                                    <div className="relative z-10 flex flex-col items-center">
-                                        <h3 className="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm">
-                                            PENGAJIAN AKBAR
-                                        </h3>
-                                        <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                                            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                                            <p className="text-[10px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* QR Code Section */}
-                                {includeQR && (
-                                    <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative">
-                                        <div className="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm mb-4">
-                                            {/* QR Code Placeholder */}
-                                            <div className="w-32 h-32 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
-                                                <div className="grid grid-cols-5 gap-1 p-2">
-                                                    {Array.from({ length: 25 }).map((_, i) => (
-                                                        <div key={i} className={`w-4 h-4 ${Math.random() > 0.5 ? 'bg-white' : 'bg-gray-900'}`}></div>
-                                                    ))}
+                                {orientation === 'portrait' ? (
+                                    // PORTRAIT LAYOUT
+                                    <>
+                                        {/* Header */}
+                                        <div className="bg-primary h-[140px] flex flex-col items-center justify-end pb-4 px-4 text-center text-white relative">
+                                            <div className="relative z-10 flex flex-col items-center">
+                                                <h3 className="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm">
+                                                    PENGAJIAN AKBAR
+                                                </h3>
+                                                <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                                                    <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                                                    <p className="text-[10px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
-                                    </div>
+
+                                        {/* QR Code Section */}
+                                        {includeQR && (
+                                            <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative">
+                                                <div className="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm mb-4">
+                                                    {/* QR Code Placeholder */}
+                                                    <div className="w-32 h-32 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
+                                                        <div className="grid grid-cols-5 gap-1 p-2">
+                                                            {Array.from({ length: 25 }).map((_, i) => (
+                                                                <div key={i} className={`w-4 h-4 ${Math.random() > 0.5 ? 'bg-white' : 'bg-gray-900'}`}></div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
+                                            </div>
+                                        )}
+
+                                        {/* Participant Details */}
+                                        <div className="px-6 pb-8 text-center bg-gradient-to-t from-gray-50 to-white">
+                                            <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
+                                            <p className="text-xs font-bold text-primary tracking-widest uppercase mb-3 border-b border-gray-100 pb-3">Participant</p>
+                                            <div className="flex flex-col gap-1 text-gray-500">
+                                                <div className="flex items-center justify-center gap-1 text-xs font-medium">
+                                                    <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
+                                                    <span>Jakarta Selatan</span>
+                                                </div>
+                                                <div className="mt-2 text-[10px] font-mono font-bold text-gray-400 tracking-wider">
+                                                    REG-2026-00123
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Footer Accent */}
+                                        <div className="h-2 bg-primary w-full"></div>
+                                    </>
+                                ) : (
+                                    // LANDSCAPE LAYOUT
+                                    <>
+                                        {/* Left: QR Code */}
+                                        <div className="w-[180px] bg-white border-r border-gray-100 flex flex-col items-center justify-center p-6 relative">
+                                            {includeQR ? (
+                                                <div className="flex flex-col items-center gap-3 mt-4">
+                                                    <div className="p-2 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm">
+                                                        <div className="w-24 h-24 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
+                                                            <div className="grid grid-cols-5 gap-1 p-1">
+                                                                {Array.from({ length: 25 }).map((_, i) => (
+                                                                    <div key={i} className={`w-[18px] h-[18px] ${Math.random() > 0.5 ? 'bg-white' : 'bg-gray-900'}`}></div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-[9px] text-gray-400 font-mono tracking-widest uppercase text-center leading-tight">Scan for<br />Check-in</p>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center h-full text-gray-300">
+                                                    <span className="material-symbols-outlined text-4xl">qr_code_2</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Right: Details */}
+                                        <div className="flex-1 flex flex-col relative w-full">
+                                            {/* Header */}
+                                            <div className="bg-primary h-[80px] flex flex-col items-center justify-center px-4 text-center text-white w-full">
+                                                <h3 className="font-display font-extrabold text-lg uppercase tracking-wider leading-tight mb-1 drop-shadow-sm">
+                                                    PENGAJIAN AKBAR
+                                                </h3>
+                                                <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">
+                                                    <span className="material-symbols-outlined text-[10px]">calendar_today</span>
+                                                    <p className="text-[9px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Details Body */}
+                                            <div className="flex-1 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-t from-gray-50 to-white w-full">
+                                                <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-0.5">AHMAD FAUZI</h2>
+                                                <p className="text-[10px] font-bold text-primary tracking-widest uppercase mb-2 border-b border-gray-100 pb-2 w-1/2 mx-auto">Participant</p>
+
+                                                <div className="flex flex-col gap-1 text-gray-500">
+                                                    <div className="flex items-center justify-center gap-1 text-[11px] font-medium">
+                                                        <span className="material-symbols-outlined text-[12px] text-gray-400">location_on</span>
+                                                        <span>Jakarta Selatan</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Registration ID Badge */}
+                                            <div className="absolute bottom-4 right-4 bg-gray-100 py-1 px-2 rounded text-[9px] font-mono font-bold text-gray-500 tracking-wider">
+                                                REG-2026-00123
+                                            </div>
+
+                                            {/* Footer Accent */}
+                                            <div className="h-2 bg-primary w-full"></div>
+                                        </div>
+                                    </>
                                 )}
-
-                                {/* Participant Details */}
-                                <div className="px-6 pb-8 text-center bg-gradient-to-t from-gray-50 to-white">
-                                    <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
-                                    <p className="text-xs font-bold text-primary tracking-widest uppercase mb-3 border-b border-gray-100 pb-3">Participant</p>
-                                    <div className="flex flex-col gap-1 text-gray-500">
-                                        <div className="flex items-center justify-center gap-1 text-xs font-medium">
-                                            <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
-                                            <span>Jakarta Selatan</span>
-                                        </div>
-                                        <div className="mt-2 bg-gray-100 py-1 px-3 rounded text-[10px] font-mono font-bold text-gray-600 tracking-wider">
-                                            REG-2026-00123
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Footer Accent */}
-                                <div className="h-2 bg-primary w-full"></div>
                             </div>
 
                             <div className="mt-6 text-xs text-gray-400 flex items-center gap-2">
