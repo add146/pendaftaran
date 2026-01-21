@@ -194,7 +194,7 @@ export default function Participants() {
 
     const handleCheckIn = async (registrationId: string) => {
         try {
-            await participantsAPI.checkIn(registrationId)
+            await participantsAPI.checkIn(registrationId, id)
             fetchData() // Refresh data
         } catch (err: any) {
             alert(err.message)

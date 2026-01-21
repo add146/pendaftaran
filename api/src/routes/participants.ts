@@ -157,9 +157,11 @@ participants.post('/register', async (c) => {
     }, 201)
 })
 
-// Check-in participant
+// Check-in participant (with event validation)
 participants.post('/:id/check-in', async (c) => {
     const { id } = c.req.param()
+    const body = await c.req.json().catch(() => ({}))
+    const { event_id } = body as { event_id?: string }
 
     // Find participant by ID or registration ID or QR code
     const participant = await c.env.DB.prepare(`
@@ -170,15 +172,23 @@ participants.post('/:id/check-in', async (c) => {
         return c.json({ error: 'Participant not found' }, 404)
     }
 
+    // Validate event_id if provided
+    if (event_id && participant.event_id !== event_id) {
+        return c.json({
+            error: 'Peserta ini terdaftar di event lain',
+            participant_event_id: participant.event_id
+        }, 400)
+    }
+
     if (participant.check_in_status === 'checked_in') {
         return c.json({
-            error: 'Already checked in',
+            error: 'Sudah check-in sebelumnya',
             check_in_time: participant.check_in_time
         }, 400)
     }
 
     if (participant.payment_status !== 'paid') {
-        return c.json({ error: 'Payment not completed' }, 400)
+        return c.json({ error: 'Pembayaran belum dikonfirmasi' }, 400)
     }
 
     const checkInTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })

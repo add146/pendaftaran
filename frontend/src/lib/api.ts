@@ -108,10 +108,10 @@ export const participantsAPI = {
             { method: 'POST', body: JSON.stringify(data) }
         ),
 
-    checkIn: (id: string) =>
+    checkIn: (id: string, eventId?: string) =>
         fetchAPI<{ message: string; participant: { id: string; full_name: string; registration_id: string; check_in_time: string } }>(
             `/api/participants/${id}/check-in`,
-            { method: 'POST' }
+            { method: 'POST', body: JSON.stringify({ event_id: eventId }) }
         ),
 
     getQR: (id: string) =>

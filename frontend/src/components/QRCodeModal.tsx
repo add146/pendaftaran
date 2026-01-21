@@ -17,72 +17,202 @@ interface QRCodeModalProps {
 
 export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModalProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const cardRef = useRef<HTMLDivElement>(null)
-    const [qrDataUrl, setQrDataUrl] = useState<string>('')
+    const cardCanvasRef = useRef<HTMLCanvasElement>(null)
+    const [cardDataUrl, setCardDataUrl] = useState<string>('')
 
     useEffect(() => {
-        if (isOpen && participant?.qr_code && canvasRef.current) {
-            // Generate QR code on canvas with dark background style
-            QRCode.toCanvas(canvasRef.current, participant.qr_code, {
-                width: 160,
-                margin: 1,
-                color: {
-                    dark: '#ffffff',
-                    light: '#1f2937'
-                }
-            }, (error: Error | null | undefined) => {
-                if (error) console.error('QR generation error:', error)
-            })
+        if (isOpen && participant?.qr_code) {
+            // Generate visible QR code (white on dark)
+            if (canvasRef.current) {
+                QRCode.toCanvas(canvasRef.current, participant.qr_code, {
+                    width: 160,
+                    margin: 1,
+                    color: {
+                        dark: '#ffffff',
+                        light: '#1f2937'
+                    }
+                }, (error: Error | null | undefined) => {
+                    if (error) console.error('QR generation error:', error)
+                })
+            }
 
-            // Also generate data URL for download/share
-            QRCode.toDataURL(participant.qr_code, {
-                width: 400,
-                margin: 2,
-                color: {
-                    dark: '#1B4332',
-                    light: '#ffffff'
-                }
-            }).then((url: string) => setQrDataUrl(url))
+            // Generate ID Card image
+            generateIDCardImage()
         }
     }, [isOpen, participant])
 
-    if (!isOpen || !participant) return null
+    const generateIDCardImage = async () => {
+        if (!participant) return
 
-    const handleDownload = () => {
-        if (!qrDataUrl) return
-        const link = document.createElement('a')
-        link.download = `ID-Card-${participant.registration_id}.png`
-        link.href = qrDataUrl
-        link.click()
+        // Generate QR code as data URL first
+        const qrImageUrl = await QRCode.toDataURL(participant.qr_code, {
+            width: 180,
+            margin: 1,
+            color: {
+                dark: '#ffffff',
+                light: '#1f2937'
+            }
+        })
+
+        // Create canvas for ID Card
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return
+
+        // Card dimensions
+        const width = 400
+        const height = 550
+        canvas.width = width
+        canvas.height = height
+
+        // Background
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, width, height)
+
+        // Green header
+        ctx.fillStyle = '#1B4332'
+        ctx.fillRect(0, 0, width, 100)
+
+        // Event title
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 18px Arial, sans-serif'
+        ctx.textAlign = 'center'
+        const eventTitle = (participant.event_title || 'EVENT').toUpperCase()
+        const maxTitleWidth = width - 40
+        let titleFontSize = 18
+        ctx.font = `bold ${titleFontSize}px Arial, sans-serif`
+        while (ctx.measureText(eventTitle).width > maxTitleWidth && titleFontSize > 12) {
+            titleFontSize -= 1
+            ctx.font = `bold ${titleFontSize}px Arial, sans-serif`
+        }
+        ctx.fillText(eventTitle, width / 2, 45)
+
+        // Date badge
+        if (participant.event_date) {
+            const dateStr = formatDate(participant.event_date)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
+            const badgeWidth = 180
+            const badgeHeight = 28
+            roundRect(ctx, (width - badgeWidth) / 2, 60, badgeWidth, badgeHeight, 14)
+            ctx.fill()
+
+            ctx.fillStyle = '#ffffff'
+            ctx.font = 'bold 12px Arial, sans-serif'
+            ctx.fillText(dateStr.toUpperCase(), width / 2, 78)
+        }
+
+        // Load and draw QR code
+        const qrImage = new Image()
+        qrImage.onload = () => {
+            // QR background
+            ctx.fillStyle = '#1f2937'
+            roundRect(ctx, (width - 200) / 2, 120, 200, 200, 16)
+            ctx.fill()
+
+            // QR image
+            ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
+
+            // Scan text
+            ctx.fillStyle = '#9ca3af'
+            ctx.font = '10px Arial, sans-serif'
+            ctx.textAlign = 'center'
+            ctx.fillText('SCAN FOR CHECK-IN', width / 2, 345)
+
+            // Participant name
+            ctx.fillStyle = '#1f2937'
+            ctx.font = 'bold 24px Arial, sans-serif'
+            const name = participant.full_name.toUpperCase()
+            let nameFontSize = 24
+            ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
+            while (ctx.measureText(name).width > width - 40 && nameFontSize > 14) {
+                nameFontSize -= 1
+                ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
+            }
+            ctx.fillText(name, width / 2, 380)
+
+            // Ticket type
+            ctx.fillStyle = '#1B4332'
+            ctx.font = 'bold 14px Arial, sans-serif'
+            ctx.fillText((participant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 405)
+
+            // City
+            if (participant.city) {
+                ctx.fillStyle = '#6b7280'
+                ctx.font = '13px Arial, sans-serif'
+                ctx.fillText(`📍 ${participant.city}`, width / 2, 435)
+            }
+
+            // Registration ID badge
+            ctx.fillStyle = 'rgba(27, 67, 50, 0.1)'
+            const regBadgeWidth = 200
+            const regBadgeHeight = 40
+            roundRect(ctx, (width - regBadgeWidth) / 2, 470, regBadgeWidth, regBadgeHeight, 10)
+            ctx.fill()
+
+            ctx.fillStyle = '#1B4332'
+            ctx.font = 'bold 14px, Courier, monospace'
+            ctx.fillText(participant.registration_id, width / 2, 495)
+
+            // Generate data URL
+            setCardDataUrl(canvas.toDataURL('image/png'))
+        }
+        qrImage.src = qrImageUrl
     }
 
-    const handleSendWhatsApp = () => {
-        const message = encodeURIComponent(
-            `🎫 *E-TICKET*\n\n` +
-            `📌 *${participant.event_title || 'Event'}*\n` +
-            `📅 ${participant.event_date || '-'}\n\n` +
-            `👤 *${participant.full_name}*\n` +
-            `📍 ${participant.city || '-'}\n` +
-            `🎟️ Registration ID: ${participant.registration_id}\n\n` +
-            `Tunjukkan QR Code berikut saat check-in:\n` +
-            `${participant.qr_code}`
-        )
-        window.open(`https://wa.me/?text=${message}`, '_blank')
+    // Helper for rounded rectangles
+    const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath()
+        ctx.moveTo(x + r, y)
+        ctx.arcTo(x + w, y, x + w, y + h, r)
+        ctx.arcTo(x + w, y + h, x, y + h, r)
+        ctx.arcTo(x, y + h, x, y, r)
+        ctx.arcTo(x, y, x + w, y, r)
+        ctx.closePath()
     }
 
-    // Format date for display
     const formatDate = (dateStr?: string) => {
         if (!dateStr) return ''
         try {
             const date = new Date(dateStr)
             return date.toLocaleDateString('id-ID', {
                 day: 'numeric',
-                month: 'long',
+                month: 'short',
                 year: 'numeric'
             })
         } catch {
             return dateStr
         }
+    }
+
+    if (!isOpen || !participant) return null
+
+    const handleDownload = () => {
+        if (!cardDataUrl) return
+        const link = document.createElement('a')
+        link.download = `ID-Card-${participant.registration_id}.png`
+        link.href = cardDataUrl
+        link.click()
+    }
+
+    const handleSendWhatsApp = async () => {
+        // Download the ID Card first
+        if (cardDataUrl) {
+            handleDownload()
+        }
+
+        // Then open WhatsApp with message
+        setTimeout(() => {
+            const message = encodeURIComponent(
+                `🎫 *E-TICKET*\n\n` +
+                `📌 *${participant.event_title || 'Event'}*\n` +
+                `📅 ${formatDate(participant.event_date)}\n\n` +
+                `👤 *${participant.full_name}*\n` +
+                `📍 ${participant.city || '-'}\n` +
+                `🎟️ Registration ID: ${participant.registration_id}\n\n` +
+                `ID Card telah didownload. Silakan share gambar tersebut.`
+            )
+            window.open(`https://wa.me/?text=${message}`, '_blank')
+        }, 500)
     }
 
     return (
@@ -96,7 +226,7 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
             </button>
 
             {/* ID Card */}
-            <div ref={cardRef} className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
+            <div ref={cardCanvasRef as any} className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
                 {/* Green Header */}
                 <div className="bg-primary px-6 py-5 text-center">
                     <h2 className="text-white font-black text-xl tracking-wider uppercase">
@@ -156,7 +286,8 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
                 <div className="px-6 pb-6 flex gap-3">
                     <button
                         onClick={handleDownload}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors"
+                        disabled={!cardDataUrl}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors disabled:opacity-50"
                     >
                         <span className="material-symbols-outlined text-[20px]">download</span>
                         Download
