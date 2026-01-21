@@ -109,12 +109,21 @@ export default function Settings() {
         setMessage('')
 
         try {
-            // Save all configs to API
+            // Save all configs individually to match backend expectations
             console.log('Saving Midtrans config:', midtransConfig)
+
+            // Save Midtrans keys individually
+            await settingsAPI.save('midtrans_environment', midtransConfig.environment)
+            await settingsAPI.save('midtrans_client_key', midtransConfig.environment === 'production' ? midtransConfig.production_client_key : midtransConfig.sandbox_client_key)
+            await settingsAPI.save('midtrans_server_key', midtransConfig.environment === 'production' ? midtransConfig.production_server_key : midtransConfig.sandbox_server_key)
+
+            // Still save the full config object for UI state persistence
+            await settingsAPI.save('midtrans_config', midtransConfig)
+
+            // Save other configs
             console.log('Saving Bank config:', bankConfig)
             console.log('Saving WAHA config:', wahaConfig)
 
-            await settingsAPI.save('midtrans_config', midtransConfig)
             await settingsAPI.save('bank_config', bankConfig)
             await settingsAPI.save('waha_config', wahaConfig)
 
