@@ -10,6 +10,7 @@ import EditEvent from './pages/events/EditEvent'
 import EventRegistration from './pages/events/EventRegistration'
 import Participants from './pages/events/Participants'
 import IDCardGenerator from './pages/events/IDCardGenerator'
+import PublicTicket from './pages/events/PublicTicket'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/event/:slug" element={<EventRegistration />} />
+        <Route path="/ticket/:registrationId" element={<PublicTicket />} />
 
         {/* Admin routes */}
         <Route path="/dashboard" element={<Dashboard />} />

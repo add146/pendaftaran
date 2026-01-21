@@ -142,6 +142,22 @@ export const publicAPI = {
             total_revenue: number
             recent_events: Event[]
         }>('/api/public/dashboard/stats'),
+
+    ticket: (registrationId: string) =>
+        fetchAPI<{
+            registration_id: string
+            full_name: string
+            email: string
+            phone?: string
+            city?: string
+            ticket_name?: string
+            qr_code: string
+            payment_status: string
+            event_title: string
+            event_date: string
+            event_time?: string
+            location?: string
+        }>(`/api/public/ticket/${registrationId}`),
 }
 
 // Types

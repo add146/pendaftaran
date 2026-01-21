@@ -195,24 +195,22 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
     }
 
     const handleSendWhatsApp = async () => {
-        // Download the ID Card first
-        if (cardDataUrl) {
-            handleDownload()
-        }
+        // Generate ticket link
+        const baseUrl = window.location.origin
+        const ticketLink = `${baseUrl}/ticket/${participant.registration_id}`
 
-        // Then open WhatsApp with message
-        setTimeout(() => {
-            const message = encodeURIComponent(
-                `🎫 *E-TICKET*\n\n` +
-                `📌 *${participant.event_title || 'Event'}*\n` +
-                `📅 ${formatDate(participant.event_date)}\n\n` +
-                `👤 *${participant.full_name}*\n` +
-                `📍 ${participant.city || '-'}\n` +
-                `🎟️ Registration ID: ${participant.registration_id}\n\n` +
-                `ID Card telah didownload. Silakan share gambar tersebut.`
-            )
-            window.open(`https://wa.me/?text=${message}`, '_blank')
-        }, 500)
+        // Open WhatsApp with message including link
+        const message = encodeURIComponent(
+            `🎫 *E-TICKET*\n\n` +
+            `📌 *${participant.event_title || 'Event'}*\n` +
+            `📅 ${formatDate(participant.event_date)}\n\n` +
+            `👤 *${participant.full_name}*\n` +
+            `📍 ${participant.city || '-'}\n` +
+            `🎟️ Registration ID: ${participant.registration_id}\n\n` +
+            `🔗 *Lihat ID Card:*\n${ticketLink}\n\n` +
+            `Tunjukkan QR Code di link tersebut saat check-in.`
+        )
+        window.open(`https://wa.me/?text=${message}`, '_blank')
     }
 
     return (
