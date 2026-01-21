@@ -29,8 +29,20 @@ payments.post('/create', async (c) => {
         return c.json({ error: 'Participant ID and amount required' }, 400)
     }
 
+    // Fetch Midtrans settings from database
+    const midtransSettings = await c.env.DB.prepare(`
+        SELECT key, value FROM settings WHERE key IN ('midtrans_server_key', 'midtrans_client_key', 'midtrans_environment')
+    `).all()
+
+    const settingsMap = new Map(midtransSettings.results.map((s: any) => [s.key, s.value]))
+    const serverKey = settingsMap.get('midtrans_server_key') || c.env.MIDTRANS_SERVER_KEY
+    const isProduction = settingsMap.get('midtrans_environment') === 'production'
+
+    if (!serverKey) {
+        return c.json({ error: 'Midtrans not configured. Please configure in Settings.' }, 400)
+    }
+
     const orderId = `ORDER-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
-    const isProduction = c.env.MIDTRANS_IS_PRODUCTION === 'true'
     const urls = getMidtransUrl(isProduction)
 
     // Create Midtrans Snap transaction
@@ -61,7 +73,7 @@ payments.post('/create', async (c) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Authorization': 'Basic ' + btoa(c.env.MIDTRANS_SERVER_KEY + ':')
+                'Authorization': 'Basic ' + btoa(serverKey + ':')
             },
             body: JSON.stringify(snapPayload)
         })
