@@ -154,31 +154,46 @@ participants.post('/register', async (c) => {
 
     // Send WhatsApp notification if phone number provided
     if (phone) {
-        const { sendWhatsAppMessage, generateRegistrationMessage, generatePaymentPendingMessage } = await import('../lib/whatsapp')
-        const ticketLink = `${c.req.url.split('/api')[0]}/ticket/${registrationId}`
+        try {
+            console.log('[WAHA] Starting WhatsApp notification for:', phone)
+            const { sendWhatsAppMessage, generateRegistrationMessage, generatePaymentPendingMessage } = await import('../lib/whatsapp')
+            console.log('[WAHA] WhatsApp module imported successfully')
 
-        if (paymentStatus === 'paid') {
-            // Free event - send registration success with QR link
-            const message = generateRegistrationMessage({
-                eventTitle: event.title,
-                fullName: full_name,
-                registrationId,
-                ticketLink,
-                ticketName,
-                ticketPrice
-            })
-            await sendWhatsAppMessage(c.env.DB, phone, message)
-        } else {
-            // Paid event - send payment pending message
-            const message = generatePaymentPendingMessage({
-                eventTitle: event.title,
-                fullName: full_name,
-                ticketPrice,
-                bankName: event.bank_name || undefined,
-                accountHolder: event.account_holder_name || undefined,
-                accountNumber: event.account_number || undefined
-            })
-            await sendWhatsAppMessage(c.env.DB, phone, message)
+            const ticketLink = `${c.req.url.split('/api')[0]}/ticket/${registrationId}`
+            console.log('[WAHA] Ticket link:', ticketLink)
+
+            if (paymentStatus === 'paid') {
+                // Free event - send registration success with QR link
+                console.log('[WAHA] Generating registration success message')
+                const message = generateRegistrationMessage({
+                    eventTitle: event.title,
+                    fullName: full_name,
+                    registrationId,
+                    ticketLink,
+                    ticketName,
+                    ticketPrice
+                })
+                console.log('[WAHA] Sending WhatsApp message...')
+                const result = await sendWhatsAppMessage(c.env.DB, phone, message)
+                console.log('[WAHA] Send result:', result)
+            } else {
+                // Paid event - send payment pending message
+                console.log('[WAHA] Generating payment pending message')
+                const message = generatePaymentPendingMessage({
+                    eventTitle: event.title,
+                    fullName: full_name,
+                    ticketPrice,
+                    bankName: event.bank_name || undefined,
+                    accountHolder: event.account_holder_name || undefined,
+                    accountNumber: event.account_number || undefined
+                })
+                console.log('[WAHA] Sending WhatsApp message...')
+                const result = await sendWhatsAppMessage(c.env.DB, phone, message)
+                console.log('[WAHA] Send result:', result)
+            }
+        } catch (error) {
+            console.error('[WAHA] Error sending WhatsApp notification:', error)
+            // Don't fail registration if WhatsApp fails
         }
     }
 
