@@ -28,10 +28,12 @@ function StatCard({ icon, label, value, subValue, iconColor }: {
 // Participant row component
 function ParticipantRow({
     participant,
-    onCheckIn
+    onCheckIn,
+    onApprove
 }: {
     participant: ParticipantType
     onCheckIn: (id: string) => void
+    onApprove: (id: string) => void
 }) {
     const paymentStyles: Record<string, string> = {
         paid: 'bg-green-100 text-green-800',
@@ -42,6 +44,11 @@ function ParticipantRow({
     const initials = participant.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     const colors = ['bg-primary/10 text-primary', 'bg-purple-100 text-purple-600', 'bg-blue-100 text-blue-600', 'bg-orange-100 text-orange-600']
     const bgColor = colors[participant.full_name.charCodeAt(0) % colors.length]
+
+    // Generate WhatsApp link to user's phone
+    const userPhone = participant.phone?.replace(/^0/, '62') || ''
+    const waMessage = encodeURIComponent(`Halo ${participant.full_name}, berikut tiket QR Code Anda untuk event:\n\nRegistration ID: ${participant.registration_id}\nQR Code: ${participant.qr_code || 'Akan dikirim setelah pembayaran dikonfirmasi'}`)
+    const waLink = userPhone ? `https://wa.me/${userPhone}?text=${waMessage}` : ''
 
     return (
         <tr className="hover:bg-gray-50 transition-colors group">
@@ -57,7 +64,20 @@ function ParticipantRow({
                 </div>
             </td>
             <td className="p-4 font-mono text-gray-600">#{participant.registration_id}</td>
-            <td className="p-4 text-gray-600">{participant.email}</td>
+            <td className="p-4">
+                <div className="text-gray-600">{participant.email}</div>
+                {participant.phone && (
+                    <a
+                        href={waLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-green-600 hover:underline flex items-center gap-1 mt-0.5"
+                    >
+                        <span className="material-symbols-outlined text-[14px]">chat</span>
+                        {participant.phone}
+                    </a>
+                )}
+            </td>
             <td className="p-4 text-center">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${paymentStyles[participant.payment_status]}`}>
                     {participant.payment_status.charAt(0).toUpperCase() + participant.payment_status.slice(1)}
@@ -78,17 +98,42 @@ function ParticipantRow({
                 )}
             </td>
             <td className="p-4 text-right">
-                {participant.check_in_status !== 'checked_in' && participant.payment_status === 'paid' && (
-                    <button
-                        onClick={() => onCheckIn(participant.registration_id)}
-                        className="text-primary text-xs font-bold hover:underline mr-3"
-                    >
-                        Check In
-                    </button>
-                )}
-                <button className="text-gray-400 hover:text-primary p-1 rounded-md hover:bg-primary/5 transition-all">
-                    <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                </button>
+                <div className="flex items-center justify-end gap-2">
+                    {/* Approve Payment button for pending payments */}
+                    {participant.payment_status === 'pending' && (
+                        <button
+                            onClick={() => onApprove(participant.registration_id)}
+                            className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">check</span>
+                            Approve
+                        </button>
+                    )}
+
+                    {/* Check In button for paid participants */}
+                    {participant.check_in_status !== 'checked_in' && participant.payment_status === 'paid' && (
+                        <button
+                            onClick={() => onCheckIn(participant.registration_id)}
+                            className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover flex items-center gap-1"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
+                            Check In
+                        </button>
+                    )}
+
+                    {/* WhatsApp Send QR button for paid participants */}
+                    {participant.payment_status === 'paid' && participant.phone && (
+                        <a
+                            href={waLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">send</span>
+                            Send QR
+                        </a>
+                    )}
+                </div>
             </td>
         </tr>
     )
@@ -134,6 +179,15 @@ export default function Participants() {
     const handleCheckIn = async (registrationId: string) => {
         try {
             await participantsAPI.checkIn(registrationId)
+            fetchData() // Refresh data
+        } catch (err: any) {
+            alert(err.message)
+        }
+    }
+
+    const handleApprove = async (registrationId: string) => {
+        try {
+            await participantsAPI.approvePayment(registrationId)
             fetchData() // Refresh data
         } catch (err: any) {
             alert(err.message)
@@ -257,7 +311,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>

@@ -223,3 +223,35 @@ participants.get('/:id/qr', async (c) => {
         }
     })
 })
+
+// Approve payment (manual payment approval)
+participants.post('/:id/approve-payment', async (c) => {
+    const { id } = c.req.param()
+
+    const participant = await c.env.DB.prepare(`
+    SELECT * FROM participants WHERE id = ? OR registration_id = ?
+  `).bind(id, id).first()
+
+    if (!participant) {
+        return c.json({ error: 'Participant not found' }, 404)
+    }
+
+    if (participant.payment_status === 'paid') {
+        return c.json({ error: 'Payment already confirmed' }, 400)
+    }
+
+    await c.env.DB.prepare(`
+    UPDATE participants SET payment_status = 'paid' WHERE id = ?
+  `).bind(participant.id).run()
+
+    return c.json({
+        message: 'Payment approved',
+        participant: {
+            id: participant.id,
+            full_name: participant.full_name,
+            registration_id: participant.registration_id,
+            payment_status: 'paid',
+            qr_code: participant.qr_code
+        }
+    })
+})

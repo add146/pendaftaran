@@ -118,6 +118,12 @@ export const participantsAPI = {
         fetchAPI<{ qr_data: string; participant: { name: string; registration_id: string; event: string; date: string } }>(
             `/api/participants/${id}/qr`
         ),
+
+    approvePayment: (id: string) =>
+        fetchAPI<{ message: string; participant: { id: string; full_name: string; registration_id: string; payment_status: string; qr_code: string } }>(
+            `/api/participants/${id}/approve-payment`,
+            { method: 'POST' }
+        ),
 }
 
 // Public API
