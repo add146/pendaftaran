@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS events (
     event_mode TEXT DEFAULT 'free',
     payment_mode TEXT DEFAULT 'manual', -- 'manual' or 'auto' (Midtrans)
     whatsapp_cs TEXT, -- WhatsApp number for manual payment
+    bank_name TEXT, -- Bank name for manual payment
+    account_holder_name TEXT, -- Account holder name for manual payment
+    account_number TEXT, -- Bank account number for manual payment
     visibility TEXT DEFAULT 'public',
     status TEXT DEFAULT 'draft',
     image_url TEXT,
