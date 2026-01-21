@@ -29,7 +29,6 @@ export default function EventRegistration() {
     })
 
     const [participantId, setParticipantId] = useState('')
-    const [snapToken, setSnapToken] = useState('')
 
     useEffect(() => {
         if (!slug) return
@@ -79,8 +78,6 @@ export default function EventRegistration() {
                 customerEmail: formData.email,
                 customerPhone: formData.phone
             })
-
-            setSnapToken(token)
 
             // Open Snap Popup
             // @ts-ignore
