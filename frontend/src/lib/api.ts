@@ -155,8 +155,8 @@ export interface Event {
     images?: string[]
     slug?: string
     created_at: string
-    // For update only
-    ticket_types?: { name: string; price: string; quota?: string }[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ticket_types?: any[]
 }
 
 export interface PublicEvent extends Event {
