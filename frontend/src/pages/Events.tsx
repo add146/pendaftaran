@@ -48,8 +48,8 @@ export default function Events() {
                                     key={status}
                                     onClick={() => setFilter(status)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === status
-                                            ? 'bg-primary text-white'
-                                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                                        ? 'bg-primary text-white'
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                                         }`}
                                 >
                                     {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -82,8 +82,8 @@ export default function Events() {
                                     <div className="p-5">
                                         <div className="flex items-start justify-between mb-3">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${event.status === 'open' ? 'bg-green-100 text-green-800' :
-                                                    event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
-                                                        'bg-red-100 text-red-800'
+                                                event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                                    'bg-red-100 text-red-800'
                                                 }`}>
                                                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                                             </span>
@@ -103,6 +103,12 @@ export default function Events() {
                                         </div>
 
                                         <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+                                            <Link
+                                                to={`/events/${event.id}/edit`}
+                                                className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
+                                            >
+                                                Edit
+                                            </Link>
                                             <Link
                                                 to={`/events/${event.id}/participants`}
                                                 className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
