@@ -159,7 +159,9 @@ participants.post('/register', async (c) => {
             const { sendWhatsAppMessage, generateRegistrationMessage, generatePaymentPendingMessage } = await import('../lib/whatsapp')
             console.log('[WAHA] WhatsApp module imported successfully')
 
-            const ticketLink = `${c.req.url.split('/api')[0]}/ticket/${registrationId}`
+            // Use frontend URL for ticket link
+            const frontendUrl = 'https://pendaftaran-qr.pages.dev'
+            const ticketLink = `${frontendUrl}/ticket/${registrationId}`
             console.log('[WAHA] Ticket link:', ticketLink)
 
             if (paymentStatus === 'paid') {
