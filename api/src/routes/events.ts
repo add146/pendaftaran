@@ -123,6 +123,9 @@ events.put('/:id', async (c) => {
 
   // Update ticket types if provided
   if (ticket_types && Array.isArray(ticket_types)) {
+    // First, set ticket_type_id to NULL for all participants of this event to avoid FK constraint
+    await c.env.DB.prepare('UPDATE participants SET ticket_type_id = NULL WHERE event_id = ?').bind(id).run()
+
     // Delete existing ticket types
     await c.env.DB.prepare('DELETE FROM ticket_types WHERE event_id = ?').bind(id).run()
 
