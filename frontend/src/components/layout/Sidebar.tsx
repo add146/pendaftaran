@@ -12,6 +12,7 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
         { id: 'events', label: 'Events', icon: 'calendar_today', href: '/events' },
         { id: 'participants', label: 'Participants', icon: 'group', href: '/participants' },
         { id: 'payments', label: 'Payments', icon: 'credit_card', href: '/payments' },
+        { id: 'organization', label: 'Organization', icon: 'apartment', href: '/organization' },
         { id: 'settings', label: 'Settings', icon: 'settings', href: '/settings' },
     ]
 
@@ -71,7 +72,15 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
                 </nav>
 
                 <div className="p-4 border-t border-border-light">
-                    <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-main hover:bg-border-light font-medium transition-colors w-full">
+                    <button
+                        onClick={() => {
+                            localStorage.removeItem('auth_token')
+                            localStorage.removeItem('user')
+                            localStorage.removeItem('orgId')
+                            window.location.href = '/'
+                        }}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-main hover:bg-border-light font-medium transition-colors w-full"
+                    >
                         <span className="material-symbols-outlined text-[24px]">logout</span>
                         <span>Sign Out</span>
                     </button>

@@ -52,7 +52,8 @@ auth.post('/login', async (c) => {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role
+            role: user.role,
+            organization_id: user.organization_id  // Add this field
         }
     })
 })
@@ -94,6 +95,12 @@ auth.post('/register', async (c) => {
         'INSERT INTO users (id, organization_id, email, password_hash, name) VALUES (?, ?, ?, ?, ?)'
     ).bind(userId, orgId, email, passwordHash, name).run()
 
+    // Create nonprofit subscription (default free plan)
+    const subId = `sub_${crypto.randomUUID().slice(0, 8)}`
+    await c.env.DB.prepare(
+        'INSERT INTO subscriptions (id, organization_id, plan, status, payment_status) VALUES (?, ?, ?, ?, ?)'
+    ).bind(subId, orgId, 'nonprofit', 'active', 'paid').run()
+
     // Generate token for immediate login
     const token = await signJWT({
         userId,
@@ -108,7 +115,8 @@ auth.post('/register', async (c) => {
         user: {
             id: userId,
             email,
-            name
+            name,
+            organization_id: orgId  // Add this field
         }
     }, 201)
 })
@@ -136,7 +144,8 @@ auth.get('/me', authMiddleware, async (c) => {
         email: dbUser.email,
         name: dbUser.name,
         role: dbUser.role,
-        organization: dbUser.organization_name
+        organization: dbUser.organization_name,
+        organization_id: user.orgId  // Add this field from JWT
     })
 })
 

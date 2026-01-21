@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
+import { authMiddleware } from '../middleware/auth'
 
 export const participants = new Hono<{ Bindings: Bindings }>()
 
@@ -10,10 +11,17 @@ function generateRegId(): string {
     return `REG-${year}-${random}`
 }
 
-// List participants for an event
-participants.get('/event/:eventId', async (c) => {
+// List participants for an event (organization-scoped)
+participants.get('/event/:eventId', authMiddleware, async (c) => {
+    const user = c.get('user')
     const { eventId } = c.req.param()
     const { status, payment, search, limit = '20', offset = '0' } = c.req.query()
+
+    // Verify event belongs to organization
+    const event = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(eventId, user.orgId).first()
+    if (!event) {
+        return c.json({ error: 'Event not found' }, 404)
+    }
 
     let query = 'SELECT p.*, t.name as ticket_name, t.price as ticket_price FROM participants p LEFT JOIN ticket_types t ON p.ticket_type_id = t.id WHERE p.event_id = ?'
     const params: (string | number)[] = [eventId]
@@ -60,8 +68,9 @@ participants.get('/event/:eventId', async (c) => {
     })
 })
 
-// Get single participant
-participants.get('/:id', async (c) => {
+// Get single participant (organization-scoped)
+participants.get('/:id', authMiddleware, async (c) => {
+    const user = c.get('user')
     const { id } = c.req.param()
 
     const participant = await c.env.DB.prepare(`
@@ -69,8 +78,8 @@ participants.get('/:id', async (c) => {
     FROM participants p 
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     LEFT JOIN events e ON p.event_id = e.id
-    WHERE p.id = ? OR p.registration_id = ?
-  `).bind(id, id).first()
+    WHERE (p.id = ? OR p.registration_id = ?) AND e.organization_id = ?
+  `).bind(id, id, user.orgId).first()
 
     if (!participant) {
         return c.json({ error: 'Participant not found' }, 404)
@@ -152,51 +161,33 @@ participants.post('/register', async (c) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode).run()
 
-    // Send WhatsApp notification if phone number provided
-    if (phone) {
+    // Send WhatsApp notification ONLY for FREE events (paid status)
+    // For PAID events, WhatsApp will be sent after payment confirmation via webhook or manual approve
+    if (phone && paymentStatus === 'paid') {
         try {
-            console.log('[WAHA] Starting WhatsApp notification for:', phone)
-            const { sendWhatsAppMessage, generateRegistrationMessage, generatePaymentPendingMessage } = await import('../lib/whatsapp')
-            console.log('[WAHA] WhatsApp module imported successfully')
+            console.log('[REGISTRATION] Sending WhatsApp for free event to:', phone)
+            const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
 
-            // Use frontend URL for ticket link
             const frontendUrl = 'https://etiket.my.id'
             const ticketLink = `${frontendUrl}/ticket/${registrationId}`
-            console.log('[WAHA] Ticket link:', ticketLink)
 
-            if (paymentStatus === 'paid') {
-                // Free event - send registration success with QR link
-                console.log('[WAHA] Generating registration success message')
-                const message = generateRegistrationMessage({
-                    eventTitle: event.title,
-                    fullName: full_name,
-                    registrationId,
-                    ticketLink,
-                    ticketName,
-                    ticketPrice
-                })
-                console.log('[WAHA] Sending WhatsApp message...')
-                const result = await sendWhatsAppMessage(c.env.DB, phone, message)
-                console.log('[WAHA] Send result:', result)
-            } else {
-                // Paid event - send payment pending message
-                console.log('[WAHA] Generating payment pending message')
-                const message = generatePaymentPendingMessage({
-                    eventTitle: event.title,
-                    fullName: full_name,
-                    ticketPrice,
-                    bankName: event.bank_name || undefined,
-                    accountHolder: event.account_holder_name || undefined,
-                    accountNumber: event.account_number || undefined
-                })
-                console.log('[WAHA] Sending WhatsApp message...')
-                const result = await sendWhatsAppMessage(c.env.DB, phone, message)
-                console.log('[WAHA] Send result:', result)
-            }
+            const message = generateRegistrationMessage({
+                eventTitle: event.title,
+                fullName: full_name,
+                registrationId,
+                ticketLink,
+                ticketName,
+                ticketPrice
+            })
+
+            const result = await sendWhatsAppMessage(c.env.DB, phone, message)
+            console.log('[REGISTRATION] WhatsApp send result:', result)
         } catch (error) {
-            console.error('[WAHA] Error sending WhatsApp notification:', error)
+            console.error('[REGISTRATION] Error sending WhatsApp:', error)
             // Don't fail registration if WhatsApp fails
         }
+    } else if (phone && paymentStatus === 'pending') {
+        console.log('[REGISTRATION] Skipping WhatsApp for paid event - will send after payment confirmation')
     }
 
     return c.json({
@@ -329,17 +320,18 @@ participants.get('/:id/qr', async (c) => {
     })
 })
 
-// Approve payment (manual payment approval)
-participants.post('/:id/approve-payment', async (c) => {
+// Approve payment (manual payment approval, organization-scoped)
+participants.post('/:id/approve-payment', authMiddleware, async (c) => {
+    const user = c.get('user')
     const { id } = c.req.param()
 
     const participant = await c.env.DB.prepare(`
-    SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+    SELECT p.*, e.title as event_title, e.organization_id, t.name as ticket_name, t.price as ticket_price
     FROM participants p
     LEFT JOIN events e ON p.event_id = e.id
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
-    WHERE p.id = ? OR p.registration_id = ?
-  `).bind(id, id).first() as any
+    WHERE (p.id = ? OR p.registration_id = ?) AND e.organization_id = ?
+  `).bind(id, id, user.orgId).first() as any
 
     if (!participant) {
         return c.json({ error: 'Participant not found' }, 404)
@@ -390,19 +382,20 @@ participants.post('/:id/approve-payment', async (c) => {
     })
 })
 
-// Resend WhatsApp notification
-participants.post('/:id/resend-whatsapp', async (c) => {
+// Resend WhatsApp notification (organization-scoped)
+participants.post('/:id/resend-whatsapp', authMiddleware, async (c) => {
+    const user = c.get('user')
     const { id } = c.req.param()
 
     console.log('[RESEND-WA] Starting resend for participant:', id)
 
     const participant = await c.env.DB.prepare(`
-        SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+        SELECT p.*, e.title as event_title, e.organization_id, t.name as ticket_name, t.price as ticket_price
         FROM participants p
         LEFT JOIN events e ON p.event_id = e.id
         LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
-        WHERE p.id = ? OR p.registration_id = ?
-    `).bind(id, id).first() as any
+        WHERE (p.id = ? OR p.registration_id = ?) AND e.organization_id = ?
+    `).bind(id, id, user.orgId).first() as any
 
     if (!participant) {
         return c.json({ error: 'Participant not found' }, 404)
@@ -458,13 +451,16 @@ participants.post('/:id/resend-whatsapp', async (c) => {
     }
 })
 
-// Delete participant
-participants.delete('/:id', async (c) => {
+// Delete participant (organization-scoped)
+participants.delete('/:id', authMiddleware, async (c) => {
+    const user = c.get('user')
     const { id } = c.req.param()
 
     const participant = await c.env.DB.prepare(`
-    SELECT * FROM participants WHERE id = ? OR registration_id = ?
-  `).bind(id, id).first()
+    SELECT p.*, e.organization_id FROM participants p
+    JOIN events e ON p.event_id = e.id
+    WHERE (p.id = ? OR p.registration_id = ?) AND e.organization_id = ?
+  `).bind(id, id, user.orgId).first()
 
     if (!participant) {
         return c.json({ error: 'Participant not found' }, 404)

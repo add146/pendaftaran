@@ -44,7 +44,7 @@ export const authAPI = {
         ),
 
     me: () =>
-        fetchAPI<{ id: string; email: string; name: string; role: string; organization: string }>(
+        fetchAPI<{ id: string; email: string; name: string; role: string; organization: string; organization_id: string }>(
             '/api/auth/me'
         ),
 }
@@ -298,3 +298,99 @@ export const paymentsAPI = {
     },
 }
 
+// Organizations API
+export const organizationsAPI = {
+    get: (id: string) =>
+        fetchAPI<Organization>(`/api/organizations/${id}`),
+
+    update: (id: string, data: { name?: string; logo_url?: string }) =>
+        fetchAPI<{ message: string }>(`/api/organizations/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        }),
+
+    getMembers: (id: string) =>
+        fetchAPI<{ members: User[] }>(`/api/organizations/${id}/members`),
+
+    toggleWaha: (id: string, enabled: boolean) =>
+        fetchAPI<{ message: string; waha_enabled: boolean }>(`/api/organizations/${id}/waha-toggle`, {
+            method: 'PUT',
+            body: JSON.stringify({ enabled }),
+        }),
+
+    getWahaStatus: (id: string) =>
+        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string }>(
+            `/api/organizations/${id}/waha-status`
+        ),
+}
+
+// Subscriptions API
+export const subscriptionsAPI = {
+    getCurrent: () =>
+        fetchAPI<Subscription>('/api/subscriptions/current'),
+
+    upgrade: (paymentMethod: 'midtrans' | 'manual') =>
+        fetchAPI<{ message: string; payment_id: string; amount: number; payment_method: string }>(
+            '/api/subscriptions/upgrade',
+            { method: 'POST', body: JSON.stringify({ payment_method: paymentMethod }) }
+        ),
+
+    submitPayment: (paymentId: string, paymentProofUrl?: string) =>
+        fetchAPI<{ message: string }>('/api/subscriptions/payment', {
+            method: 'POST',
+            body: JSON.stringify({ payment_id: paymentId, payment_proof_url: paymentProofUrl }),
+        }),
+
+    getPaymentStatus: (paymentId: string) =>
+        fetchAPI<SubscriptionPayment>(`/api/subscriptions/payment-status/${paymentId}`),
+}
+
+// Additional Types
+
+export interface Organization {
+    id: string
+    name: string
+    slug: string
+    logo_url?: string
+    waha_enabled: number
+    created_at: string
+    plan?: string
+    subscription_status?: string
+}
+
+export interface User {
+    id: string
+    email: string
+    name: string
+    role: string
+    created_at: string
+}
+
+export interface Subscription {
+    id: string
+    organization_id: string
+    plan: 'nonprofit' | 'profit'
+    status: 'active' | 'pending_payment' | 'canceled' | 'expired'
+    payment_method?: string
+    payment_status?: string
+    payment_proof_url?: string
+    amount: number
+    started_at: string
+    expires_at?: string
+    created_at: string
+}
+
+export interface SubscriptionPayment {
+    id: string
+    subscription_id: string
+    organization_id: string
+    amount: number
+    payment_method: string
+    payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
+    payment_proof_url?: string
+    approved_by?: string
+    approved_at?: string
+    period_start: string
+    period_end: string
+    created_at: string
+}

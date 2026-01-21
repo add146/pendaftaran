@@ -1,31 +1,35 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
+import { authMiddleware } from '../middleware/auth'
 
 export const events = new Hono<{ Bindings: Bindings }>()
 
-// List all events
-events.get('/', async (c) => {
+// List all events (organization-scoped)
+events.get('/', authMiddleware, async (c) => {
+  const user = c.get('user')
   const { status, limit = '10', offset = '0' } = c.req.query()
 
-  let query = 'SELECT * FROM events'
-  const params: string[] = []
+  let query = 'SELECT * FROM events WHERE organization_id = ?'
+  const params: (string | number)[] = [user.orgId]
 
   if (status) {
-    query += ' WHERE status = ?'
+    query += ' AND status = ?'
     params.push(status)
   }
 
   query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?'
-  params.push(limit, offset)
+  params.push(parseInt(limit), parseInt(offset))
 
   const result = await c.env.DB.prepare(query).bind(...params).all()
 
   // Get total count
-  let countQuery = 'SELECT COUNT(*) as total FROM events'
+  let countQuery = 'SELECT COUNT(*) as total FROM events WHERE organization_id = ?'
+  const countParams: string[] = [user.orgId]
   if (status) {
-    countQuery += ' WHERE status = ?'
+    countQuery += ' AND status = ?'
+    countParams.push(status)
   }
-  const countResult = await c.env.DB.prepare(countQuery).bind(...(status ? [status] : [])).first()
+  const countResult = await c.env.DB.prepare(countQuery).bind(...countParams).first()
 
   return c.json({
     data: result.results,
@@ -35,13 +39,14 @@ events.get('/', async (c) => {
   })
 })
 
-// Get single event
-events.get('/:id', async (c) => {
+// Get single event (organization-scoped)
+events.get('/:id', authMiddleware, async (c) => {
+  const user = c.get('user')
   const { id } = c.req.param()
 
   const event = await c.env.DB.prepare(
-    'SELECT * FROM events WHERE id = ?'
-  ).bind(id).first()
+    'SELECT * FROM events WHERE id = ? AND organization_id = ?'
+  ).bind(id, user.orgId).first()
 
   if (!event) {
     return c.json({ error: 'Event not found' }, 404)
@@ -68,8 +73,9 @@ events.get('/:id', async (c) => {
   })
 })
 
-// Create event
-events.post('/', async (c) => {
+// Create event (inject organization_id from JWT)
+events.post('/', authMiddleware, async (c) => {
+  const user = c.get('user')
   const body = await c.req.json()
   const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images } = body
 
@@ -82,20 +88,21 @@ events.post('/', async (c) => {
   const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
   await c.env.DB.prepare(`
-    INSERT INTO events (id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
-  `).bind(eventId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl).run()
+    INSERT INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
+  `).bind(eventId, user.orgId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl).run()
 
   return c.json({ id: eventId, slug }, 201)
 })
 
-// Update event
-events.put('/:id', async (c) => {
+// Update event (organization-scoped)
+events.put('/:id', authMiddleware, async (c) => {
+  const user = c.get('user')
   const { id } = c.req.param()
   const body = await c.req.json()
   const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types } = body
 
-  const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ?').bind(id).first()
+  const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
   if (!existing) {
     return c.json({ error: 'Event not found' }, 404)
   }
@@ -161,18 +168,32 @@ events.put('/:id', async (c) => {
   return c.json({ message: 'Event updated' })
 })
 
-// Delete event
-events.delete('/:id', async (c) => {
+// Delete event (organization-scoped)
+events.delete('/:id', authMiddleware, async (c) => {
+  const user = c.get('user')
   const { id } = c.req.param()
+
+  // Verify event belongs to organization before deleting
+  const event = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+  if (!event) {
+    return c.json({ error: 'Event not found' }, 404)
+  }
 
   await c.env.DB.prepare('DELETE FROM events WHERE id = ?').bind(id).run()
 
   return c.json({ message: 'Event deleted' })
 })
 
-// Get event stats
-events.get('/:id/stats', async (c) => {
+// Get event stats (organization-scoped)
+events.get('/:id/stats', authMiddleware, async (c) => {
+  const user = c.get('user')
   const { id } = c.req.param()
+
+  // Verify event belongs to organization
+  const event = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+  if (!event) {
+    return c.json({ error: 'Event not found' }, 404)
+  }
 
   const stats = await c.env.DB.prepare(`
     SELECT 
