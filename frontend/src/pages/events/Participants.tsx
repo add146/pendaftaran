@@ -324,7 +324,7 @@ export default function Participants() {
                                 <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors">search</span>
                             </div>
                             <input
-                                className="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg bg-background-light text-sm placeholder-gray-500 focus:ring-2 focus:ring-primary/20 transition-all"
+                                className="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg bg-background-light text-sm placeholder-gray-500 focus:ring-2 focus:ring-primary/20 transition-all text-text-main"
                                 placeholder="Search by name, ID, or email..."
                                 type="text"
                                 value={search}

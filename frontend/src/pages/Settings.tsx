@@ -181,7 +181,7 @@ export default function Settings() {
                                                 type="text"
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                             />
                                         </div>
                                         <div>
@@ -190,7 +190,7 @@ export default function Settings() {
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
-                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                             />
                                         </div>
                                     </div>
@@ -223,7 +223,7 @@ export default function Settings() {
                                             type="text"
                                             value={orgName}
                                             onChange={(e) => setOrgName(e.target.value)}
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                         />
                                     </div>
                                     <div>
@@ -231,7 +231,7 @@ export default function Settings() {
                                         <textarea
                                             rows={3}
                                             placeholder="Enter organization address"
-                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                         />
                                     </div>
                                     <div>

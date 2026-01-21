@@ -205,7 +205,7 @@ export default function CreateEvent() {
                                             onChange={(e) => updateField('description', e.target.value)}
                                             placeholder="Describe your event..."
                                             rows={4}
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-white text-gray-900"
                                         />
                                     </div>
 
@@ -216,7 +216,7 @@ export default function CreateEvent() {
                                                 type="date"
                                                 value={formData.event_date}
                                                 onChange={(e) => updateField('event_date', e.target.value)}
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                             />
                                         </div>
                                         <div>
@@ -225,7 +225,7 @@ export default function CreateEvent() {
                                                 type="time"
                                                 value={formData.event_time}
                                                 onChange={(e) => updateField('event_time', e.target.value)}
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                             />
                                         </div>
                                     </div>
@@ -237,7 +237,7 @@ export default function CreateEvent() {
                                             value={formData.location}
                                             onChange={(e) => updateField('location', e.target.value)}
                                             placeholder="e.g., Masjid Al-Ikhlas, Main Hall"
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                         />
                                     </div>
 
@@ -249,7 +249,7 @@ export default function CreateEvent() {
                                             onChange={(e) => updateField('capacity', e.target.value)}
                                             placeholder="Leave empty for unlimited"
                                             min="1"
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                         />
                                     </div>
                                 </div>
