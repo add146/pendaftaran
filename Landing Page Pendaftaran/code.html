@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html class="light" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MasjidEvent - Solusi Manajemen Event Komunitas &amp; Masjid</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e7b49",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#131f19",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1c2e26",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>/* Custom pattern for Islamic geometric background */
+.bg-islamic-pattern {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuCJ_bpYNgYiLOu3PsedX90fKmaSWYvRjxQxdlrN1JAPw2Fn1yKtdsCf6OkfGR-3YWeLcupCKMtgpel2eVDnnzbnstyKMQBhgJGHrR0_utYS7GF0NLgWhfSHTnEWfPT9a_3Lz_fZLC6-_ZUqFLIrsjouh3MmpLG_7zhvFWrq6aT0Ir_calREY7UvFvPxwN1QeVAe7HIE4MLzGjWb9f8EFOhKrJCdiehAthejzhmT-zOxRQ3h5eCgQCqBF38rIznDaUzl-pYddoRwdoo)
+    }
+.dark .bg-islamic-pattern {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuD7Ipd_2nretNhBN4IUhs0dK9K3m9_nc5nkxn1XfMJupffIQ1hWC462M48oymrrEPhkUPivuXTGeHYwk4Xjhr4Ex-OnDxTJKG4Hy51yslxQk8lOYN64hIyU1_EX92GVop0Lh-lJtJTuS4IJcXYovSt-ydP3B7vo7ra-6gyuNqz2xFv4vIo1azxECHNxpeuryjrQsjvhV9C4pjvbGINXNQ2NvdxjiqREUi84ulaw0GRHqHGO_hZ0STuw-mFcDcVJBvA2Tnf9oqxPd-o)
+    }</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#101914] dark:text-gray-100 font-display transition-colors duration-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Navbar -->
+<header class="sticky top-0 z-50 w-full border-b border-gray-200 dark:border-gray-800 bg-surface-light/95 dark:bg-background-dark/95 backdrop-blur supports-[backdrop-filter]:bg-surface-light/60">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10 h-16 md:h-20 flex items-center justify-between">
+<!-- Logo Area -->
+<div class="flex items-center gap-3">
+<div class="text-primary">
+<span class="material-symbols-outlined !text-[32px]">mosque</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">MasjidEvent</h2>
+</div>
+<!-- Desktop Navigation -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors" href="#features">Fitur</a>
+<a class="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors" href="#pricing">Harga</a>
+<a class="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors" href="#contact">Kontak</a>
+</nav>
+<!-- Action Buttons -->
+<div class="flex items-center gap-3">
+<button class="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                        Masuk
+                    </button>
+<button class="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary/90 transition-all hover:shadow-md">
+                        Mulai Gratis
+                    </button>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="relative bg-islamic-pattern pt-16 pb-20 lg:pt-24 lg:pb-32 overflow-hidden">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10">
+<div class="grid lg:grid-cols-2 gap-12 items-center">
+<!-- Text Content -->
+<div class="flex flex-col gap-6 max-w-2xl">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 w-fit">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-semibold text-primary uppercase tracking-wide">Platform No.1 Untuk Masjid</span>
+</div>
+<h1 class="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.15] tracking-tight text-gray-900 dark:text-white">
+                            Solusi Manajemen Event <span class="text-primary">Komunitas &amp; Masjid</span>
+</h1>
+<p class="text-lg text-gray-600 dark:text-gray-300 leading-relaxed max-w-lg">
+                            Kelola pendaftaran, pembayaran otomatis, dan absensi QR code dalam satu platform terintegrasi. Modernkan pengelolaan acara Anda sekarang.
+                        </p>
+<div class="flex flex-col sm:flex-row gap-4 mt-2">
+<button class="h-12 px-8 rounded-lg bg-primary text-white font-bold text-base hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+<span>Mulai Gratis</span>
+<span class="material-symbols-outlined !text-[20px]">arrow_forward</span>
+</button>
+<button class="h-12 px-8 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold text-base hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined !text-[20px] text-primary">play_circle</span>
+<span>Lihat Demo</span>
+</button>
+</div>
+<div class="pt-4 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white dark:border-background-dark bg-gray-200 bg-cover" data-alt="User avatar 1" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD5TeVkO9TZyT4JNj4vVMTOSzkZl20MJ7F0iaT14w6r9B2qVY_W6C5j3OhT8Rbl-390BgdZJZDdvmSNEyGOfkRgKdqBaSMK_9vYxoCIFiDbyPZ78kQP_KFwIOgno-feWQifTI5gwwPYnOgbQtMyfzeqp9nfQEUDskW4poRNDm4pcvZoRY8pUIDtR7L00WRWT5RPKmnUq3grvnH2mJOtMOHoYziphBqdkL9QtgsosPld0uQibj1N61IIvQ58J2_dBxC4MfgSm5HlEqA')"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white dark:border-background-dark bg-gray-200 bg-cover" data-alt="User avatar 2" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA74-_-2cppFr2PH2SRrzNzKUHJsPyoLCVm9h1hTS5r8hT3Dev6eP1r1D3gk9s-7oOCSAn2cMYQkyG4SuSEaipzOHOAt_uXqSiS-5GqXlnifYD0KAJkt_4LUnp93df5duG9Qy4XWDSJ1qU4Qef1HykQpuRMM28Y2Prnvm7-wTJg3bCVadUotaUlnk85Iocok9jXCezsqmKokJjaBkHja4KcmTmYp_AFb53rzJJfqSBIrkKyKtmOWt7K0jrw6IvufVW2zn9Brh1Sgqc')"></div>
+<div class="w-8 h-8 rounded-full border-2 border-white dark:border-background-dark bg-gray-200 bg-cover" data-alt="User avatar 3" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDN6h5zHAMmTMr0CyKJ0JoO4pTlKkihNReTixDMxVQqe3PfEa07DIvkZV0zWV8YSFlPhu4mANXB9W7kjIox02lEVkk0bMof8tLwBOODpw3xmlK0CaX8ZAusVgeL-aqD_8TpyfILl3CXZ9e5H38uRkWhZVBUATLmUVAYSscP1CoctjBiY7nYgsCyzD81aPQ29BPtliNSrErp9V75ZkCWKDWG_EYyLa39khPJf8daZtDPtY1zNVZPC4dGtNMy0ZNWCi07aneuR_ttVdE')"></div>
+</div>
+<p>Dipercaya oleh 500+ Masjid</p>
+</div>
+</div>
+<!-- Hero Image -->
+<div class="relative w-full lg:h-auto rounded-2xl shadow-2xl overflow-hidden group">
+<div class="absolute inset-0 bg-primary/20 dark:bg-primary/10 z-10 pointer-events-none"></div>
+<div class="aspect-[4/3] w-full bg-cover bg-center bg-no-repeat transform group-hover:scale-105 transition-transform duration-700" data-alt="People discussing community event plans in a modern workspace" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBcD5VsCxdwbqDw1bz30RUvfZiaJrTAATTv0leSjKj7Zcz40KeoQMElrVGuQAwUtiodIMG9FwpKy6G4ZKEdQA7rllJyV-Y4mnBrY3Q_BGOharMjqeC-RZnTNd6--jr-fSBueZCoGs8M8Yv3w4zuomuCuNRtMgmiDOA37kMlGmOeTZCTB_YmQQ5IvXA1nLDD34A8SwpLVIoI-ypTfcWyalpP_YxVvV1SFGkRFN2-Mgcf5omnlZ3RGkOLTTlTtOeBc8E7n_v95FgCeXA')">
+</div>
+<!-- Floating Card 1 -->
+<div class="absolute bottom-6 left-6 z-20 bg-white dark:bg-surface-dark p-4 rounded-xl shadow-lg max-w-[200px] border border-gray-100 dark:border-gray-700 animate-[bounce_3s_infinite]">
+<div class="flex items-center gap-3 mb-2">
+<div class="bg-green-100 dark:bg-green-900/30 p-2 rounded-full text-primary">
+<span class="material-symbols-outlined !text-[20px]">qr_code_scanner</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Status Check-in</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">Sukses</p>
+</div>
+</div>
+</div>
+<!-- Floating Card 2 -->
+<div class="absolute top-6 right-6 z-20 bg-white dark:bg-surface-dark p-4 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Donasi</p>
+<p class="text-sm font-bold text-gray-900 dark:text-white">Rp 15.450.000</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Trusted By Section (Optional Trust Bar) -->
+<div class="border-y border-gray-100 dark:border-gray-800 bg-white dark:bg-surface-dark py-8">
+<div class="max-w-[1280px] mx-auto px-4 text-center">
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-6">Mendukung Komunitas &amp; Masjid Terbaik di Indonesia</p>
+<div class="flex flex-wrap justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+<!-- Placeholder Logos using simple text for demo -->
+<span class="text-xl font-bold font-display text-gray-400 dark:text-gray-500">Masjid Raya</span>
+<span class="text-xl font-bold font-display text-gray-400 dark:text-gray-500">DKM Center</span>
+<span class="text-xl font-bold font-display text-gray-400 dark:text-gray-500">IslamicHub</span>
+<span class="text-xl font-bold font-display text-gray-400 dark:text-gray-500">CharityFlow</span>
+</div>
+</div>
+</div>
+<!-- Features Section -->
+<section class="py-20 bg-background-light dark:bg-background-dark" id="features">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<h2 class="text-primary font-bold text-sm tracking-widest uppercase mb-3">Fitur Unggulan</h2>
+<h3 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-4">Semua yang Anda Butuhkan untuk Event Sukses</h3>
+<p class="text-gray-600 dark:text-gray-300 text-lg">
+                        Platform kami dirancang khusus untuk memenuhi kebutuhan unik pengurus masjid dan komunitas dalam mengelola acara.
+                    </p>
+</div>
+<div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Feature 1 -->
+<div class="group bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center text-primary mb-5 group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[28px]">app_registration</span>
+</div>
+<h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Pendaftaran Otomatis</h4>
+<p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                            Formulir pendaftaran online yang mudah dibuat, disesuaikan, dan dikelola tanpa coding.
+                        </p>
+</div>
+<!-- Feature 2 -->
+<div class="group bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center text-primary mb-5 group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[28px]">qr_code_2</span>
+</div>
+<h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">QR Code ID Card</h4>
+<p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                            Sistem check-in super cepat di lokasi dengan pemindaian kode QR digital unik per peserta.
+                        </p>
+</div>
+<!-- Feature 3 -->
+<div class="group bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center text-primary mb-5 group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[28px]">credit_card</span>
+</div>
+<h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Integrasi Midtrans</h4>
+<p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                            Terima pembayaran tiket atau donasi secara otomatis, aman, dan langsung terverifikasi.
+                        </p>
+</div>
+<!-- Feature 4 -->
+<div class="group bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-100 dark:border-gray-800 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+<div class="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-lg flex items-center justify-center text-primary mb-5 group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-[28px]">bar_chart</span>
+</div>
+<h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Laporan Real-time</h4>
+<p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                            Pantau kehadiran, pemasukan, dan data demografi peserta secara langsung melalui dashboard.
+                        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="py-20 bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800" id="pricing">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<h2 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-4">Pilih Paket Sesuai Kebutuhan</h2>
+<p class="text-gray-600 dark:text-gray-300 text-lg">
+                        Mulai dari gratis untuk komunitas kecil hingga fitur lengkap untuk organisasi besar.
+                    </p>
+</div>
+<div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+<!-- Free Plan -->
+<div class="relative flex flex-col p-6 bg-background-light dark:bg-background-dark rounded-2xl border border-gray-200 dark:border-gray-700">
+<div class="mb-5">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Gratis</h3>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Untuk acara kecil &amp; kajian rutin</p>
+</div>
+<div class="mb-6">
+<span class="text-4xl font-black text-gray-900 dark:text-white">Rp 0</span>
+<span class="text-gray-500 font-medium">/selamanya</span>
+</div>
+<button class="w-full py-3 px-4 rounded-lg bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            Mulai Sekarang
+                        </button>
+<ul class="flex flex-col gap-3 mt-8 text-sm text-gray-700 dark:text-gray-300 flex-1">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Hingga 50 peserta
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                1 Event aktif
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                QR Code Check-in
+                            </li>
+<li class="flex items-center gap-3 opacity-50">
+<span class="material-symbols-outlined text-gray-400 !text-[20px]">cancel</span>
+                                Export Data Excel
+                            </li>
+</ul>
+</div>
+<!-- Basic Plan -->
+<div class="relative flex flex-col p-6 bg-white dark:bg-surface-light/5 rounded-2xl border-2 border-primary shadow-xl scale-105 z-10">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
+                            Paling Populer
+                        </div>
+<div class="mb-5">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Basic</h3>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Untuk masjid aktif &amp; komunitas</p>
+</div>
+<div class="mb-6">
+<span class="text-4xl font-black text-gray-900 dark:text-white">Rp 199rb</span>
+<span class="text-gray-500 font-medium">/bulan</span>
+</div>
+<button class="w-full py-3 px-4 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25">
+                            Pilih Basic
+                        </button>
+<ul class="flex flex-col gap-3 mt-8 text-sm text-gray-700 dark:text-gray-300 flex-1">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Hingga 500 peserta
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                5 Event aktif
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Export Data Peserta
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Integrasi Pembayaran
+                            </li>
+</ul>
+</div>
+<!-- Pro Plan -->
+<div class="relative flex flex-col p-6 bg-background-light dark:bg-background-dark rounded-2xl border border-gray-200 dark:border-gray-700">
+<div class="mb-5">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white">Pro</h3>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Untuk event akbar &amp; organisasi</p>
+</div>
+<div class="mb-6">
+<span class="text-4xl font-black text-gray-900 dark:text-white">Rp 499rb</span>
+<span class="text-gray-500 font-medium">/bulan</span>
+</div>
+<button class="w-full py-3 px-4 rounded-lg bg-white dark:bg-surface-dark border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            Pilih Pro
+                        </button>
+<ul class="flex flex-col gap-3 mt-8 text-sm text-gray-700 dark:text-gray-300 flex-1">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Unlimited peserta
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Unlimited Event
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Laporan Prioritas &amp; Analytics
+                            </li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary !text-[20px]">check_circle</span>
+                                Support Prioritas 24/7
+                            </li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-20 bg-background-light dark:bg-background-dark">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10">
+<div class="relative rounded-3xl overflow-hidden bg-primary px-6 py-16 text-center md:px-12 lg:py-20">
+<!-- Background Pattern Overlay -->
+<div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')] mix-blend-overlay"></div>
+<div class="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-6">
+<h2 class="text-3xl md:text-4xl font-black text-white">Siap Mengelola Event Masjid Anda?</h2>
+<p class="text-green-50 text-lg max-w-2xl">Bergabunglah dengan ratusan pengurus masjid lainnya yang telah beralih ke sistem digital yang lebih efisien dan transparan.</p>
+<button class="h-12 px-8 mt-4 rounded-lg bg-white text-primary font-bold text-base hover:bg-gray-100 shadow-xl transition-all">
+                            Buat Akun Gratis Sekarang
+                        </button>
+<p class="text-sm text-green-100 mt-2 opacity-80">Tidak perlu kartu kredit. Batal kapan saja.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-white dark:bg-surface-dark border-t border-gray-100 dark:border-gray-800 pt-16 pb-8" id="contact">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+<!-- Brand Column -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary !text-[28px]">mosque</span>
+<h2 class="text-xl font-bold text-gray-900 dark:text-white">MasjidEvent</h2>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                            Platform manajemen event terpercaya untuk masjid dan komunitas Muslim modern. Memudahkan silaturahmi melalui teknologi.
+                        </p>
+</div>
+<!-- Links Column 1 -->
+<div class="flex flex-col gap-4">
+<h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Produk</h3>
+<div class="flex flex-col gap-2">
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Fitur</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Harga</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Studi Kasus</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Integrasi API</a>
+</div>
+</div>
+<!-- Links Column 2 -->
+<div class="flex flex-col gap-4">
+<h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Perusahaan</h3>
+<div class="flex flex-col gap-2">
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Tentang Kami</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Karir</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Kebijakan Privasi</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors text-sm" href="#">Syarat &amp; Ketentuan</a>
+</div>
+</div>
+<!-- Social/Contact Column -->
+<div class="flex flex-col gap-4">
+<h3 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Hubungi Kami</h3>
+<div class="flex gap-4">
+<a class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-primary hover:text-white transition-all" href="#">
+<span class="material-symbols-outlined !text-[20px]">mail</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-primary hover:text-white transition-all" href="#">
+<!-- Instagram Logo Placeholder using Material Icon as requested -->
+<span class="material-symbols-outlined !text-[20px]">photo_camera</span>
+</a>
+<a class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-primary hover:text-white transition-all" href="#">
+<!-- Facebook Logo Placeholder -->
+<span class="material-symbols-outlined !text-[20px]">public</span>
+</a>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                            Jakarta, Indonesia<br/>
+                            support@masjidevent.com
+                        </p>
+</div>
+</div>
+<div class="border-t border-gray-200 dark:border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-sm text-gray-500 dark:text-gray-400 text-center md:text-left">
+                        © 2023 MasjidEvent Platform. All rights reserved.
+                    </p>
+<div class="flex gap-6">
+<span class="text-xs text-gray-400">Made with <span class="text-red-500">♥</span> for Ummah</span>
+</div>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

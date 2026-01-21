@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* Custom theme based on UI designs */
+@theme {
+  --color-primary: #1e7b49;
+  --color-primary-hover: #16643a;
+  --color-background-light: #f6f8f7;
+  --color-background-dark: #131f19;
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #1c2e26;
+  --color-card-light: #ffffff;
+  --color-card-dark: #1a2c24;
+  --color-border-light: #e9f1ed;
+  --color-border-dark: #2f4538;
+  --color-text-main: #101914;
+  --color-text-sub: #578e71;
+  --color-text-muted: #63756d;
+  
+  --font-display: 'Lexend', sans-serif;
+  --font-body: 'Noto Sans', sans-serif;
+}
+
+/* Google Fonts import */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Noto+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+/* Root styles */
+:root {
+  font-family: var(--font-display);
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Material Symbols styles */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.icon-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}

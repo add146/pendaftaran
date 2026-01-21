@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Participant ID Card Generator - MasjidEvents</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;family=Noto+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e7b49",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#131f19",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#101914] dark:text-white font-display min-h-screen flex flex-col">
+<!-- Top Navbar -->
+<header class="sticky top-0 z-50 w-full bg-[#f9fbfa] dark:bg-[#131f19] border-b border-[#e9f1ed] dark:border-[#2a3c32]">
+<div class="px-4 lg:px-10 py-3 flex items-center justify-between">
+<div class="flex items-center gap-4 text-[#101914] dark:text-white">
+<div class="size-8 text-primary">
+<svg class="w-full h-full" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path>
+<path clip-rule="evenodd" d="M39.998 35.764C39.9944 35.7463 39.9875 35.7155 39.9748 35.6706C39.9436 35.5601 39.8949 35.4259 39.8346 35.2825C39.8168 35.2403 39.7989 35.1993 39.7813 35.1602C38.5103 34.2887 35.9788 33.0607 33.7095 32.5189C30.9875 31.8691 27.6413 31.4783 24 31.4783C20.3587 31.4783 17.0125 31.8691 14.2905 32.5189C12.0012 33.0654 9.44505 34.3104 8.18538 35.1832C8.17384 35.2075 8.16216 35.233 8.15052 35.2592C8.09919 35.3751 8.05721 35.4886 8.02977 35.589C8.00356 35.6848 8.00039 35.7333 8.00004 35.7388C8.00004 35.739 8 35.7393 8.00004 35.7388C8.00004 35.7641 8.0104 36.0767 8.68485 36.6314C9.34546 37.1746 10.4222 37.7531 11.9291 38.2772C14.9242 39.319 19.1919 40 24 40C28.8081 40 33.0758 39.319 36.0709 38.2772C37.5778 37.7531 38.6545 37.1746 39.3151 36.6314C39.9006 36.1499 39.9857 35.8511 39.998 35.764ZM4.95178 32.7688L21.4543 6.30267C22.6288 4.4191 25.3712 4.41909 26.5457 6.30267L43.0534 32.777C43.0709 32.8052 43.0878 32.8338 43.104 32.8629L41.3563 33.8352C43.104 32.8629 43.1038 32.8626 43.104 32.8629L43.1051 32.865L43.1065 32.8675L43.1101 32.8739L43.1199 32.8918C43.1276 32.906 43.1377 32.9246 43.1497 32.9473C43.1738 32.9925 43.2062 33.0545 43.244 33.1299C43.319 33.2792 43.4196 33.489 43.5217 33.7317C43.6901 34.1321 44 34.9311 44 35.7391C44 37.4427 43.003 38.7775 41.8558 39.7209C40.6947 40.6757 39.1354 41.4464 37.385 42.0552C33.8654 43.2794 29.133 44 24 44C18.867 44 14.1346 43.2794 10.615 42.0552C8.86463 41.4464 7.30529 40.6757 6.14419 39.7209C4.99695 38.7775 3.99999 37.4427 3.99999 35.7391C3.99999 34.8725 4.29264 34.0922 4.49321 33.6393C4.60375 33.3898 4.71348 33.1804 4.79687 33.0311C4.83898 32.9556 4.87547 32.8935 4.9035 32.8471C4.91754 32.8238 4.92954 32.8043 4.93916 32.7889L4.94662 32.777L4.95178 32.7688ZM35.9868 29.004L24 9.77997L12.0131 29.004C12.4661 28.8609 12.9179 28.7342 13.3617 28.6282C16.4281 27.8961 20.0901 27.4783 24 27.4783C27.9099 27.4783 31.5719 27.8961 34.6383 28.6282C35.082 28.7342 35.5339 28.8609 35.9868 29.004Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">MasjidEvents</h2>
+</div>
+<div class="flex items-center gap-8">
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-[#101914] dark:text-[#d0d6d3] text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-medium leading-normal" href="#">Events</a>
+<a class="text-[#101914] dark:text-[#d0d6d3] text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Attendees</a>
+<a class="text-[#101914] dark:text-[#d0d6d3] text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Settings</a>
+</nav>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-[#e9f1ed] dark:border-[#2a3c32]" data-alt="User profile avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCl6idis6_qQJlVHWUgkFYaSJTxbyK7-TFQahD4eE_WiyjBdsfRBWBvYTBh-6OJJbGE902c8sXUX0fQihlghSNYr7WOZ-DsXtbaxrPg1WRYVQFG1QV2dsQE8Fret8q5bQ_86F1ybE6XJKlwlrWzpFfBW_dHRn6Pw7bxh8koPJaaXNT6Lz2CzkEF4EDMNFVrfPi8onGWyg5JYAr1_CNVU1Kwhcjqix6RTz2AXmVfnsK7irgfG1zRfiMT4jLHmmA8AEtvfLclHsUQwkc");'></div>
+</div>
+</div>
+</header>
+<div class="layout-container flex h-full grow flex-col">
+<div class="px-4 lg:px-40 flex flex-1 justify-center py-5">
+<div class="layout-content-container flex flex-col max-w-[1280px] flex-1">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap gap-2 px-4 py-2">
+<a class="text-[#578e71] text-sm md:text-base font-medium leading-normal hover:underline" href="#">Dashboard</a>
+<span class="text-[#578e71] text-sm md:text-base font-medium leading-normal">/</span>
+<a class="text-[#578e71] text-sm md:text-base font-medium leading-normal hover:underline" href="#">Events</a>
+<span class="text-[#578e71] text-sm md:text-base font-medium leading-normal">/</span>
+<a class="text-[#578e71] text-sm md:text-base font-medium leading-normal hover:underline" href="#">Pengajian Akbar</a>
+<span class="text-[#578e71] text-sm md:text-base font-medium leading-normal">/</span>
+<span class="text-[#101914] dark:text-white text-sm md:text-base font-medium leading-normal">ID Cards</span>
+</div>
+<!-- Page Header -->
+<div class="px-4 pb-3 pt-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<h2 class="text-[#101914] dark:text-white text-[28px] font-bold leading-tight tracking-[-0.015em]">ID Card Generator</h2>
+<span class="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-[#1f2e26] px-3 py-1 rounded-full border border-gray-100 dark:border-[#2a3c32]">
+<span class="w-2 h-2 rounded-full bg-green-500 inline-block mr-2"></span>
+                        Event Active
+                    </span>
+</div>
+<!-- Main Content Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 px-4 py-6">
+<!-- Left: Card Preview Canvas -->
+<div class="lg:col-span-8 bg-white dark:bg-[#1f2e26] rounded-2xl shadow-sm border border-[#e9f1ed] dark:border-[#2a3c32] p-8 md:p-12 flex flex-col items-center justify-center relative overflow-hidden group">
+<!-- Canvas Background Grid -->
+<div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none" style="background-image: radial-gradient(#1e7b49 1px, transparent 1px); background-size: 20px 20px;"></div>
+<!-- The ID Card (Portrait Lanyard) -->
+<div class="relative w-[320px] h-[520px] bg-white rounded-xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-gray-100 z-10">
+<!-- Lanyard Hole -->
+<div class="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-3 bg-gray-100 rounded-full shadow-inner border border-gray-200 z-20 flex items-center justify-center">
+<div class="w-8 h-1 bg-black/10 rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="bg-primary h-[140px] flex flex-col items-center justify-end pb-4 px-4 text-center text-white relative">
+<div class="absolute inset-0 bg-primary opacity-90" style="background-image: url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'0 0 20 20\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E');"></div>
+<div class="relative z-10 flex flex-col items-center">
+<h3 class="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm">Pengajian Akbar</h3>
+<div class="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<p class="text-[10px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
+</div>
+</div>
+</div>
+<!-- QR Code Section -->
+<div class="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative">
+<div class="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm mb-4">
+<!-- QR Code Placeholder -->
+<div class="w-32 h-32 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
+<img alt="QR Code" class="w-full h-full object-cover" data-alt="Participant QR Code" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAQVvgQAZpdXgdb-milfyNDbuZ_fqs8dLrhsLyjjKJgLmhb8ZGInM_OoUYf6q8_6PAOYfasb6AnttnOfjh5JZaLGrCWaTTPzHUcmi59meDrYGL127TkojNlNoXDsx1lRwcaIV8Q8yaI7eIK4cPCWbe1MYJfVJf91kaQgrrHQ_ce3885ZCFI6s9nwtbdnA-zveksQHMWLO2rjK3HAExxeRSHmDFQcCKSL2RctDwewJjYQIq9DYozXJu-3jXB1m-eO2OOoFhQFWn-go"/>
+</div>
+</div>
+<p class="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
+</div>
+<!-- Participant Details -->
+<div class="px-6 pb-8 text-center bg-gradient-to-t from-gray-50 to-white">
+<h2 class="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
+<p class="text-xs font-bold text-primary tracking-widest uppercase mb-3 border-b border-gray-100 pb-3">Participant</p>
+<div class="flex flex-col gap-1 text-gray-500">
+<div class="flex items-center justify-center gap-1 text-xs font-medium">
+<span class="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
+<span>Jakarta Selatan</span>
+</div>
+<div class="mt-2 bg-gray-100 py-1 px-3 rounded text-[10px] font-mono font-bold text-gray-600 tracking-wider">
+                                        REG-2026-00123
+                                    </div>
+</div>
+</div>
+<!-- Footer Accent -->
+<div class="h-2 bg-primary w-full"></div>
+</div>
+<div class="absolute bottom-6 text-xs text-gray-400 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">zoom_in</span>
+                             Hover card to zoom
+                        </div>
+</div>
+<!-- Right: Controls Sidebar -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<!-- Configuration Panel -->
+<div class="bg-white dark:bg-[#1f2e26] rounded-xl shadow-sm border border-[#e9f1ed] dark:border-[#2a3c32] p-6">
+<h3 class="text-[#101914] dark:text-white tracking-tight text-xl font-bold leading-tight mb-6">Card Settings</h3>
+<!-- Orientation Selector -->
+<div class="mb-8">
+<label class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 block">Orientation</label>
+<div class="grid grid-cols-2 gap-3">
+<!-- Portrait Option (Active) -->
+<label class="cursor-pointer group relative">
+<input checked="" class="peer sr-only" name="orientation" type="radio"/>
+<div class="flex flex-col items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary/5 transition-all">
+<div class="w-8 h-10 border-2 border-primary rounded-sm bg-white dark:bg-gray-800"></div>
+<span class="text-sm font-bold text-primary">Portrait</span>
+</div>
+<div class="absolute top-2 right-2 text-primary opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-lg">check_circle</span>
+</div>
+</label>
+<!-- Landscape Option -->
+<label class="cursor-pointer group relative">
+<input class="peer sr-only" name="orientation" type="radio"/>
+<div class="flex flex-col items-center gap-3 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-transparent transition-all peer-checked:border-primary peer-checked:bg-primary/5">
+<div class="w-10 h-8 border-2 border-gray-400 dark:border-gray-500 rounded-sm bg-white dark:bg-gray-800 peer-checked:border-primary"></div>
+<span class="text-sm font-medium text-gray-600 dark:text-gray-400 peer-checked:text-primary peer-checked:font-bold">Landscape</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Additional Options -->
+<div class="space-y-4 mb-6">
+<label class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors">
+<div class="relative flex items-center">
+<input checked="" class="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300 dark:border-gray-600" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-200">Show Punch Hole</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors">
+<div class="relative flex items-center">
+<input checked="" class="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300 dark:border-gray-600" type="checkbox"/>
+</div>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-200">Include QR Code</span>
+</label>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+<button class="flex items-center justify-center gap-2 w-full bg-primary hover:bg-[#16643b] text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-[0.98]">
+<span class="material-symbols-outlined">download</span>
+                                    Download PDF
+                                </button>
+<button class="flex items-center justify-center gap-2 w-full bg-white dark:bg-transparent border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold py-3 px-4 rounded-lg transition-all">
+<span class="material-symbols-outlined">print</span>
+                                    Print Immediately
+                                </button>
+</div>
+</div>
+<!-- Bulk Action Card -->
+<div class="bg-[#e9f1ed] dark:bg-[#1a2e24] rounded-xl p-5 border border-primary/20 flex flex-col gap-3">
+<div class="flex items-start gap-3">
+<div class="p-2 bg-primary/10 rounded-full text-primary">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<div>
+<h4 class="font-bold text-sm text-[#101914] dark:text-white">Batch Generation</h4>
+<p class="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">Need cards for everyone? Generate IDs for all 150 registered participants at once.</p>
+</div>
+</div>
+<button class="text-primary text-xs font-bold hover:underline self-end flex items-center gap-1">
+                                GENERATE BATCH <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body></html>

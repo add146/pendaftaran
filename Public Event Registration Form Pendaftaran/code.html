@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Event Registration - Mosque Connect</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e7b49",
+                        "primary-hover": "#16643a",
+                        "background-light": "#f6f8f7",
+                        "background-dark": "#131f19",
+                        "card-light": "#ffffff",
+                        "card-dark": "#1C2621",
+                        "border-light": "#e9f1ed",
+                        "border-dark": "#2A3831",
+                        "text-main": "#101914",
+                        "text-muted": "#63756d",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white font-display transition-colors duration-200 antialiased min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark px-6 lg:px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary flex items-center justify-center">
+<svg class="w-full h-full" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M24 4L6 14V34L24 44L42 34V14L24 4Z" stroke="currentColor" stroke-linejoin="round" stroke-width="4"></path>
+<path d="M24 14V34" stroke="currentColor" stroke-linecap="round" stroke-width="4"></path>
+<path d="M14 20L24 26L34 20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path>
+</svg>
+</div>
+<h2 class="text-text-main dark:text-white text-lg font-bold leading-tight tracking-tight">Mosque Connect</h2>
+</div>
+<div class="hidden md:flex items-center gap-8">
+<nav class="flex items-center gap-6">
+<a class="text-text-main dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">Events</a>
+<a class="text-text-main dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">About Us</a>
+<a class="text-text-main dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">Contact</a>
+</nav>
+<div class="flex gap-2">
+<button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-main dark:text-white text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    Login
+                </button>
+</div>
+</div>
+<button class="md:hidden text-text-main dark:text-white">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+<!-- LEFT COLUMN: Event Details -->
+<div class="lg:col-span-2 space-y-8">
+<!-- Hero Image -->
+<div class="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm group">
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+<img alt="Interior of a beautiful modern mosque with soft lighting and green prayer rugs" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="Interior of a beautiful modern mosque with soft lighting and green prayer rugs" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEHSOR-c0GXzA1b4VBclH_Y-BL5hQ3Lc2t0vMdeBiOXR02cuGWYSD7QA1l7vhIiwawWhrqNjbt7dE2Kd0B_1PTMBKLUUXfQliZQPQzMQIahIVD-wzjntfn0eDLZ9_4uiPdsBebBfx6FeGsBO9uIsgWDoNji0nxaZwUghF-8J0nT5dqqtt7kg2dTjb7dyyzjv9FzaLYuJfVoCz0MJFn7P48NtYzMK3kPdMros3wxq-idP-76Ahff3i8dK14nvR6Q4aNQxC5PlMWf2w"/>
+<div class="absolute bottom-0 left-0 p-6 z-20">
+<span class="inline-block px-3 py-1 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 shadow-lg">Religious Gathering</span>
+<h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight shadow-black drop-shadow-md">Pengajian Akbar: Preparing for Ramadan</h1>
+</div>
+</div>
+<!-- Essential Info Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex items-start gap-4 p-4 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm">
+<div class="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary shrink-0">
+<span class="material-symbols-outlined">calendar_month</span>
+</div>
+<div>
+<p class="text-xs font-medium text-text-muted uppercase tracking-wide">Date &amp; Time</p>
+<p class="text-sm font-semibold text-text-main dark:text-white mt-1">Sunday, March 10th, 2024</p>
+<p class="text-sm text-text-muted">09:00 AM - 11:30 AM</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark shadow-sm">
+<div class="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary shrink-0">
+<span class="material-symbols-outlined">location_on</span>
+</div>
+<div>
+<p class="text-xs font-medium text-text-muted uppercase tracking-wide">Location</p>
+<p class="text-sm font-semibold text-text-main dark:text-white mt-1">Masjid Al-Ikhlas, Main Hall</p>
+<a class="text-sm text-primary hover:underline mt-0.5 inline-flex items-center gap-1" href="#">
+                                View on Map <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Description & Itinerary -->
+<div class="space-y-6">
+<section>
+<h3 class="text-xl font-bold text-text-main dark:text-white mb-3">About the Event</h3>
+<p class="text-base text-text-muted dark:text-gray-300 leading-relaxed font-body">
+                            Join us for a spiritual gathering designed to prepare our hearts and minds for the blessed month of Ramadan. This special event will focus on practical steps to maximize your worship, purify your intentions, and build consistent habits before the holy month arrives. 
+                        </p>
+<p class="text-base text-text-muted dark:text-gray-300 leading-relaxed font-body mt-4">
+                            Lunch will be provided for all registered attendees. This event is open to brothers and sisters.
+                        </p>
+</section>
+<div class="h-px w-full bg-border-light dark:bg-border-dark"></div>
+<section>
+<h3 class="text-xl font-bold text-text-main dark:text-white mb-4">Featured Speaker</h3>
+<div class="flex items-center gap-4">
+<div class="size-16 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="Portrait of Ustadh Abdullah smiling in traditional attire" class="w-full h-full object-cover" data-alt="Portrait of Ustadh Abdullah smiling in traditional attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-HgWvQvN2aNNt68RuMZB-ijdA05QwYQEFpD5sNjOfD7fzveczDKN6Ei5MdzBBdz8Y8WHYpBKexON6suzQYHb6M6_9jkO2WDPcfgEHWUqi1sFhJvc3O25ZWl0Br0Y80hpRjOPJbaTUi2owhSlRCXioVpYnH8FjUa8VXt8OcYdc_uzRPvpmAOiN-uVe2fZQMxQRH9txTzne2g46EMjSZrZGzbzptQ9wyh5DS2zM8OTDY7ar-oLcwTdOxUer6N1WY7KUS3_7jGPSt9Q"/>
+</div>
+<div>
+<p class="text-lg font-bold text-text-main dark:text-white">Ustadh Abdullah</p>
+<p class="text-sm text-text-muted">Senior Lecturer, Islamic Studies Institute</p>
+</div>
+</div>
+</section>
+<div class="h-px w-full bg-border-light dark:bg-border-dark"></div>
+<!-- Map Preview -->
+<section>
+<h3 class="text-xl font-bold text-text-main dark:text-white mb-4">Getting There</h3>
+<div class="w-full h-48 bg-gray-200 rounded-xl overflow-hidden relative">
+<img alt="Map view of city streets with a pin on the mosque location" class="w-full h-full object-cover opacity-80" data-alt="Map view of city streets with a pin on the mosque location" data-location="Jakarta, Indonesia" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8fIMuKjpQoi1O_8RqWK26Ni1QWVtBs4xVuvw3VwMSn5QU-b3C_9R468UhZjGcqMQtjCU8lVTlwYd6RCtmKZXSut5p8jqosNUJ9dAB4IlPxKr5K7UgYIuRtdyFBjtw_4uvG3TYkiDJoVejiCPrQ7jVloApq2gvZC5u2gTtyxehTvN2fnERUGI1CJ2UOrjA9bqus_gHIYoG76IiRohnZYJ_cdE3oB9eBj5EGshWGLLmQuVxRfaVdEZnksrvem63hBpkay_odRM_7kA"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<button class="bg-white text-text-main px-4 py-2 rounded-lg shadow-md font-medium text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">directions</span>
+                                    Get Directions
+                                </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- RIGHT COLUMN: Registration Form -->
+<div class="lg:col-span-1">
+<div class="sticky top-24">
+<div class="bg-card-light dark:bg-card-dark rounded-2xl shadow-xl border border-border-light dark:border-border-dark overflow-hidden">
+<!-- Header with Price -->
+<div class="bg-primary/5 p-6 border-b border-border-light dark:border-border-dark flex justify-between items-center">
+<div>
+<p class="text-sm font-medium text-text-muted">Registration Fee</p>
+<div class="flex items-baseline gap-1">
+<span class="text-2xl font-bold text-primary">Free</span>
+<span class="text-xs text-text-muted line-through opacity-60">IDR 50.000</span>
+</div>
+</div>
+<div class="bg-white dark:bg-background-dark p-2 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-primary text-2xl">confirmation_number</span>
+</div>
+</div>
+<!-- Form -->
+<div class="p-6 space-y-5">
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-text-main dark:text-gray-200" for="fullname">Full Name</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-[20px]">person</span>
+<input class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-text-main dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-shadow placeholder:text-gray-400" id="fullname" placeholder="Enter your full name" type="text"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-text-main dark:text-gray-200" for="email">Email Address</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-[20px]">mail</span>
+<input class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-text-main dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-shadow placeholder:text-gray-400" id="email" placeholder="name@example.com" type="email"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="text-sm font-semibold text-text-main dark:text-gray-200" for="whatsapp">WhatsApp Number</label>
+<div class="flex">
+<div class="flex items-center justify-center px-3 border border-r-0 border-gray-300 dark:border-gray-600 rounded-l-lg bg-gray-50 dark:bg-background-dark text-text-muted text-sm font-medium">
+                                        +62
+                                    </div>
+<input class="w-full px-4 py-2.5 rounded-r-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark text-text-main dark:text-white text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-shadow placeholder:text-gray-400" id="whatsapp" placeholder="812-3456-7890" type="tel"/>
+</div>
+<p class="text-xs text-text-muted mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">qr_code</span>
+                                    QR ticket will be sent via WhatsApp
+                                </p>
+</div>
+<!-- Gender Selection -->
+<div class="space-y-1.5">
+<span class="text-sm font-semibold text-text-main dark:text-gray-200 block mb-2">I am attending as</span>
+<div class="grid grid-cols-2 gap-3">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="gender" type="radio"/>
+<div class="text-center py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary transition-all text-sm font-medium text-text-muted">
+                                            Ikhwan (Male)
+                                        </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="gender" type="radio"/>
+<div class="text-center py-2 px-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-background-dark peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary transition-all text-sm font-medium text-text-muted">
+                                            Akhwat (Female)
+                                        </div>
+</label>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group">
+                                    Register Now
+                                    <span class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+</button>
+<p class="text-center text-xs text-text-muted mt-4 flex justify-center items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-green-600">lock</span>
+                                    Secure Registration powered by Mosque Connect
+                                </p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Simple Footer -->
+<footer class="border-t border-border-light dark:border-border-dark py-8 mt-auto bg-card-light dark:bg-card-dark">
+<div class="max-w-7xl mx-auto px-6 text-center">
+<p class="text-sm text-text-muted">© 2024 Mosque Connect. All rights reserved.</p>
+</div>
+</footer>
+</body></html>
