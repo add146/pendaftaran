@@ -61,6 +61,55 @@ export const authAPI = {
         ),
 }
 
+// Super Admin API
+export const superAdminAPI = {
+    getStats: () =>
+        fetchAPI<{
+            total_organizations: number
+            organizations_by_plan: { plan: string; count: number }[]
+            total_users: number
+            total_events: number
+            pending_subscription_approvals: number
+        }>('/api/admin/stats'),
+
+    getOrganizations: (limit = 50, offset = 0) =>
+        fetchAPI<{ organizations: any[] }>(
+            `/api/admin/organizations?limit=${limit}&offset=${offset}`
+        ),
+
+    getUsers: (orgId?: string, limit = 100, offset = 0) =>
+        fetchAPI<{ users: any[] }>(
+            `/api/admin/users?${orgId ? `organization_id=${orgId}&` : ''}limit=${limit}&offset=${offset}`
+        ),
+
+    updateUserRole: (userId: string, role: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/users/${userId}/role`,
+            { method: 'PUT', body: JSON.stringify({ role }) }
+        ),
+
+    deleteUser: (userId: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/users/${userId}`,
+            { method: 'DELETE' }
+        ),
+
+    getPendingSubscriptions: () =>
+        fetchAPI<{ payments: any[] }>('/api/admin/subscriptions/pending'),
+
+    approveSubscription: (id: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/subscriptions/${id}/approve`,
+            { method: 'PUT' }
+        ),
+
+    rejectSubscription: (id: string, reason: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/subscriptions/${id}/reject`,
+            { method: 'PUT', body: JSON.stringify({ reason }) }
+        ),
+}
+
 // Events API
 export const eventsAPI = {
     list: (params?: { status?: string; limit?: number; offset?: number }) => {
