@@ -1,227 +1,331 @@
-import { useParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { publicAPI, participantsAPI, type PublicEvent, type TicketType } from '../../lib/api'
 
 export default function EventRegistration() {
-    const { slug: _slug } = useParams()
+    const { slug } = useParams<{ slug: string }>()
+    const [event, setEvent] = useState<(PublicEvent & { ticket_types: TicketType[]; registration_available: boolean }) | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+    const [success, setSuccess] = useState(false)
+    const [registrationId, setRegistrationId] = useState('')
+
+    // Form state
+    const [formData, setFormData] = useState({
+        full_name: '',
+        email: '',
+        phone: '',
+        ticket_type_id: ''
+    })
+
+    useEffect(() => {
+        if (!slug) return
+
+        publicAPI.event(slug)
+            .then(data => {
+                setEvent(data)
+                // Set default ticket if available
+                if (data.ticket_types && data.ticket_types.length > 0) {
+                    setFormData(prev => ({ ...prev, ticket_type_id: data.ticket_types[0].id }))
+                }
+                setLoading(false)
+            })
+            .catch(err => {
+                setError(err.message || 'Event not found')
+                setLoading(false)
+            })
+    }, [slug])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!event) return
+
+        if (!formData.full_name || !formData.email) {
+            setError('Name and email are required')
+            return
+        }
+
+        setSubmitting(true)
+        setError('')
+
+        try {
+            const result = await participantsAPI.register({
+                event_id: event.id,
+                ticket_type_id: formData.ticket_type_id || undefined,
+                full_name: formData.full_name,
+                email: formData.email,
+                phone: formData.phone || undefined
+            })
+            setRegistrationId(result.registration_id)
+            setSuccess(true)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Registration failed')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    const formatDate = (dateStr: string) => {
+        return new Date(dateStr).toLocaleDateString('id-ID', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        })
+    }
+
+    // Parse event image
+    const getEventImage = () => {
+        if (!event?.image_url) return null
+        try {
+            const imgs = JSON.parse(event.image_url)
+            return Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : event.image_url
+        } catch {
+            return event.image_url
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background-light flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        )
+    }
+
+    if (error && !event) {
+        return (
+            <div className="min-h-screen bg-background-light flex flex-col items-center justify-center p-4">
+                <span className="material-symbols-outlined text-[64px] text-gray-300 mb-4">event_busy</span>
+                <h1 className="text-2xl font-bold text-gray-700 mb-2">Event Not Found</h1>
+                <p className="text-gray-500 mb-4">{error}</p>
+                <Link to="/" className="text-primary hover:underline">Back to Home</Link>
+            </div>
+        )
+    }
+
+    if (success) {
+        return (
+            <div className="min-h-screen bg-background-light flex flex-col items-center justify-center p-4">
+                <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
+                    <div className="size-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+                        <span className="material-symbols-outlined text-[40px] text-green-600">check_circle</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h1>
+                    <p className="text-gray-600 mb-4">Thank you for registering for <strong>{event?.title}</strong></p>
+                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                        <p className="text-sm text-gray-500">Your Registration ID</p>
+                        <p className="text-lg font-mono font-bold text-primary">{registrationId}</p>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-6">
+                        A confirmation email has been sent to <strong>{formData.email}</strong>
+                    </p>
+                    <Link
+                        to="/"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">home</span>
+                        Back to Home
+                    </Link>
+                </div>
+            </div>
+        )
+    }
+
+    const eventImage = getEventImage()
 
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col">
-            {/* Top Navigation */}
-            <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light bg-card-light px-6 lg:px-10 py-3 sticky top-0 z-50">
-                <div className="flex items-center gap-4">
-                    <div className="size-8 text-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[32px]">mosque</span>
+            {/* Header */}
+            <header className="flex items-center justify-between border-b border-border-light bg-white px-6 py-4 sticky top-0 z-50">
+                <Link to="/" className="flex items-center gap-3">
+                    <div className="size-8 text-primary">
+                        <span className="material-symbols-outlined text-[32px]">confirmation_number</span>
                     </div>
-                    <h2 className="text-text-main text-lg font-bold leading-tight tracking-tight">Mosque Connect</h2>
-                </div>
-                <div className="hidden md:flex items-center gap-8">
-                    <nav className="flex items-center gap-6">
-                        <a className="text-text-main text-sm font-medium hover:text-primary transition-colors" href="#">Events</a>
-                        <a className="text-text-main text-sm font-medium hover:text-primary transition-colors" href="#">About Us</a>
-                        <a className="text-text-main text-sm font-medium hover:text-primary transition-colors" href="#">Contact</a>
-                    </nav>
-                    <button className="flex items-center justify-center px-4 h-9 bg-background-light border border-border-light text-text-main text-sm font-bold rounded-lg hover:bg-gray-100 transition-colors">
-                        Login
-                    </button>
-                </div>
-                <button className="md:hidden text-text-main">
-                    <span className="material-symbols-outlined">menu</span>
-                </button>
+                    <h2 className="text-lg font-bold">Pendaftaran QR</h2>
+                </Link>
             </header>
 
-            {/* Main Content Area */}
-            <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
-                    {/* LEFT COLUMN: Event Details */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Hero Image */}
-                        <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-sm bg-gradient-to-br from-primary/30 to-primary/10">
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-[80px] text-primary/30">mosque</span>
-                            </div>
-                            <div className="absolute bottom-0 left-0 p-6 z-20">
-                                <span className="inline-block px-3 py-1 bg-primary text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 shadow-lg">
-                                    Religious Gathering
-                                </span>
-                                <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight drop-shadow-md">
-                                    Pengajian Akbar: Preparing for Ramadan
-                                </h1>
-                            </div>
-                        </div>
-
-                        {/* Essential Info Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="flex items-start gap-4 p-4 rounded-xl bg-card-light border border-border-light shadow-sm">
-                                <div className="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary shrink-0">
-                                    <span className="material-symbols-outlined">calendar_month</span>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-text-muted uppercase tracking-wide">Date & Time</p>
-                                    <p className="text-sm font-semibold text-text-main mt-1">Sunday, March 10th, 2024</p>
-                                    <p className="text-sm text-text-muted">09:00 AM - 11:30 AM</p>
+            <main className="flex-grow">
+                <div className="max-w-4xl mx-auto px-4 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+                        {/* Event Details */}
+                        <div className="lg:col-span-3 space-y-6">
+                            {/* Hero Image */}
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/30 to-primary/10">
+                                {eventImage ? (
+                                    <img src={eventImage} alt={event?.title} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <span className="material-symbols-outlined text-[80px] text-primary/30">event</span>
+                                    </div>
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div className="absolute bottom-0 left-0 p-6">
+                                    <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'
+                                        }`}>
+                                        {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
+                                    </span>
+                                    <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                                        {event?.title}
+                                    </h1>
                                 </div>
                             </div>
-                            <div className="flex items-start gap-4 p-4 rounded-xl bg-card-light border border-border-light shadow-sm">
-                                <div className="flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary shrink-0">
-                                    <span className="material-symbols-outlined">location_on</span>
-                                </div>
-                                <div>
-                                    <p className="text-xs font-medium text-text-muted uppercase tracking-wide">Location</p>
-                                    <p className="text-sm font-semibold text-text-main mt-1">Masjid Al-Ikhlas, Main Hall</p>
-                                    <a className="text-sm text-primary hover:underline mt-0.5 inline-flex items-center gap-1" href="#">
-                                        View on Map <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Description */}
-                        <div className="space-y-6">
-                            <section>
-                                <h3 className="text-xl font-bold text-text-main mb-3">About the Event</h3>
-                                <p className="text-base text-text-muted leading-relaxed">
-                                    Join us for a spiritual gathering designed to prepare our hearts and minds for the blessed month of Ramadan. This special event will focus on practical steps to maximize your worship, purify your intentions, and build consistent habits before the holy month arrives.
-                                </p>
-                                <p className="text-base text-text-muted leading-relaxed mt-4">
-                                    Lunch will be provided for all registered attendees. This event is open to brothers and sisters.
-                                </p>
-                            </section>
-
-                            <div className="h-px w-full bg-border-light"></div>
-
-                            <section>
-                                <h3 className="text-xl font-bold text-text-main mb-4">Featured Speaker</h3>
-                                <div className="flex items-center gap-4">
-                                    <div className="size-16 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xl border-2 border-primary/20">
-                                        UA
+                            {/* Event Info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
+                                    <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                        <span className="material-symbols-outlined">calendar_month</span>
                                     </div>
                                     <div>
-                                        <p className="text-lg font-bold text-text-main">Ustadh Abdullah</p>
-                                        <p className="text-sm text-text-muted">Senior Lecturer, Islamic Studies Institute</p>
+                                        <p className="text-xs font-medium text-gray-500 uppercase">Date & Time</p>
+                                        <p className="font-semibold">{event?.event_date ? formatDate(event.event_date) : '-'}</p>
+                                        <p className="text-sm text-gray-500">{event?.event_time || 'Time TBA'}</p>
                                     </div>
                                 </div>
-                            </section>
-
-                            <div className="h-px w-full bg-border-light"></div>
-
-                            {/* Map Preview */}
-                            <section>
-                                <h3 className="text-xl font-bold text-text-main mb-4">Getting There</h3>
-                                <div className="w-full h-48 bg-gray-200 rounded-xl overflow-hidden relative flex items-center justify-center">
-                                    <button className="bg-white text-text-main px-4 py-2 rounded-lg shadow-md font-medium text-sm hover:bg-gray-50 transition-colors flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-primary">directions</span>
-                                        Get Directions
-                                    </button>
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-
-                    {/* RIGHT COLUMN: Registration Form */}
-                    <div className="lg:col-span-1">
-                        <div className="sticky top-24">
-                            <div className="bg-card-light rounded-2xl shadow-xl border border-border-light overflow-hidden">
-                                {/* Header with Price */}
-                                <div className="bg-primary/5 p-6 border-b border-border-light flex justify-between items-center">
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
+                                    <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                                        <span className="material-symbols-outlined">location_on</span>
+                                    </div>
                                     <div>
-                                        <p className="text-sm font-medium text-text-muted">Registration Fee</p>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-2xl font-bold text-primary">Free</span>
-                                            <span className="text-xs text-text-muted line-through opacity-60">IDR 50.000</span>
-                                        </div>
-                                    </div>
-                                    <div className="bg-white p-2 rounded-lg shadow-sm">
-                                        <span className="material-symbols-outlined text-primary text-2xl">confirmation_number</span>
+                                        <p className="text-xs font-medium text-gray-500 uppercase">Location</p>
+                                        <p className="font-semibold">{event?.location || 'Location TBA'}</p>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Form */}
-                                <form className="p-6 space-y-5">
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-text-main" htmlFor="fullname">Full Name</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-[20px]">person</span>
+                            {/* Description */}
+                            {event?.description && (
+                                <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                                    <h3 className="text-lg font-bold mb-3">About This Event</h3>
+                                    <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Registration Form */}
+                        <div className="lg:col-span-2">
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 sticky top-24">
+                                <h3 className="text-xl font-bold mb-6">Register Now</h3>
+
+                                {!event?.registration_available ? (
+                                    <div className="text-center py-8">
+                                        <span className="material-symbols-outlined text-[48px] text-gray-300 mb-3">event_busy</span>
+                                        <p className="text-gray-500">Registration is closed</p>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={handleSubmit} className="space-y-4">
+                                        {error && (
+                                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                                                {error}
+                                            </div>
+                                        )}
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Full Name *</label>
                                             <input
                                                 type="text"
-                                                id="fullname"
-                                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white text-text-main text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-shadow placeholder:text-gray-400"
+                                                value={formData.full_name}
+                                                onChange={e => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                 placeholder="Enter your full name"
+                                                required
                                             />
                                         </div>
-                                    </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-text-main" htmlFor="email">Email Address</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-[20px]">mail</span>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Email *</label>
                                             <input
                                                 type="email"
-                                                id="email"
-                                                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-white text-text-main text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-shadow placeholder:text-gray-400"
-                                                placeholder="name@example.com"
+                                                value={formData.email}
+                                                onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                placeholder="Enter your email"
+                                                required
                                             />
                                         </div>
-                                    </div>
 
-                                    <div className="space-y-1.5">
-                                        <label className="text-sm font-semibold text-text-main" htmlFor="whatsapp">WhatsApp Number</label>
-                                        <div className="flex">
-                                            <div className="flex items-center justify-center px-3 border border-r-0 border-gray-300 rounded-l-lg bg-gray-50 text-text-muted text-sm font-medium">
-                                                +62
-                                            </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Phone Number</label>
                                             <input
                                                 type="tel"
-                                                id="whatsapp"
-                                                className="w-full px-4 py-2.5 rounded-r-lg border border-gray-300 bg-white text-text-main text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-shadow placeholder:text-gray-400"
-                                                placeholder="812-3456-7890"
+                                                value={formData.phone}
+                                                onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                placeholder="Enter your phone number"
                                             />
                                         </div>
-                                        <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-[14px]">qr_code</span>
-                                            QR ticket will be sent via WhatsApp
-                                        </p>
-                                    </div>
 
-                                    {/* Gender Selection */}
-                                    <div className="space-y-1.5">
-                                        <span className="text-sm font-semibold text-text-main block mb-2">I am attending as</span>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <label className="cursor-pointer">
-                                                <input type="radio" name="gender" defaultChecked className="peer sr-only" />
-                                                <div className="text-center py-2 px-3 rounded-lg border border-gray-300 bg-white peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary transition-all text-sm font-medium text-text-muted">
-                                                    Ikhwan (Male)
+                                        {/* Ticket Types for paid events */}
+                                        {event?.event_mode === 'paid' && event.ticket_types && event.ticket_types.length > 0 && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Select Ticket</label>
+                                                <div className="space-y-2">
+                                                    {event.ticket_types.map(ticket => (
+                                                        <label
+                                                            key={ticket.id}
+                                                            className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-colors ${formData.ticket_type_id === ticket.id
+                                                                ? 'border-primary bg-primary/5'
+                                                                : 'border-gray-200 hover:border-gray-300'
+                                                                }`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="ticket"
+                                                                    value={ticket.id}
+                                                                    checked={formData.ticket_type_id === ticket.id}
+                                                                    onChange={() => setFormData(prev => ({ ...prev, ticket_type_id: ticket.id }))}
+                                                                    className="w-4 h-4 text-primary"
+                                                                />
+                                                                <span className="font-medium">{ticket.name}</span>
+                                                            </div>
+                                                            <span className="font-bold text-primary">
+                                                                Rp {ticket.price.toLocaleString('id-ID')}
+                                                            </span>
+                                                        </label>
+                                                    ))}
                                                 </div>
-                                            </label>
-                                            <label className="cursor-pointer">
-                                                <input type="radio" name="gender" className="peer sr-only" />
-                                                <div className="text-center py-2 px-3 rounded-lg border border-gray-300 bg-white peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary transition-all text-sm font-medium text-text-muted">
-                                                    Akhwat (Female)
-                                                </div>
-                                            </label>
-                                        </div>
-                                    </div>
+                                            </div>
+                                        )}
 
-                                    <div className="pt-2">
-                                        <button type="submit" className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group">
-                                            Register Now
-                                            <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+                                        <button
+                                            type="submit"
+                                            disabled={submitting}
+                                            className="w-full py-4 rounded-lg bg-primary text-white font-bold text-lg hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {submitting ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                                    Processing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined">how_to_reg</span>
+                                                    Register
+                                                </>
+                                            )}
                                         </button>
-                                        <p className="text-center text-xs text-text-muted mt-4 flex justify-center items-center gap-1">
-                                            <span className="material-symbols-outlined text-[14px] text-green-600">lock</span>
-                                            Secure Registration powered by Mosque Connect
-                                        </p>
-                                    </div>
-                                </form>
+
+                                        {event?.capacity && (
+                                            <p className="text-center text-sm text-gray-500">
+                                                {event.registered_count} / {event.capacity} registered
+                                            </p>
+                                        )}
+                                    </form>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             </main>
 
-            {/* Simple Footer */}
-            <footer className="border-t border-border-light py-8 mt-auto bg-card-light">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-sm text-text-muted">© 2026 Mosque Connect. All rights reserved.</p>
+            {/* Footer */}
+            <footer className="border-t border-gray-200 bg-white py-6">
+                <div className="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500">
+                    Powered by <span className="font-semibold text-primary">Pendaftaran QR</span>
                 </div>
             </footer>
         </div>

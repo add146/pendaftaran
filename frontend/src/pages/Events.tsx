@@ -121,6 +121,17 @@ export default function Events() {
                                             </div>
 
                                             <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+                                                <button
+                                                    onClick={() => {
+                                                        const url = `${window.location.origin}/event/${event.slug || event.id}`
+                                                        navigator.clipboard.writeText(url)
+                                                        alert('Link copied: ' + url)
+                                                    }}
+                                                    className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                                >
+                                                    <span className="material-symbols-outlined text-[16px]">share</span>
+                                                    Share
+                                                </button>
                                                 <Link
                                                     to={`/events/${event.id}/edit`}
                                                     className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
