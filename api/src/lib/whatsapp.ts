@@ -56,14 +56,32 @@ export async function sendWhatsAppMessage(
     message: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        console.log('[WAHA] Starting sendWhatsAppMessage for phone:', phone)
+
         const config = await getWAHAConfig(db)
 
         if (!config) {
-            console.log('WAHA not configured or disabled')
+            console.log('[WAHA] WAHA not configured or disabled')
             return { success: false, error: 'WAHA not configured' }
         }
 
+        console.log('[WAHA] Config loaded:', {
+            apiUrl: config.apiUrl,
+            session: config.session,
+            hasApiKey: !!config.apiKey
+        })
+
         const chatId = formatWhatsAppNumber(phone)
+        console.log('[WAHA] Formatted chatId:', chatId)
+
+        const requestBody = {
+            session: config.session,
+            chatId,
+            text: message
+        }
+
+        console.log('[WAHA] Sending request to:', `${config.apiUrl}/api/sendText`)
+        console.log('[WAHA] Request body:', JSON.stringify(requestBody))
 
         const response = await fetch(`${config.apiUrl}/api/sendText`, {
             method: 'POST',
@@ -71,23 +89,22 @@ export async function sendWhatsAppMessage(
                 'X-Api-Key': config.apiKey,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                session: config.session,
-                chatId,
-                text: message
-            })
+            body: JSON.stringify(requestBody)
         })
+
+        console.log('[WAHA] Response status:', response.status)
 
         if (!response.ok) {
             const error = await response.text()
-            console.error('WAHA API error:', error)
-            return { success: false, error: `WAHA API error: ${response.status}` }
+            console.error('[WAHA] API error response:', error)
+            return { success: false, error: `WAHA API error: ${response.status} - ${error}` }
         }
 
-        console.log('WhatsApp message sent to:', chatId)
+        const responseData = await response.json()
+        console.log('[WAHA] Success! Response:', JSON.stringify(responseData))
         return { success: true }
     } catch (error) {
-        console.error('Failed to send WhatsApp message:', error)
+        console.error('[WAHA] Exception:', error)
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
 }
