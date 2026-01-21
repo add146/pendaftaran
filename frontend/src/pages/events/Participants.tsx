@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { participantsAPI, eventsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
 import QRScanner from '../../components/QRScanner'
 import QRCodeModal from '../../components/QRCodeModal'
+import AdminLayout from '../../components/layout/AdminLayout'
 
 // Stat card component
 function StatCard({ icon, label, value, subValue, iconColor }: {
@@ -279,28 +280,8 @@ export default function Participants() {
     }
 
     return (
-        <div className="bg-background-light text-text-main font-display min-h-screen">
-            {/* Top Navigation */}
-            <header className="sticky top-0 z-30 flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light bg-surface-light px-10 py-3 shadow-sm">
-                <div className="flex items-center gap-4 text-text-main">
-                    <Link to="/dashboard" className="size-8 text-primary">
-                        <span className="material-symbols-outlined text-[32px]">mosque</span>
-                    </Link>
-                    <h2 className="text-lg font-bold leading-tight tracking-tight">MosqueEvents</h2>
-                </div>
-                <div className="flex flex-1 justify-end gap-8">
-                    <div className="hidden md:flex items-center gap-9">
-                        <Link className="text-sm font-medium leading-normal hover:text-primary transition-colors" to="/dashboard">Dashboard</Link>
-                        <span className="text-primary text-sm font-medium leading-normal">Events</span>
-                    </div>
-                    <div className="rounded-full size-10 bg-primary/20 flex items-center justify-center text-primary font-bold">
-                        IA
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content */}
-            <main className="flex-1 flex flex-col items-center py-8 px-4 md:px-10 lg:px-20 w-full max-w-[1440px] mx-auto">
+        <AdminLayout title="Event Participants" currentPage="events" showCreateButton={false}>
+            <div className="flex-1 flex flex-col items-center py-6 px-4 md:px-8 w-full max-w-[1440px] mx-auto">
                 <div className="w-full flex flex-col gap-6">
                     {/* Breadcrumbs */}
                     <div className="flex flex-wrap gap-2 text-sm">
@@ -413,7 +394,7 @@ export default function Participants() {
                         </div>
                     </div>
                 </div>
-            </main>
+            </div>
 
             {/* Scanner Modal */}
             <QRScanner
@@ -437,6 +418,6 @@ export default function Participants() {
                     ticket_name: selectedParticipant.ticket_name
                 } : null}
             />
-        </div>
+        </AdminLayout>
     )
 }

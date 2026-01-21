@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Sidebar from '../components/layout/Sidebar'
-import Header from '../components/layout/Header'
+import AdminLayout from '../components/layout/AdminLayout'
 import { authAPI, settingsAPI } from '../lib/api'
 
 interface UserProfile {
@@ -137,456 +136,386 @@ export default function Settings() {
     ]
 
     return (
-        <div className="flex h-screen w-full bg-background-light">
-            <Sidebar currentPage="settings" />
+        <AdminLayout title="Settings" currentPage="settings" showCreateButton={false}>
+            {/* Success Message */}
+            {message && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
+                    <span className="material-symbols-outlined">check_circle</span>
+                    {message}
+                </div>
+            )}
 
-            <main className="flex-1 flex flex-col h-full overflow-hidden">
-                <Header title="Settings" showCreateButton={false} />
+            <div className="max-w-4xl">
+                {/* Tabs */}
+                <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
+                                ? 'border-primary text-primary'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
 
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-                    {/* Success Message */}
-                    {message && (
-                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
-                            <span className="material-symbols-outlined">check_circle</span>
-                            {message}
-                        </div>
-                    )}
-
-                    <div className="max-w-4xl">
-                        {/* Tabs */}
-                        <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                                        ? 'border-primary text-primary'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
-                                        }`}
-                                >
-                                    <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
-                                    {tab.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {loading ? (
-                            <div className="flex items-center justify-center h-48">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                            </div>
-                        ) : (
-                            <>
-                                {/* General Settings */}
-                                {activeTab === 'general' && (
-                                    <div className="space-y-6">
-                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                            <h3 className="font-bold text-text-main mb-4">Profile Settings</h3>
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                                                    <input
-                                                        type="text"
-                                                        value={name}
-                                                        onChange={(e) => setName(e.target.value)}
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                                                    <input
-                                                        type="email"
-                                                        value={email}
-                                                        onChange={(e) => setEmail(e.target.value)}
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={handleSave}
-                                                disabled={saving}
-                                                className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
-                                            >
-                                                {saving ? 'Saving...' : 'Save Changes'}
-                                            </button>
+                {loading ? (
+                    <div className="flex items-center justify-center h-48">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                ) : (
+                    <>
+                        {/* General Settings */}
+                        {activeTab === 'general' && (
+                            <div className="space-y-6">
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                    <h3 className="font-bold text-text-main mb-4">Profile Settings</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                            <input
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            />
                                         </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                            <input
+                                                type="email"
+                                                value={email}
+                                                onChange={(e) => setEmail(e.target.value)}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            />
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={saving}
+                                        className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
+                                    >
+                                        {saving ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
 
-                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                            <h3 className="font-bold text-text-main mb-4">Security</h3>
-                                            <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50">
-                                                Change Password
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                    <h3 className="font-bold text-text-main mb-4">Security</h3>
+                                    <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50">
+                                        Change Password
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Organization Settings */}
+                        {activeTab === 'organization' && (
+                            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="font-bold text-text-main mb-4">Organization Details</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                        <input
+                                            type="text"
+                                            value={orgName}
+                                            onChange={(e) => setOrgName(e.target.value)}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                        <textarea
+                                            rows={3}
+                                            placeholder="Enter organization address"
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                                        <div className="flex items-center gap-4">
+                                            <div className="size-20 rounded-lg bg-primary/10 flex items-center justify-center">
+                                                <span className="material-symbols-outlined text-primary text-[32px]">business</span>
+                                            </div>
+                                            <button className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50">
+                                                Upload Logo
                                             </button>
                                         </div>
                                     </div>
-                                )}
+                                </div>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
+                                >
+                                    {saving ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        )}
 
-                                {/* Organization Settings */}
-                                {activeTab === 'organization' && (
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                        <h3 className="font-bold text-text-main mb-4">Organization Details</h3>
+                        {/* Notifications Settings */}
+                        {activeTab === 'notifications' && (
+                            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="font-bold text-text-main mb-4">Notification Preferences</h3>
+                                <div className="space-y-4">
+                                    {[
+                                        { key: 'email', label: 'Email notifications for new registrations', checked: notifications.email },
+                                        { key: 'whatsapp', label: 'WhatsApp notifications', checked: notifications.whatsapp },
+                                        { key: 'daily', label: 'Daily summary report', checked: notifications.daily },
+                                    ].map((item) => (
+                                        <label key={item.key} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
+                                            <input
+                                                type="checkbox"
+                                                checked={item.checked}
+                                                onChange={(e) => setNotifications(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                                                className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
+                                            />
+                                            <span className="text-sm text-gray-700">{item.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
+                                >
+                                    {saving ? 'Saving...' : 'Save Preferences'}
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Integrations Settings */}
+                        {activeTab === 'integrations' && (
+                            <div className="space-y-6">
+                                {/* Midtrans Configuration */}
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="size-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-blue-600">payments</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-text-main">Midtrans Payment Gateway</h3>
+                                            <p className="text-sm text-gray-500">Configure online payments for your events</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Environment Toggle */}
+                                    <div className="bg-gray-50 p-4 rounded-lg mb-6 flex items-center justify-between">
+                                        <div>
+                                            <h4 className="font-medium text-text-main">Environment</h4>
+                                            <p className="text-xs text-gray-500">Select Sandbox for testing, Production for real payments</p>
+                                        </div>
+                                        <div className="flex bg-white rounded-lg p-1 border border-gray-200">
+                                            <button
+                                                onClick={() => setMidtransConfig({ ...midtransConfig, environment: 'sandbox' })}
+                                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${midtransConfig.environment === 'sandbox'
+                                                    ? 'bg-primary text-white shadow-sm'
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                    }`}
+                                            >
+                                                Sandbox
+                                            </button>
+                                            <button
+                                                onClick={() => setMidtransConfig({ ...midtransConfig, environment: 'production' })}
+                                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${midtransConfig.environment === 'production'
+                                                    ? 'bg-primary text-white shadow-sm'
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                    }`}
+                                            >
+                                                Production
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Keys Configuration */}
+                                    <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-4">
+                                            <h4 className="font-bold text-sm text-gray-900 uppercase tracking-wide border-b border-gray-100 pb-2">Sandbox Keys</h4>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
+                                                <input
+                                                    type="password"
+                                                    placeholder="SB-Mid-server-..."
+                                                    value={midtransConfig.sandbox_server_key}
+                                                    onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_server_key: e.target.value })}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
                                                 <input
                                                     type="text"
-                                                    value={orgName}
-                                                    onChange={(e) => setOrgName(e.target.value)}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    placeholder="SB-Mid-client-..."
+                                                    value={midtransConfig.sandbox_client_key}
+                                                    onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_client_key: e.target.value })}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
                                                 />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                                <textarea
-                                                    rows={3}
-                                                    placeholder="Enter organization address"
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="size-20 rounded-lg bg-primary/10 flex items-center justify-center">
-                                                        <span className="material-symbols-outlined text-primary text-[32px]">business</span>
-                                                    </div>
-                                                    <button className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50">
-                                                        Upload Logo
-                                                    </button>
-                                                </div>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={saving}
-                                            className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
-                                        >
-                                            {saving ? 'Saving...' : 'Save Changes'}
-                                        </button>
-                                    </div>
-                                )}
 
-                                {/* Notifications Settings */}
-                                {activeTab === 'notifications' && (
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                        <h3 className="font-bold text-text-main mb-4">Notification Preferences</h3>
                                         <div className="space-y-4">
-                                            {[
-                                                { key: 'email', label: 'Email notifications for new registrations', checked: notifications.email },
-                                                { key: 'whatsapp', label: 'WhatsApp notifications', checked: notifications.whatsapp },
-                                                { key: 'daily', label: 'Daily summary report', checked: notifications.daily },
-                                            ].map((item) => (
-                                                <label key={item.key} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={item.checked}
-                                                        onChange={(e) => setNotifications(prev => ({ ...prev, [item.key]: e.target.checked }))}
-                                                        className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
-                                                    />
-                                                    <span className="text-sm text-gray-700">{item.label}</span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                        <button
-                                            onClick={handleSave}
-                                            disabled={saving}
-                                            className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
-                                        >
-                                            {saving ? 'Saving...' : 'Save Preferences'}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* Integrations Settings */}
-                                {activeTab === 'integrations' && (
-                                    <div className="space-y-6">
-                                        {/* Midtrans Configuration */}
-                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <div className="size-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-blue-600">payments</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-text-main">Midtrans Payment Gateway</h3>
-                                                    <p className="text-sm text-gray-500">Konfigurasi pembayaran otomatis untuk event berbayar</p>
-                                                </div>
+                                            <h4 className="font-bold text-sm text-gray-900 uppercase tracking-wide border-b border-gray-100 pb-2">Production Keys</h4>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
+                                                <input
+                                                    type="password"
+                                                    placeholder="Mid-server-..."
+                                                    value={midtransConfig.production_server_key}
+                                                    onChange={(e) => setMidtransConfig({ ...midtransConfig, production_server_key: e.target.value })}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                />
                                             </div>
-
-                                            {/* Environment Toggle */}
-                                            <div className="mb-6">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Environment</label>
-                                                <div className="flex gap-4">
-                                                    <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${midtransConfig.environment === 'sandbox' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                                                        }`}>
-                                                        <input
-                                                            type="radio"
-                                                            name="midtrans_env"
-                                                            value="sandbox"
-                                                            checked={midtransConfig.environment === 'sandbox'}
-                                                            onChange={() => setMidtransConfig({ ...midtransConfig, environment: 'sandbox' })}
-                                                            className="hidden"
-                                                        />
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="material-symbols-outlined text-blue-600">science</span>
-                                                            <div>
-                                                                <p className="font-medium text-gray-800">Sandbox</p>
-                                                                <p className="text-xs text-gray-500">Mode testing/development</p>
-                                                            </div>
-                                                        </div>
-                                                    </label>
-                                                    <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${midtransConfig.environment === 'production' ? 'border-green-500 bg-green-50' : 'border-gray-200'
-                                                        }`}>
-                                                        <input
-                                                            type="radio"
-                                                            name="midtrans_env"
-                                                            value="production"
-                                                            checked={midtransConfig.environment === 'production'}
-                                                            onChange={() => setMidtransConfig({ ...midtransConfig, environment: 'production' })}
-                                                            className="hidden"
-                                                        />
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="material-symbols-outlined text-green-600">verified</span>
-                                                            <div>
-                                                                <p className="font-medium text-gray-800">Production</p>
-                                                                <p className="text-xs text-gray-500">Mode transaksi nyata</p>
-                                                            </div>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            {/* Sandbox Keys */}
-                                            <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                                                <h4 className="font-bold text-blue-800 mb-4 flex items-center gap-2">
-                                                    <span className="material-symbols-outlined text-[18px]">science</span>
-                                                    Sandbox Keys
-                                                </h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
-                                                        <input
-                                                            type="password"
-                                                            placeholder="SB-Mid-server-xxx"
-                                                            value={midtransConfig.sandbox_server_key}
-                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_server_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="SB-Mid-client-xxx"
-                                                            value={midtransConfig.sandbox_client_key}
-                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_client_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-blue-600 mt-2">
-                                                    <a href="https://dashboard.sandbox.midtrans.com/settings/config_info" target="_blank" rel="noopener noreferrer" className="underline">
-                                                        Dapatkan key di Midtrans Sandbox Dashboard →
-                                                    </a>
-                                                </p>
-                                            </div>
-
-                                            {/* Production Keys */}
-                                            <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-lg">
-                                                <h4 className="font-bold text-green-800 mb-4 flex items-center gap-2">
-                                                    <span className="material-symbols-outlined text-[18px]">verified</span>
-                                                    Production Keys
-                                                </h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
-                                                        <input
-                                                            type="password"
-                                                            placeholder="Mid-server-xxx"
-                                                            value={midtransConfig.production_server_key}
-                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, production_server_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Mid-client-xxx"
-                                                            value={midtransConfig.production_client_key}
-                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, production_client_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-green-600 mt-2">
-                                                    <a href="https://dashboard.midtrans.com/settings/config_info" target="_blank" rel="noopener noreferrer" className="underline">
-                                                        Dapatkan key di Midtrans Production Dashboard →
-                                                    </a>
-                                                </p>
-                                            </div>
-
-                                            {/* Current Active */}
-                                            <div className={`p-3 rounded-lg mb-6 ${midtransConfig.environment === 'sandbox' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="material-symbols-outlined text-[18px]">info</span>
-                                                    <span className="text-sm font-medium">
-                                                        Active: {midtransConfig.environment === 'sandbox' ? 'Sandbox (Testing)' : 'Production (Live)'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Bank Account Configuration */}
-                                            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mt-6">
-                                                <div className="flex items-center gap-3 mb-6">
-                                                    <div className="size-12 rounded-lg bg-yellow-100 flex items-center justify-center">
-                                                        <span className="material-symbols-outlined text-yellow-600">account_balance</span>
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="font-bold text-text-main">Bank Account (Manual Payment)</h3>
-                                                        <p className="text-sm text-gray-500">Untuk pembayaran transfer bank manual</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="contoh: BCA, Mandiri, BRI"
-                                                            value={bankConfig.bank_name}
-                                                            onChange={(e) => setBankConfig({ ...bankConfig, bank_name: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Nama sesuai rekening"
-                                                            value={bankConfig.account_holder_name}
-                                                            onChange={(e) => setBankConfig({ ...bankConfig, account_holder_name: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
-                                                        <input
-                                                            type="text"
-                                                            placeholder="1234567890"
-                                                            value={bankConfig.account_number}
-                                                            onChange={(e) => setBankConfig({ ...bankConfig, account_number: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Save Button */}
-                                            <button
-                                                onClick={handleSave}
-                                                disabled={saving}
-                                                className="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-6"
-                                            >
-                                                {saving ? (
-                                                    <>
-                                                        <span className="animate-spin material-symbols-outlined text-[20px]">refresh</span>
-                                                        Menyimpan...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className="material-symbols-outlined text-[20px]">save</span>
-                                                        Simpan Semua Konfigurasi
-                                                    </>
-                                                )}
-                                            </button>
-                                        </div>
-
-                                        {/* WAHA WhatsApp Gateway */}
-                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                            <div className="flex items-center gap-3 mb-6">
-                                                <div className="size-12 rounded-lg bg-green-100 flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-green-600">chat</span>
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-text-main">WhatsApp Gateway (WAHA)</h3>
-                                                    <p className="text-sm text-gray-500">Auto-send QR code links via WhatsApp</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Enable Toggle */}
-                                            <div className="mb-6">
-                                                <label className="flex items-center gap-3 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={wahaConfig.enabled}
-                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, enabled: e.target.checked })}
-                                                        className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
-                                                    />
-                                                    <span className="text-sm font-medium text-gray-700">Enable WhatsApp Notifications</span>
-                                                </label>
-                                            </div>
-
-                                            {/* Configuration Fields */}
-                                            <div className="space-y-4">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">WAHA API URL</label>
-                                                    <input
-                                                        type="url"
-                                                        placeholder="https://your-waha-instance.com"
-                                                        value={wahaConfig.api_url}
-                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, api_url: e.target.value })}
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                                                    <input
-                                                        type="password"
-                                                        placeholder="Your WAHA API key"
-                                                        value={wahaConfig.api_key}
-                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, api_key: e.target.value })}
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="default"
-                                                        value={wahaConfig.session}
-                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, session: e.target.value })}
-                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <p className="text-xs text-gray-500 mt-4">
-                                                <a href="https://waha.devlike.pro/docs/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                                                    Learn more about WAHA →
-                                                </a>
-                                            </p>
-                                        </div>
-
-                                        {/* Other Integrations */}
-                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                            <h3 className="font-bold text-text-main mb-4">Integrasi Lainnya</h3>
-                                            <div className="space-y-3">
-                                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="material-symbols-outlined text-blue-600">calendar_month</span>
-                                                        <div>
-                                                            <p className="font-medium text-sm">Google Calendar</p>
-                                                            <p className="text-xs text-gray-500">Sync events</p>
-                                                        </div>
-                                                    </div>
-                                                    <span className="text-xs text-gray-400">Coming Soon</span>
-                                                </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Mid-client-..."
+                                                    value={midtransConfig.production_client_key}
+                                                    onChange={(e) => setMidtransConfig({ ...midtransConfig, production_client_key: e.target.value })}
+                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                />
                                             </div>
                                         </div>
                                     </div>
-                                )}
-                            </>
+                                </div>
+
+                                {/* Bank Account Configuration */}
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="size-12 rounded-lg bg-orange-100 flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-orange-600">account_balance</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-text-main">Manual Transfer (Bank Account)</h3>
+                                            <p className="text-sm text-gray-500">Configure bank account for manual transfers</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                            <input
+                                                type="text"
+                                                placeholder="contoh: BCA, Mandiri, BRI"
+                                                value={bankConfig.bank_name}
+                                                onChange={(e) => setBankConfig({ ...bankConfig, bank_name: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
+                                            <input
+                                                type="text"
+                                                placeholder="Nama sesuai rekening"
+                                                value={bankConfig.account_holder_name}
+                                                onChange={(e) => setBankConfig({ ...bankConfig, account_holder_name: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                            <input
+                                                type="text"
+                                                placeholder="1234567890"
+                                                value={bankConfig.account_number}
+                                                onChange={(e) => setBankConfig({ ...bankConfig, account_number: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* WAHA WhatsApp Gateway */}
+                                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="size-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-green-600">chat</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-text-main">WhatsApp Gateway (WAHA)</h3>
+                                            <p className="text-sm text-gray-500">Auto-send QR code links via WhatsApp</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Enable Toggle */}
+                                    <div className="mb-6">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={wahaConfig.enabled}
+                                                onChange={(e) => setWahaConfig({ ...wahaConfig, enabled: e.target.checked })}
+                                                className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Enable WhatsApp Notifications</span>
+                                        </label>
+                                    </div>
+
+                                    {/* Configuration Fields */}
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">WAHA API URL</label>
+                                            <input
+                                                type="url"
+                                                placeholder="https://your-waha-instance.com"
+                                                value={wahaConfig.api_url}
+                                                onChange={(e) => setWahaConfig({ ...wahaConfig, api_url: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                                            <input
+                                                type="password"
+                                                placeholder="Your WAHA API key"
+                                                value={wahaConfig.api_key}
+                                                onChange={(e) => setWahaConfig({ ...wahaConfig, api_key: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
+                                            <input
+                                                type="text"
+                                                placeholder="default"
+                                                value={wahaConfig.session}
+                                                onChange={(e) => setWahaConfig({ ...wahaConfig, session: e.target.value })}
+                                                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-gray-500 mt-4">
+                                        <a href="https://waha.devlike.pro/docs/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                                            Learn more about WAHA →
+                                        </a>
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <span className="animate-spin material-symbols-outlined text-[20px]">refresh</span>
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="material-symbols-outlined text-[20px]">save</span>
+                                            Simpan Semua Konfigurasi
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         )}
-                    </div>
-                </div>
-            </main>
-        </div>
+                    </>
+                )}
+            </div>
+        </AdminLayout>
     )
 }

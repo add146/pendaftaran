@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import AdminLayout from '../../components/layout/AdminLayout'
 
 export default function IDCardGenerator() {
     const { id: _id } = useParams()
@@ -8,37 +9,14 @@ export default function IDCardGenerator() {
     const [includeQR, setIncludeQR] = useState(true)
 
     return (
-        <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col">
-            {/* Top Navbar */}
-            <header className="sticky top-0 z-50 w-full bg-surface-light border-b border-border-light">
-                <div className="px-4 lg:px-10 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-text-main">
-                        <Link to="/dashboard" className="size-8 text-primary">
-                            <span className="material-symbols-outlined text-[32px]">mosque</span>
-                        </Link>
-                        <h2 className="text-lg font-bold leading-tight tracking-tight">MasjidEvents</h2>
-                    </div>
-                    <div className="flex items-center gap-8">
-                        <nav className="hidden md:flex items-center gap-9">
-                            <Link className="text-text-main text-sm font-medium leading-normal hover:text-primary transition-colors" to="/dashboard">Dashboard</Link>
-                            <Link className="text-primary text-sm font-medium leading-normal" to="#">Events</Link>
-                            <a className="text-text-main text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Attendees</a>
-                            <a className="text-text-main text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Settings</a>
-                        </nav>
-                        <div className="rounded-full size-10 bg-primary/20 flex items-center justify-center text-primary font-bold">IA</div>
-                    </div>
-                </div>
-            </header>
-
+        <AdminLayout title="ID Card Generator" currentPage="events" showCreateButton={false}>
             <div className="flex-1 px-4 lg:px-40 py-5">
                 <div className="flex flex-col max-w-[1280px] mx-auto">
                     {/* Breadcrumbs */}
                     <div className="flex flex-wrap gap-2 px-4 py-2">
                         <Link className="text-text-sub text-sm md:text-base font-medium leading-normal hover:underline" to="/dashboard">Dashboard</Link>
                         <span className="text-text-sub text-sm md:text-base font-medium leading-normal">/</span>
-                        <Link className="text-text-sub text-sm md:text-base font-medium leading-normal hover:underline" to="#">Events</Link>
-                        <span className="text-text-sub text-sm md:text-base font-medium leading-normal">/</span>
-                        <Link className="text-text-sub text-sm md:text-base font-medium leading-normal hover:underline" to="#">Pengajian Akbar</Link>
+                        <Link className="text-text-sub text-sm md:text-base font-medium leading-normal hover:underline" to="/events">Events</Link>
                         <span className="text-text-sub text-sm md:text-base font-medium leading-normal">/</span>
                         <span className="text-text-main text-sm md:text-base font-medium leading-normal">ID Cards</span>
                     </div>
@@ -244,6 +222,6 @@ export default function IDCardGenerator() {
                     </div>
                 </div>
             </div>
-        </div>
+        </AdminLayout>
     )
 }

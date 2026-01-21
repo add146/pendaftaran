@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 
 // Feature card component
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
@@ -31,8 +32,8 @@ function PricingCard({
 }) {
     return (
         <div className={`relative flex flex-col p-6 rounded-2xl ${popular
-                ? 'bg-white border-2 border-primary shadow-xl scale-105 z-10'
-                : 'bg-background-light border border-gray-200'
+            ? 'bg-white border-2 border-primary shadow-xl scale-105 z-10'
+            : 'bg-background-light border border-gray-200'
             }`}>
             {popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
@@ -48,8 +49,8 @@ function PricingCard({
                 <span className="text-gray-500 font-medium">{period}</span>
             </div>
             <button className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${popular
-                    ? 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/25'
-                    : 'bg-white border border-gray-300 text-gray-900 hover:bg-gray-50'
+                ? 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/25'
+                : 'bg-white border border-gray-300 text-gray-900 hover:bg-gray-50'
                 }`}>
                 {popular ? 'Pilih Basic' : 'Mulai Sekarang'}
             </button>
@@ -115,6 +116,8 @@ export default function Landing() {
         },
     ]
 
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen">
             {/* Navbar */}
@@ -126,12 +129,16 @@ export default function Landing() {
                         </div>
                         <h2 className="text-xl font-bold tracking-tight text-gray-900">MasjidEvent</h2>
                     </div>
+
+                    {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-8">
                         <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#features">Fitur</a>
                         <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#pricing">Harga</a>
                         <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#contact">Kontak</a>
                     </nav>
-                    <div className="flex items-center gap-3">
+
+                    {/* Desktop Actions */}
+                    <div className="hidden md:flex items-center gap-3">
                         <Link to="/dashboard" className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
                             Masuk
                         </Link>
@@ -139,7 +146,58 @@ export default function Landing() {
                             Mulai Gratis
                         </Link>
                     </div>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    >
+                        <span className="material-symbols-outlined text-[28px]">{isMenuOpen ? 'close' : 'menu'}</span>
+                    </button>
                 </div>
+
+                {/* Mobile Menu Overlay */}
+                {isMenuOpen && (
+                    <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-lg py-6 px-4 flex flex-col gap-6 animate-fade-in">
+                        <nav className="flex flex-col gap-4">
+                            <a
+                                className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                href="#features"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Fitur
+                            </a>
+                            <a
+                                className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                href="#pricing"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Harga
+                            </a>
+                            <a
+                                className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                href="#contact"
+                                onClick={() => setIsMenuOpen(false)}
+                            >
+                                Kontak
+                            </a>
+                        </nav>
+                        <div className="flex flex-col gap-3">
+                            <Link
+                                to="/dashboard"
+                                className="flex h-12 w-full items-center justify-center rounded-lg border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Masuk
+                            </Link>
+                            <Link
+                                to="/dashboard"
+                                className="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all"
+                            >
+                                Mulai Gratis
+                            </Link>
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Hero Section */}

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Sidebar from '../components/layout/Sidebar'
-import Header from '../components/layout/Header'
+import AdminLayout from '../components/layout/AdminLayout'
 import { Link } from 'react-router-dom'
 import { publicAPI, type Event } from '../lib/api'
 
@@ -120,70 +119,64 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="flex h-screen w-full bg-background-light">
-            <Sidebar currentPage="dashboard" />
-
-            <main className="flex-1 flex flex-col h-full overflow-hidden">
-                <Header title="Dashboard Overview" />
-
-                <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
-                    {loading ? (
-                        <div className="flex items-center justify-center h-64">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <AdminLayout title="Dashboard Overview" currentPage="dashboard">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-8">
+                {loading ? (
+                    <div className="flex items-center justify-center h-64">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                    </div>
+                ) : error ? (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
+                ) : (
+                    <>
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                            <StatCard icon="event_available" label="Active Events" value={String(stats?.active_events || 0)} />
+                            <StatCard icon="diversity_3" label="Total Participants" value={String(stats?.total_participants || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
+                            <StatCard icon="payments" label="Total Revenue" value={formatCurrency(stats?.total_revenue || 0)} />
                         </div>
-                    ) : error ? (
-                        <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
-                    ) : (
-                        <>
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                                <StatCard icon="event_available" label="Active Events" value={String(stats?.active_events || 0)} />
-                                <StatCard icon="diversity_3" label="Total Participants" value={String(stats?.total_participants || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
-                                <StatCard icon="payments" label="Total Revenue" value={formatCurrency(stats?.total_revenue || 0)} />
+
+                        {/* Recent Events Section */}
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-text-main">Recent Events</h3>
+                                <a className="text-sm font-medium text-primary hover:text-primary-hover hover:underline" href="/events">
+                                    View All
+                                </a>
                             </div>
 
-                            {/* Recent Events Section */}
-                            <div className="flex flex-col gap-4">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-xl font-bold text-text-main">Recent Events</h3>
-                                    <a className="text-sm font-medium text-primary hover:text-primary-hover hover:underline" href="#">
-                                        View All
-                                    </a>
-                                </div>
-
-                                <div className="overflow-hidden rounded-xl border border-border-light bg-surface-light shadow-sm">
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-sm whitespace-nowrap">
-                                            <thead className="border-b border-border-light bg-background-light/50">
-                                                <tr>
-                                                    <th className="px-6 py-4 font-semibold text-text-main w-1/3">Event Name</th>
-                                                    <th className="px-6 py-4 font-semibold text-text-main">Date</th>
-                                                    <th className="px-6 py-4 font-semibold text-text-main">Status</th>
-                                                    <th className="px-6 py-4 font-semibold text-text-main w-1/4">Quota Progress</th>
-                                                    <th className="px-6 py-4 font-semibold text-text-main text-right">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border-light">
-                                                {stats?.recent_events?.map((event) => (
-                                                    <EventRow
-                                                        key={event.id}
-                                                        id={event.id}
-                                                        title={event.title}
-                                                        event_date={event.event_date}
-                                                        status={event.status}
-                                                        registered_count={event.registered_count || 0}
-                                                        capacity={event.capacity || null}
-                                                    />
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                            <div className="overflow-hidden rounded-xl border border-border-light bg-surface-light shadow-sm">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm whitespace-nowrap">
+                                        <thead className="border-b border-border-light bg-background-light/50">
+                                            <tr>
+                                                <th className="px-6 py-4 font-semibold text-text-main w-1/3">Event Name</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main">Date</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main">Status</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main w-1/4">Quota Progress</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border-light">
+                                            {stats?.recent_events?.map((event) => (
+                                                <EventRow
+                                                    key={event.id}
+                                                    id={event.id}
+                                                    title={event.title}
+                                                    event_date={event.event_date}
+                                                    status={event.status}
+                                                    registered_count={event.registered_count || 0}
+                                                    capacity={event.capacity || null}
+                                                />
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </>
-                    )}
-                </div>
-            </main>
-        </div>
+                        </div>
+                    </>
+                )}
+            </div>
+        </AdminLayout>
     )
 }
