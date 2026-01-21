@@ -67,31 +67,43 @@ publicRoutes.get('/events/:slug', async (c) => {
   })
 })
 
-// Dashboard stats (for admin)
-publicRoutes.get('/dashboard/stats', async (c) => {
-  // Get active events count
+// Dashboard stats (for authenticated admin) - REQUIRES AUTH
+import { authMiddleware } from '../middleware/auth'
+export const dashboardStatsRoute = new Hono<{ Bindings: Bindings }>()
+
+dashboardStatsRoute.get('/stats', authMiddleware, async (c) => {
+  const user = c.get('user')
+
+  // Get active events count for this organization
   const activeEvents = await c.env.DB.prepare(
-    "SELECT COUNT(*) as count FROM events WHERE status = 'open'"
-  ).first()
+    "SELECT COUNT(*) as count FROM events WHERE status = 'open' AND organization_id = ?"
+  ).bind(user.orgId).first()
 
-  // Get total participants
-  const totalParticipants = await c.env.DB.prepare(
-    'SELECT COUNT(*) as count FROM participants'
-  ).first()
+  // Get total participants for this organization's events
+  const totalParticipants = await c.env.DB.prepare(`
+    SELECT COUNT(*) as count FROM participants p
+    JOIN events e ON p.event_id = e.id
+    WHERE e.organization_id = ?
+  `).bind(user.orgId).first()
 
-  // Get total revenue
-  const totalRevenue = await c.env.DB.prepare(
-    "SELECT COALESCE(SUM(amount), 0) as total FROM payments WHERE status = 'paid'"
-  ).first()
+  // Get total revenue for this organization's events
+  const totalRevenue = await c.env.DB.prepare(`
+    SELECT COALESCE(SUM(pay.amount), 0) as total 
+    FROM payments pay
+    JOIN participants p ON pay.participant_id = p.id
+    JOIN events e ON p.event_id = e.id
+    WHERE pay.status = 'paid' AND e.organization_id = ?
+  `).bind(user.orgId).first()
 
-  // Get recent events
+  // Get recent events for this organization
   const recentEvents = await c.env.DB.prepare(`
     SELECT e.*, 
       (SELECT COUNT(*) FROM participants WHERE event_id = e.id) as registered_count
     FROM events e
+    WHERE e.organization_id = ?
     ORDER BY e.created_at DESC
     LIMIT 5
-  `).all()
+  `).bind(user.orgId).all()
 
   return c.json({
     active_events: activeEvents?.count || 0,

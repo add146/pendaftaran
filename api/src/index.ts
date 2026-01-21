@@ -4,10 +4,12 @@ import { logger } from 'hono/logger'
 import { events } from './routes/events'
 import { participants } from './routes/participants'
 import { auth } from './routes/auth'
-import { publicRoutes } from './routes/public'
+import { publicRoutes, dashboardStatsRoute } from './routes/public'
 import { payments } from './routes/payments'
 import { uploads } from './routes/uploads'
 import { settings } from './routes/settings'
+import { organizations } from './routes/organizations'
+import { subscriptions } from './routes/subscriptions'
 
 export type Bindings = {
 	DB: D1Database
@@ -40,7 +42,7 @@ app.get('/', (c) => {
 	return c.json({
 		status: 'ok',
 		message: 'Pendaftaran QR API',
-		version: '1.0.0'
+		version: '1.1.0'
 	})
 })
 
@@ -49,9 +51,12 @@ app.route('/api/auth', auth)
 app.route('/api/events', events)
 app.route('/api/participants', participants)
 app.route('/api/public', publicRoutes)
+app.route('/api/public/dashboard', dashboardStatsRoute)
 app.route('/api/payments', payments)
 app.route('/api/uploads', uploads)
 app.route('/api/settings', settings)
+app.route('/api/organizations', organizations)
+app.route('/api/subscriptions', subscriptions)
 
 // 404 handler
 app.notFound((c) => {

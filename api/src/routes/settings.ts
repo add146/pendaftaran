@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-// import { authMiddleware } from '../middleware/auth'
+import { authMiddleware } from '../middleware/auth'
 
 interface Bindings {
     DB: D1Database
@@ -8,14 +8,16 @@ interface Bindings {
 
 export const settings = new Hono<{ Bindings: Bindings }>()
 
-// Temporarily disabled auth for testing
-// settings.use('*', authMiddleware)
+// Enable auth for all settings routes
+settings.use('*', authMiddleware)
 
-// Get all settings
+// Get all settings for current organization
 settings.get('/', async (c) => {
+    const user = c.get('user')
+
     const result = await c.env.DB.prepare(
-        'SELECT key, value FROM settings'
-    ).all()
+        'SELECT key, value FROM settings WHERE organization_id = ?'
+    ).bind(user.orgId).all()
 
     // Convert to object
     const settingsObj: Record<string, any> = {}
@@ -30,13 +32,14 @@ settings.get('/', async (c) => {
     return c.json(settingsObj)
 })
 
-// Get single setting
+// Get single setting for current organization
 settings.get('/:key', async (c) => {
+    const user = c.get('user')
     const { key } = c.req.param()
 
     const result = await c.env.DB.prepare(
-        'SELECT value FROM settings WHERE key = ?'
-    ).bind(key).first()
+        'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
+    ).bind(key, user.orgId).first()
 
     if (!result) {
         return c.json({ error: 'Setting not found' }, 404)
@@ -49,8 +52,9 @@ settings.get('/:key', async (c) => {
     }
 })
 
-// Save/Update settings (upsert)
+// Save/Update settings (upsert) for current organization
 settings.post('/', async (c) => {
+    const user = c.get('user')
     const body = await c.req.json()
     const { key, value } = body as { key: string; value: any }
 
@@ -59,44 +63,66 @@ settings.post('/', async (c) => {
     }
 
     const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
-    const now = new Date().toISOString()
 
-    await c.env.DB.prepare(`
-        INSERT INTO settings (key, value, updated_at) 
-        VALUES (?, ?, ?)
-        ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
-    `).bind(key, valueStr, now, valueStr, now).run()
+    // Check if setting exists for this organization
+    const existing = await c.env.DB.prepare(
+        'SELECT id FROM settings WHERE key = ? AND organization_id = ?'
+    ).bind(key, user.orgId).first()
+
+    if (existing) {
+        // Update
+        await c.env.DB.prepare(
+            'UPDATE settings SET value = ? WHERE key = ? AND organization_id = ?'
+        ).bind(valueStr, key, user.orgId).run()
+    } else {
+        // Insert
+        const id = `set_${crypto.randomUUID().slice(0, 8)}`
+        await c.env.DB.prepare(
+            'INSERT INTO settings (id, key, value, organization_id) VALUES (?, ?, ?, ?)'
+        ).bind(id, key, valueStr, user.orgId).run()
+    }
 
     return c.json({ message: 'Setting saved', key })
 })
 
-// Save multiple settings at once
+// Bulk save settings for current organization
 settings.post('/bulk', async (c) => {
+    const user = c.get('user')
     const body = await c.req.json()
-    const settingsData = body as Record<string, any>
+    const settingsObj = body as Record<string, any>
 
-    const now = new Date().toISOString()
-
-    for (const [key, value] of Object.entries(settingsData)) {
+    let count = 0
+    for (const [key, value] of Object.entries(settingsObj)) {
         const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
-        await c.env.DB.prepare(`
-            INSERT INTO settings (key, value, updated_at) 
-            VALUES (?, ?, ?)
-            ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = ?
-        `).bind(key, valueStr, now, valueStr, now).run()
+        const existing = await c.env.DB.prepare(
+            'SELECT id FROM settings WHERE key = ? AND organization_id = ?'
+        ).bind(key, user.orgId).first()
+
+        if (existing) {
+            await c.env.DB.prepare(
+                'UPDATE settings SET value = ? WHERE key = ? AND organization_id = ?'
+            ).bind(valueStr, key, user.orgId).run()
+        } else {
+            const id = `set_${crypto.randomUUID().slice(0, 8)}`
+            await c.env.DB.prepare(
+                'INSERT INTO settings (id, key, value, organization_id) VALUES (?, ?, ?, ?)'
+            ).bind(id, key, valueStr, user.orgId).run()
+        }
+        count++
     }
 
-    return c.json({ message: 'Settings saved', count: Object.keys(settingsData).length })
+    return c.json({ message: 'Settings saved', count })
 })
 
-// Delete setting
+// Delete setting for current organization
 settings.delete('/:key', async (c) => {
+    const user = c.get('user')
     const { key } = c.req.param()
 
     await c.env.DB.prepare(
-        'DELETE FROM settings WHERE key = ?'
-    ).bind(key).run()
+        'DELETE FROM settings WHERE key = ? AND organization_id = ?'
+    ).bind(key, user.orgId).run()
 
     return c.json({ message: 'Setting deleted' })
 })
