@@ -20,6 +20,9 @@
 	],
 	// Environment Variables
 	"vars": {
-		"JWT_SECRET": "your-jwt-secret-change-in-production"
+		"JWT_SECRET": "your-jwt-secret-change-in-production",
+		"MIDTRANS_SERVER_KEY": "your-midtrans-server-key",
+		"MIDTRANS_CLIENT_KEY": "your-midtrans-client-key",
+		"MIDTRANS_IS_PRODUCTION": "false"
 	}
 }

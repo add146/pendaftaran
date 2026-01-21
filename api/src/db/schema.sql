@@ -68,10 +68,11 @@ CREATE TABLE IF NOT EXISTS participants (
 CREATE TABLE IF NOT EXISTS payments (
     id TEXT PRIMARY KEY,
     participant_id TEXT REFERENCES participants(id) ON DELETE CASCADE,
+    order_id TEXT UNIQUE,
     amount INTEGER NOT NULL,
-    midtrans_order_id TEXT,
-    midtrans_transaction_id TEXT,
     status TEXT DEFAULT 'pending',
+    payment_type TEXT,
+    midtrans_response TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

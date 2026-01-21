@@ -5,10 +5,14 @@ import { events } from './routes/events'
 import { participants } from './routes/participants'
 import { auth } from './routes/auth'
 import { publicRoutes } from './routes/public'
+import { payments } from './routes/payments'
 
 export type Bindings = {
 	DB: D1Database
 	JWT_SECRET: string
+	MIDTRANS_SERVER_KEY: string
+	MIDTRANS_CLIENT_KEY: string
+	MIDTRANS_IS_PRODUCTION: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -41,6 +45,7 @@ app.route('/api/auth', auth)
 app.route('/api/events', events)
 app.route('/api/participants', participants)
 app.route('/api/public', publicRoutes)
+app.route('/api/payments', payments)
 
 // 404 handler
 app.notFound((c) => {

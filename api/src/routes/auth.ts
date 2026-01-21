@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
+import { signJWT, hashPassword, verifyPassword } from '../lib/jwt'
+import { authMiddleware } from '../middleware/auth'
 
 export const auth = new Hono<{ Bindings: Bindings }>()
 
@@ -14,21 +16,35 @@ auth.post('/login', async (c) => {
     // Get user from database
     const user = await c.env.DB.prepare(
         'SELECT * FROM users WHERE email = ?'
-    ).bind(email).first()
+    ).bind(email).first() as {
+        id: string
+        organization_id: string
+        email: string
+        password_hash: string
+        name: string
+        role: string
+    } | null
 
     if (!user) {
         return c.json({ error: 'Invalid credentials' }, 401)
     }
 
-    // For development, skip password verification
-    // In production, verify password hash
+    // Verify password
+    const isValid = await verifyPassword(password, user.password_hash)
+    if (!isValid) {
+        // For backward compatibility with old unhashed passwords
+        if (user.password_hash !== password) {
+            return c.json({ error: 'Invalid credentials' }, 401)
+        }
+    }
 
-    // Generate simple token (in production use proper JWT)
-    const token = btoa(JSON.stringify({
+    // Generate JWT token
+    const token = await signJWT({
         userId: user.id,
         email: user.email,
-        exp: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
-    }))
+        orgId: user.organization_id,
+        role: user.role || 'admin'
+    }, c.env.JWT_SECRET)
 
     return c.json({
         token,
@@ -49,6 +65,10 @@ auth.post('/register', async (c) => {
         return c.json({ error: 'Email, password, and name required' }, 400)
     }
 
+    if (password.length < 6) {
+        return c.json({ error: 'Password must be at least 6 characters' }, 400)
+    }
+
     // Check if user exists
     const existing = await c.env.DB.prepare(
         'SELECT id FROM users WHERE email = ?'
@@ -66,51 +86,70 @@ auth.post('/register', async (c) => {
         'INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)'
     ).bind(orgId, organizationName || `${name}'s Organization`, orgSlug).run()
 
-    // Create user (in production, hash the password)
+    // Hash password and create user
     const userId = `user_${crypto.randomUUID().slice(0, 8)}`
+    const passwordHash = await hashPassword(password)
 
     await c.env.DB.prepare(
         'INSERT INTO users (id, organization_id, email, password_hash, name) VALUES (?, ?, ?, ?, ?)'
-    ).bind(userId, orgId, email, password, name).run()
+    ).bind(userId, orgId, email, passwordHash, name).run()
+
+    // Generate token for immediate login
+    const token = await signJWT({
+        userId,
+        email,
+        orgId,
+        role: 'admin'
+    }, c.env.JWT_SECRET)
 
     return c.json({
         message: 'Registration successful',
-        userId
+        token,
+        user: {
+            id: userId,
+            email,
+            name
+        }
     }, 201)
 })
 
-// Get current user
-auth.get('/me', async (c) => {
-    const authHeader = c.req.header('Authorization')
+// Get current user (protected route)
+auth.get('/me', authMiddleware, async (c) => {
+    const user = c.get('user')
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return c.json({ error: 'Unauthorized' }, 401)
+    const dbUser = await c.env.DB.prepare(
+        'SELECT u.*, o.name as organization_name FROM users u LEFT JOIN organizations o ON u.organization_id = o.id WHERE u.id = ?'
+    ).bind(user.userId).first() as {
+        id: string
+        email: string
+        name: string
+        role: string
+        organization_name: string
+    } | null
+
+    if (!dbUser) {
+        return c.json({ error: 'User not found' }, 404)
     }
 
-    try {
-        const token = authHeader.slice(7)
-        const decoded = JSON.parse(atob(token))
+    return c.json({
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+        role: dbUser.role,
+        organization: dbUser.organization_name
+    })
+})
 
-        if (decoded.exp < Date.now()) {
-            return c.json({ error: 'Token expired' }, 401)
-        }
+// Refresh token
+auth.post('/refresh', authMiddleware, async (c) => {
+    const user = c.get('user')
 
-        const user = await c.env.DB.prepare(
-            'SELECT u.*, o.name as organization_name FROM users u LEFT JOIN organizations o ON u.organization_id = o.id WHERE u.id = ?'
-        ).bind(decoded.userId).first()
+    const token = await signJWT({
+        userId: user.userId,
+        email: user.email,
+        orgId: user.orgId,
+        role: user.role
+    }, c.env.JWT_SECRET)
 
-        if (!user) {
-            return c.json({ error: 'User not found' }, 404)
-        }
-
-        return c.json({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            organization: user.organization_name
-        })
-    } catch {
-        return c.json({ error: 'Invalid token' }, 401)
-    }
+    return c.json({ token })
 })
