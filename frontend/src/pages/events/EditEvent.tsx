@@ -25,6 +25,9 @@ export default function EditEvent() {
         event_mode: 'free' as 'free' | 'paid',
         payment_mode: 'manual' as 'manual' | 'auto',
         whatsapp_cs: '',
+        bank_name: '',
+        account_holder_name: '',
+        account_number: '',
         visibility: 'public' as 'public' | 'private',
         status: 'draft' as 'draft' | 'open' | 'closed'
     })
@@ -93,7 +96,7 @@ export default function EditEvent() {
         if (!id) return
 
         eventsAPI.get(id)
-            .then((data: Event & { ticket_types?: { name: string; price: number; quota?: number }[]; payment_mode?: string; whatsapp_cs?: string }) => {
+            .then((data: Event & { ticket_types?: { name: string; price: number; quota?: number }[]; payment_mode?: string; whatsapp_cs?: string; bank_name?: string; account_holder_name?: string; account_number?: string }) => {
                 setFormData({
                     title: data.title || '',
                     description: data.description || '',
@@ -104,6 +107,9 @@ export default function EditEvent() {
                     event_mode: data.event_mode || 'free',
                     payment_mode: (data.payment_mode as 'manual' | 'auto') || 'manual',
                     whatsapp_cs: data.whatsapp_cs || '',
+                    bank_name: data.bank_name || '',
+                    account_holder_name: data.account_holder_name || '',
+                    account_number: data.account_number || '',
                     visibility: data.visibility || 'public',
                     status: data.status || 'draft'
                 })
@@ -170,6 +176,9 @@ export default function EditEvent() {
                 event_mode: formData.event_mode,
                 payment_mode: formData.payment_mode,
                 whatsapp_cs: formData.whatsapp_cs,
+                bank_name: formData.bank_name,
+                account_holder_name: formData.account_holder_name,
+                account_number: formData.account_number,
                 visibility: formData.visibility,
                 status: formData.status,
                 images: images,
@@ -380,19 +389,58 @@ export default function EditEvent() {
                                         </div>
 
                                         {formData.payment_mode === 'manual' && (
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-gray-500">+62</span>
-                                                    <input
-                                                        type="tel"
-                                                        value={formData.whatsapp_cs}
-                                                        onChange={(e) => updateField('whatsapp_cs', e.target.value)}
-                                                        placeholder="81234567890"
-                                                        className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    />
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-500">+62</span>
+                                                        <input
+                                                            type="tel"
+                                                            value={formData.whatsapp_cs}
+                                                            onChange={(e) => updateField('whatsapp_cs', e.target.value)}
+                                                            placeholder="81234567890"
+                                                            className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
                                                 </div>
-                                                <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
+
+                                                <div className="border-t border-gray-200 pt-4">
+                                                    <h4 className="font-medium text-sm mb-3">Informasi Rekening Bank</h4>
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <label className="block text-xs font-medium mb-1">Nama Bank *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.bank_name}
+                                                                onChange={(e) => updateField('bank_name', e.target.value)}
+                                                                placeholder="e.g., BCA, Mandiri, BRI"
+                                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium mb-1">Atas Nama *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.account_holder_name}
+                                                                onChange={(e) => updateField('account_holder_name', e.target.value)}
+                                                                placeholder="Nama pemilik rekening"
+                                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium mb-1">Nomor Rekening *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.account_number}
+                                                                onChange={(e) => updateField('account_number', e.target.value)}
+                                                                placeholder="1234567890"
+                                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-2">Informasi rekening untuk transfer manual</p>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
