@@ -36,6 +36,13 @@ export default function Settings() {
         production_client_key: ''
     })
 
+    // Bank Account configuration for manual payment
+    const [bankConfig, setBankConfig] = useState({
+        bank_name: '',
+        account_holder_name: '',
+        account_number: ''
+    })
+
     useEffect(() => {
         // Debug: check if token exists
         const token = localStorage.getItem('auth_token')
@@ -63,7 +70,18 @@ export default function Settings() {
             })
             .catch((err) => {
                 console.log('No Midtrans config found or error:', err.message)
-                // No settings yet, use defaults
+            })
+
+        // Load bank account settings
+        settingsAPI.get('bank_config')
+            .then(data => {
+                console.log('Loaded Bank config:', data)
+                if (data && data.value) {
+                    setBankConfig(data.value)
+                }
+            })
+            .catch((err) => {
+                console.log('No Bank config found or error:', err.message)
             })
     }, [])
 
@@ -72,11 +90,14 @@ export default function Settings() {
         setMessage('')
 
         try {
-            // Save Midtrans config to API
-            console.log('Saving config:', midtransConfig)
-            const result = await settingsAPI.save('midtrans_config', midtransConfig)
-            console.log('Save result:', result)
-            setMessage('Konfigurasi berhasil disimpan!')
+            // Save both Midtrans and Bank configs to API
+            console.log('Saving Midtrans config:', midtransConfig)
+            console.log('Saving Bank config:', bankConfig)
+
+            await settingsAPI.save('midtrans_config', midtransConfig)
+            await settingsAPI.save('bank_config', bankConfig)
+
+            setMessage('Semua konfigurasi berhasil disimpan!')
         } catch (err: any) {
             console.error('Save error:', err)
             setMessage('Gagal menyimpan: ' + (err.message || 'Unknown error'))
@@ -389,11 +410,57 @@ export default function Settings() {
                                                 </div>
                                             </div>
 
+                                            {/* Bank Account Configuration */}
+                                            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mt-6">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="size-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                                                        <span className="material-symbols-outlined text-yellow-600">account_balance</span>
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-text-main">Bank Account (Manual Payment)</h3>
+                                                        <p className="text-sm text-gray-500">Untuk pembayaran transfer bank manual</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="contoh: BCA, Mandiri, BRI"
+                                                            value={bankConfig.bank_name}
+                                                            onChange={(e) => setBankConfig({ ...bankConfig, bank_name: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nama sesuai rekening"
+                                                            value={bankConfig.account_holder_name}
+                                                            onChange={(e) => setBankConfig({ ...bankConfig, account_holder_name: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="1234567890"
+                                                            value={bankConfig.account_number}
+                                                            onChange={(e) => setBankConfig({ ...bankConfig, account_number: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             {/* Save Button */}
                                             <button
                                                 onClick={handleSave}
                                                 disabled={saving}
-                                                className="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                                className="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-6"
                                             >
                                                 {saving ? (
                                                     <>
@@ -403,7 +470,7 @@ export default function Settings() {
                                                 ) : (
                                                     <>
                                                         <span className="material-symbols-outlined text-[20px]">save</span>
-                                                        Simpan Konfigurasi Midtrans
+                                                        Simpan Semua Konfigurasi
                                                     </>
                                                 )}
                                             </button>
