@@ -27,6 +27,15 @@ export default function Settings() {
         daily: true
     })
 
+    // Midtrans configuration
+    const [midtransConfig, setMidtransConfig] = useState({
+        environment: 'sandbox' as 'sandbox' | 'production',
+        sandbox_server_key: '',
+        sandbox_client_key: '',
+        production_server_key: '',
+        production_client_key: ''
+    })
+
     useEffect(() => {
         authAPI.me()
             .then(data => {
@@ -221,43 +230,167 @@ export default function Settings() {
 
                                 {/* Integrations Settings */}
                                 {activeTab === 'integrations' && (
-                                    <div className="space-y-4">
-                                        {[
-                                            { name: 'Midtrans', desc: 'Payment gateway for paid events', icon: 'payments', connected: false, url: 'https://dashboard.sandbox.midtrans.com' },
-                                            { name: 'WhatsApp (WAHA)', desc: 'Send QR tickets via WhatsApp', icon: 'chat', connected: false, url: '#' },
-                                            { name: 'Google Calendar', desc: 'Sync events with calendar', icon: 'calendar_month', connected: false, url: '#' },
-                                        ].map((integration) => (
-                                            <div key={integration.name} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                                        <span className="material-symbols-outlined">{integration.icon}</span>
+                                    <div className="space-y-6">
+                                        {/* Midtrans Configuration */}
+                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="size-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-blue-600">payments</span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-text-main">Midtrans Payment Gateway</h3>
+                                                    <p className="text-sm text-gray-500">Konfigurasi pembayaran otomatis untuk event berbayar</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Environment Toggle */}
+                                            <div className="mb-6">
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Environment</label>
+                                                <div className="flex gap-4">
+                                                    <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${midtransConfig.environment === 'sandbox' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                                                        }`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="midtrans_env"
+                                                            value="sandbox"
+                                                            checked={midtransConfig.environment === 'sandbox'}
+                                                            onChange={() => setMidtransConfig({ ...midtransConfig, environment: 'sandbox' })}
+                                                            className="hidden"
+                                                        />
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="material-symbols-outlined text-blue-600">science</span>
+                                                            <div>
+                                                                <p className="font-medium">Sandbox</p>
+                                                                <p className="text-xs text-gray-500">Mode testing/development</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                    <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${midtransConfig.environment === 'production' ? 'border-green-500 bg-green-50' : 'border-gray-200'
+                                                        }`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="midtrans_env"
+                                                            value="production"
+                                                            checked={midtransConfig.environment === 'production'}
+                                                            onChange={() => setMidtransConfig({ ...midtransConfig, environment: 'production' })}
+                                                            className="hidden"
+                                                        />
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="material-symbols-outlined text-green-600">verified</span>
+                                                            <div>
+                                                                <p className="font-medium">Production</p>
+                                                                <p className="text-xs text-gray-500">Mode transaksi nyata</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            {/* Sandbox Keys */}
+                                            <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                                                <h4 className="font-bold text-blue-800 mb-4 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[18px]">science</span>
+                                                    Sandbox Keys
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
+                                                        <input
+                                                            type="password"
+                                                            placeholder="SB-Mid-server-xxx"
+                                                            value={midtransConfig.sandbox_server_key}
+                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_server_key: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                        />
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-bold text-text-main">{integration.name}</h4>
-                                                        <p className="text-sm text-gray-500">{integration.desc}</p>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="SB-Mid-client-xxx"
+                                                            value={midtransConfig.sandbox_client_key}
+                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_client_key: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                        />
                                                     </div>
                                                 </div>
-                                                <a
-                                                    href={integration.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${integration.connected
-                                                        ? 'bg-gray-100 text-gray-600'
-                                                        : 'bg-primary hover:bg-primary-hover text-white'
-                                                        }`}
-                                                >
-                                                    {integration.connected ? 'Connected' : 'Configure'}
-                                                    {!integration.connected && <span className="material-symbols-outlined text-[16px]">open_in_new</span>}
-                                                </a>
-                                            </div>
-                                        ))}
-
-                                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3 mt-6">
-                                            <span className="material-symbols-outlined text-blue-500">info</span>
-                                            <div>
-                                                <p className="text-sm text-blue-800">
-                                                    <strong>Note:</strong> To configure integrations, you need to set environment variables in your Cloudflare Workers dashboard.
+                                                <p className="text-xs text-blue-600 mt-2">
+                                                    <a href="https://dashboard.sandbox.midtrans.com/settings/config_info" target="_blank" rel="noopener noreferrer" className="underline">
+                                                        Dapatkan key di Midtrans Sandbox Dashboard →
+                                                    </a>
                                                 </p>
+                                            </div>
+
+                                            {/* Production Keys */}
+                                            <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-lg">
+                                                <h4 className="font-bold text-green-800 mb-4 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[18px]">verified</span>
+                                                    Production Keys
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
+                                                        <input
+                                                            type="password"
+                                                            placeholder="Mid-server-xxx"
+                                                            value={midtransConfig.production_server_key}
+                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, production_server_key: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Mid-client-xxx"
+                                                            value={midtransConfig.production_client_key}
+                                                            onChange={(e) => setMidtransConfig({ ...midtransConfig, production_client_key: e.target.value })}
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-green-600 mt-2">
+                                                    <a href="https://dashboard.midtrans.com/settings/config_info" target="_blank" rel="noopener noreferrer" className="underline">
+                                                        Dapatkan key di Midtrans Production Dashboard →
+                                                    </a>
+                                                </p>
+                                            </div>
+
+                                            {/* Current Active */}
+                                            <div className={`p-3 rounded-lg ${midtransConfig.environment === 'sandbox' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[18px]">info</span>
+                                                    <span className="text-sm font-medium">
+                                                        Active: {midtransConfig.environment === 'sandbox' ? 'Sandbox (Testing)' : 'Production (Live)'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Other Integrations */}
+                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                            <h3 className="font-bold text-text-main mb-4">Integrasi Lainnya</h3>
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-green-600">chat</span>
+                                                        <div>
+                                                            <p className="font-medium text-sm">WhatsApp (WAHA)</p>
+                                                            <p className="text-xs text-gray-500">Auto-send QR tickets</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-xs text-gray-400">Coming Soon</span>
+                                                </div>
+                                                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-blue-600">calendar_month</span>
+                                                        <div>
+                                                            <p className="font-medium text-sm">Google Calendar</p>
+                                                            <p className="text-xs text-gray-500">Sync events</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-xs text-gray-400">Coming Soon</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
