@@ -71,7 +71,7 @@ events.get('/:id', async (c) => {
 // Create event
 events.post('/', async (c) => {
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility, images } = body
 
   if (!title || !event_date) {
     return c.json({ error: 'Title and event date required' }, 400)
@@ -79,11 +79,12 @@ events.post('/', async (c) => {
 
   const eventId = `evt_${crypto.randomUUID().slice(0, 8)}`
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
   await c.env.DB.prepare(`
-    INSERT INTO events (id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility, status, slug)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)
-  `).bind(eventId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, visibility || 'public', slug).run()
+    INSERT INTO events (id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility, status, slug, image_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
+  `).bind(eventId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, visibility || 'public', slug, imageUrl).run()
 
   return c.json({ id: eventId, slug }, 201)
 })

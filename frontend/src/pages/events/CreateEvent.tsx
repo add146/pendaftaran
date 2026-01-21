@@ -10,6 +10,8 @@ interface EventFormData {
     location: string
     capacity: string
     event_mode: 'free' | 'paid'
+    payment_mode: 'manual' | 'auto'
+    whatsapp_cs: string
     visibility: 'public' | 'private'
 }
 
@@ -18,6 +20,8 @@ export default function CreateEvent() {
     const [currentStep, setCurrentStep] = useState(1)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [images, setImages] = useState<string[]>([])
+    const [uploadingImage, setUploadingImage] = useState(false)
 
     const [formData, setFormData] = useState<EventFormData>({
         title: '',
@@ -27,11 +31,66 @@ export default function CreateEvent() {
         location: '',
         capacity: '',
         event_mode: 'free',
+        payment_mode: 'manual',
+        whatsapp_cs: '',
         visibility: 'public'
     })
 
     const updateField = (field: keyof EventFormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }))
+    }
+
+    // Image compression and upload
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
+        if (images.length >= 3) {
+            setError('Maximum 3 images allowed')
+            return
+        }
+
+        setUploadingImage(true)
+        const file = files[0]
+
+        try {
+            const img = new Image()
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+
+                let width = img.width
+                let height = img.height
+                const maxWidth = 400
+
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width
+                    width = maxWidth
+                }
+
+                canvas.width = width
+                canvas.height = height
+                ctx?.drawImage(img, 0, 0, width, height)
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
+                setImages(prev => [...prev, dataUrl].slice(0, 3))
+                setUploadingImage(false)
+                URL.revokeObjectURL(img.src)
+            }
+            img.onerror = () => {
+                setError('Failed to load image')
+                setUploadingImage(false)
+            }
+            img.src = URL.createObjectURL(file)
+        } catch {
+            setError('Failed to upload image')
+            setUploadingImage(false)
+        }
+
+        e.target.value = ''
+    }
+
+    const removeImage = (index: number) => {
+        setImages(images.filter((_, i) => i !== index))
     }
 
     const handleSubmit = async (asDraft: boolean = false) => {
@@ -52,9 +111,12 @@ export default function CreateEvent() {
                 location: formData.location,
                 capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
                 event_mode: formData.event_mode,
+                payment_mode: formData.payment_mode,
+                whatsapp_cs: formData.whatsapp_cs,
                 visibility: formData.visibility,
-                status: asDraft ? 'draft' : 'open'
-            })
+                status: asDraft ? 'draft' : 'open',
+                images: images
+            } as Record<string, unknown>)
 
             navigate(`/events/${result.id}/participants`)
         } catch (err) {
@@ -93,10 +155,10 @@ export default function CreateEvent() {
                                 <button
                                     onClick={() => setCurrentStep(step)}
                                     className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${currentStep === step
-                                            ? 'bg-primary text-white'
-                                            : currentStep > step
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'border border-gray-300 text-gray-400'
+                                        ? 'bg-primary text-white'
+                                        : currentStep > step
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'border border-gray-300 text-gray-400'
                                         }`}
                                 >
                                     {currentStep > step ? '✓' : step}
@@ -200,8 +262,8 @@ export default function CreateEvent() {
                                                 type="button"
                                                 onClick={() => updateField('event_mode', 'free')}
                                                 className={`p-4 rounded-lg border-2 text-left transition-colors ${formData.event_mode === 'free'
-                                                        ? 'border-primary bg-primary/5'
-                                                        : 'border-gray-200 hover:border-gray-300'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-primary mb-2">volunteer_activism</span>
@@ -212,8 +274,8 @@ export default function CreateEvent() {
                                                 type="button"
                                                 onClick={() => updateField('event_mode', 'paid')}
                                                 className={`p-4 rounded-lg border-2 text-left transition-colors ${formData.event_mode === 'paid'
-                                                        ? 'border-primary bg-primary/5'
-                                                        : 'border-gray-200 hover:border-gray-300'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-primary mb-2">payments</span>
@@ -256,6 +318,111 @@ export default function CreateEvent() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Event Images */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold">Event Images (Slider)</h3>
+                                    <span className="text-sm text-gray-500">{images.length}/3</span>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4 mb-4">
+                                    {images.map((img, index) => (
+                                        <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
+                                            <img src={img} alt={`Event ${index + 1}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(index)}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {images.length < 3 && (
+                                        <label className="aspect-video rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                                            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                                            {uploadingImage ? (
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-gray-400">add_photo_alternate</span>
+                                                    <span className="text-xs text-gray-500 mt-1">Add Image</span>
+                                                </>
+                                            )}
+                                        </label>
+                                    )}
+                                </div>
+                                <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Images will be compressed automatically.</p>
+                            </div>
+
+                            {/* Payment Settings (for paid events) */}
+                            {formData.event_mode === 'paid' && (
+                                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                    <h3 className="text-lg font-bold mb-4">Payment Settings</h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Payment Mode</label>
+                                            <div className="flex gap-4">
+                                                <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'manual' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="payment_mode"
+                                                        value="manual"
+                                                        checked={formData.payment_mode === 'manual'}
+                                                        onChange={() => updateField('payment_mode', 'manual')}
+                                                        className="hidden"
+                                                    />
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-primary">chat</span>
+                                                        <div>
+                                                            <p className="font-medium">Manual (WhatsApp)</p>
+                                                            <p className="text-xs text-gray-500">Kirim nota ke WhatsApp CS</p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="payment_mode"
+                                                        value="auto"
+                                                        checked={formData.payment_mode === 'auto'}
+                                                        onChange={() => updateField('payment_mode', 'auto')}
+                                                        className="hidden"
+                                                    />
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-primary">credit_card</span>
+                                                        <div>
+                                                            <p className="font-medium">Otomatis (Midtrans)</p>
+                                                            <p className="text-xs text-gray-500">Pembayaran online langsung</p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {formData.payment_mode === 'manual' && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-500">+62</span>
+                                                    <input
+                                                        type="tel"
+                                                        value={formData.whatsapp_cs}
+                                                        onChange={(e) => updateField('whatsapp_cs', e.target.value)}
+                                                        placeholder="81234567890"
+                                                        className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
