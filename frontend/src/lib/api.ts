@@ -198,6 +198,7 @@ export interface Participant {
     full_name: string
     email: string
     phone?: string
+    city?: string
     gender?: string
     payment_status: 'pending' | 'paid' | 'failed'
     check_in_status: 'not_arrived' | 'checked_in'

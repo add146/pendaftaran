@@ -376,7 +376,10 @@ export default function Participants() {
                     full_name: selectedParticipant.full_name,
                     registration_id: selectedParticipant.registration_id,
                     qr_code: selectedParticipant.qr_code || selectedParticipant.registration_id,
-                    event_title: event?.title
+                    event_title: event?.title,
+                    event_date: event?.event_date,
+                    city: selectedParticipant.city,
+                    ticket_name: selectedParticipant.ticket_name
                 } : null}
             />
         </div>
