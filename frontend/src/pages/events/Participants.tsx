@@ -257,8 +257,8 @@ export default function Participants() {
 
     const handleResendWhatsApp = async (registrationId: string) => {
         try {
-            const result = await participantsAPI.resendWhatsApp(registrationId)
-            alert(`WhatsApp sent successfully to ${result.phone}`)
+            await participantsAPI.resendWhatsApp(registrationId)
+            // Silent success - no notification needed
         } catch (err: any) {
             alert(`Failed to send WhatsApp: ${err.message}`)
         }
