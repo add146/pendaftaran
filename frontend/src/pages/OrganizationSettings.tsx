@@ -24,8 +24,7 @@ export default function OrganizationSettings() {
         try {
             setLoading(true)
 
-            // Get orgId from auth.me() API call first
-            const { organizationsAPI: orgsAPI, authAPI } = await import('../lib/api')
+            // Get orgId from localStorage or fetch from /me
             let orgId = localStorage.getItem('orgId')
 
             // If not in localStorage, fetch from /me endpoint
@@ -45,10 +44,10 @@ export default function OrganizationSettings() {
 
             // Load organization data
             const [orgData, subData, membersData, wahaStatus] = await Promise.all([
-                orgsAPI.get(orgId),
+                organizationsAPI.get(orgId),
                 subscriptionsAPI.getCurrent(),
-                orgsAPI.getMembers(orgId),
-                orgsAPI.getWahaStatus(orgId),
+                organizationsAPI.getMembers(orgId),
+                organizationsAPI.getWahaStatus(orgId),
             ])
 
             setSubscription(subData)
