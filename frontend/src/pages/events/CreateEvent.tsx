@@ -12,6 +12,9 @@ interface EventFormData {
     event_mode: 'free' | 'paid'
     payment_mode: 'manual' | 'auto'
     whatsapp_cs: string
+    bank_name: string
+    account_holder_name: string
+    account_number: string
     visibility: 'public' | 'private'
 }
 
@@ -33,6 +36,9 @@ export default function CreateEvent() {
         event_mode: 'free',
         payment_mode: 'manual',
         whatsapp_cs: '',
+        bank_name: '',
+        account_holder_name: '',
+        account_number: '',
         visibility: 'public'
     })
 
@@ -113,6 +119,9 @@ export default function CreateEvent() {
                 event_mode: formData.event_mode,
                 payment_mode: formData.payment_mode,
                 whatsapp_cs: formData.whatsapp_cs,
+                bank_name: formData.bank_name,
+                account_holder_name: formData.account_holder_name,
+                account_number: formData.account_number,
                 visibility: formData.visibility,
                 status: asDraft ? 'draft' : 'open',
                 images: images
@@ -405,20 +414,62 @@ export default function CreateEvent() {
                                         </div>
 
                                         {formData.payment_mode === 'manual' && (
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-gray-500">+62</span>
-                                                    <input
-                                                        type="tel"
-                                                        value={formData.whatsapp_cs}
-                                                        onChange={(e) => updateField('whatsapp_cs', e.target.value)}
-                                                        placeholder="81234567890"
-                                                        className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    />
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-500">+62</span>
+                                                        <input
+                                                            type="tel"
+                                                            value={formData.whatsapp_cs}
+                                                            onChange={(e) => updateField('whatsapp_cs', e.target.value)}
+                                                            placeholder="81234567890"
+                                                            className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
                                                 </div>
-                                                <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
-                                            </div>
+
+                                                <div className="pt-4 border-t border-gray-200">
+                                                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                                                        <span className="material-symbols-outlined text-[20px]">account_balance</span>
+                                                        Informasi Rekening Bank
+                                                    </h4>
+                                                    <div className="space-y-3">
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-1">Nama Bank *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.bank_name}
+                                                                onChange={(e) => updateField('bank_name', e.target.value)}
+                                                                placeholder="contoh: BCA, Mandiri, BRI"
+                                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-1">Nama Pemilik Rekening *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.account_holder_name}
+                                                                onChange={(e) => updateField('account_holder_name', e.target.value)}
+                                                                placeholder="Nama sesuai rekening bank"
+                                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-1">Nomor Rekening *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.account_number}
+                                                                onChange={(e) => updateField('account_number', e.target.value)}
+                                                                placeholder="1234567890"
+                                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-2">Informasi ini akan ditampilkan ke peserta untuk transfer manual</p>
+                                                </div>
+                                            </>
                                         )}
                                     </div>
                                 </div>
