@@ -73,7 +73,7 @@ function ParticipantRow({
 
     // Generate WhatsApp link to user's phone with ticket link
     const userPhone = participant.phone?.replace(/^0/, '62') || ''
-    const ticketLink = `${window.location.origin}/ticket/${participant.registration_id}`
+    const ticketLink = `https://etiket.my.id/ticket/${participant.registration_id}`
     const waMessage = encodeURIComponent(
         `🎫 *E-TICKET*\n\n` +
         `👤 *${participant.full_name}*\n` +

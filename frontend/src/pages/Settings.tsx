@@ -124,8 +124,18 @@ export default function Settings() {
             console.log('Saving Bank config:', bankConfig)
             console.log('Saving WAHA config:', wahaConfig)
 
-            await settingsAPI.save('bank_config', bankConfig)
-            await settingsAPI.save('waha_config', wahaConfig)
+            // Save Bank keys individually
+            await settingsAPI.save('bank_name', bankConfig.bank_name)
+            await settingsAPI.save('account_holder_name', bankConfig.account_holder_name)
+            await settingsAPI.save('account_number', bankConfig.account_number)
+            await settingsAPI.save('bank_config', bankConfig) // Keep for UI state
+
+            // Save WAHA keys individually
+            await settingsAPI.save('waha_enabled', wahaConfig.enabled.toString()) // Backend expects "true"/"false" string
+            await settingsAPI.save('waha_api_url', wahaConfig.api_url)
+            await settingsAPI.save('waha_api_key', wahaConfig.api_key)
+            await settingsAPI.save('waha_session', wahaConfig.session)
+            await settingsAPI.save('waha_config', wahaConfig) // Keep for UI state
 
             setMessage('Semua konfigurasi berhasil disimpan!')
         } catch (err: any) {
