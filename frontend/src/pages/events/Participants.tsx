@@ -32,6 +32,7 @@ function ParticipantRow({
     onCheckIn,
     onApprove,
     onShowQR,
+    onDelete,
     eventDate,
     eventTime
 }: {
@@ -39,6 +40,7 @@ function ParticipantRow({
     onCheckIn: (id: string) => void
     onApprove: (id: string) => void
     onShowQR: (participant: ParticipantType) => void
+    onDelete: (id: string, name: string) => void
     eventDate?: string
     eventTime?: string
 }) {
@@ -179,6 +181,15 @@ function ParticipantRow({
                             Send WA
                         </a>
                     )}
+
+                    {/* Delete button */}
+                    <button
+                        onClick={() => onDelete(participant.registration_id, participant.full_name)}
+                        className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-lg hover:bg-red-600 flex items-center gap-1"
+                        title="Delete participant"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                    </button>
                 </div>
             </td>
         </tr>
@@ -245,6 +256,18 @@ export default function Participants() {
     const handleShowQR = (participant: ParticipantType) => {
         setSelectedParticipant(participant)
         setIsQRModalOpen(true)
+    }
+
+    const handleDelete = async (registrationId: string, name: string) => {
+        if (!confirm(`Are you sure you want to delete participant "${name}"? This action cannot be undone.`)) {
+            return
+        }
+        try {
+            await participantsAPI.delete(registrationId)
+            fetchData() // Refresh data
+        } catch (err: any) {
+            alert(err.message || 'Failed to delete participant')
+        }
     }
 
     const handleScanSuccess = () => {
@@ -364,7 +387,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} eventDate={event?.event_date} eventTime={event?.event_time} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onDelete={handleDelete} eventDate={event?.event_date} eventTime={event?.event_time} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>

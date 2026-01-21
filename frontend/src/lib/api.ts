@@ -124,6 +124,12 @@ export const participantsAPI = {
             `/api/participants/${id}/approve-payment`,
             { method: 'POST' }
         ),
+
+    delete: (id: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/participants/${id}`,
+            { method: 'DELETE' }
+        ),
 }
 
 // Settings API

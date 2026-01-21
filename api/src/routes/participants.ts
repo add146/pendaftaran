@@ -313,3 +313,24 @@ participants.post('/:id/approve-payment', async (c) => {
         }
     })
 })
+
+// Delete participant
+participants.delete('/:id', async (c) => {
+    const { id } = c.req.param()
+
+    const participant = await c.env.DB.prepare(`
+    SELECT * FROM participants WHERE id = ? OR registration_id = ?
+  `).bind(id, id).first()
+
+    if (!participant) {
+        return c.json({ error: 'Participant not found' }, 404)
+    }
+
+    await c.env.DB.prepare(`
+    DELETE FROM participants WHERE id = ?
+  `).bind(participant.id).run()
+
+    return c.json({
+        message: 'Participant deleted successfully'
+    })
+})
