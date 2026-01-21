@@ -390,6 +390,74 @@ participants.post('/:id/approve-payment', async (c) => {
     })
 })
 
+// Resend WhatsApp notification
+participants.post('/:id/resend-whatsapp', async (c) => {
+    const { id } = c.req.param()
+
+    console.log('[RESEND-WA] Starting resend for participant:', id)
+
+    const participant = await c.env.DB.prepare(`
+        SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+        FROM participants p
+        LEFT JOIN events e ON p.event_id = e.id
+        LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+        WHERE p.id = ? OR p.registration_id = ?
+    `).bind(id, id).first() as any
+
+    if (!participant) {
+        return c.json({ error: 'Participant not found' }, 404)
+    }
+
+    if (!participant.phone) {
+        return c.json({ error: 'No phone number found for this participant' }, 400)
+    }
+
+    console.log('[RESEND-WA] Participant found:', {
+        name: participant.full_name,
+        phone: participant.phone,
+        registration_id: participant.registration_id
+    })
+
+    try {
+        const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+        const frontendUrl = 'https://etiket.my.id'
+        const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
+
+        const message = generateRegistrationMessage({
+            eventTitle: participant.event_title,
+            fullName: participant.full_name,
+            registrationId: participant.registration_id,
+            ticketLink,
+            ticketName: participant.ticket_name,
+            ticketPrice: participant.ticket_price
+        })
+
+        console.log('[RESEND-WA] Sending WhatsApp to:', participant.phone)
+        const result = await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+
+        console.log('[RESEND-WA] Result:', result)
+
+        if (result.success) {
+            return c.json({
+                message: 'WhatsApp notification sent successfully',
+                phone: participant.phone,
+                registration_id: participant.registration_id
+            })
+        } else {
+            return c.json({
+                error: 'Failed to send WhatsApp',
+                details: result.error
+            }, 500)
+        }
+    } catch (error) {
+        console.error('[RESEND-WA] Error:', error)
+        return c.json({
+            error: 'Failed to send WhatsApp',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, 500)
+    }
+})
+
 // Delete participant
 participants.delete('/:id', async (c) => {
     const { id } = c.req.param()
