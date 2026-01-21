@@ -23,6 +23,8 @@ export default function EditEvent() {
         location: '',
         capacity: '',
         event_mode: 'free' as 'free' | 'paid',
+        payment_mode: 'manual' as 'manual' | 'auto',
+        whatsapp_cs: '',
         visibility: 'public' as 'public' | 'private',
         status: 'draft' as 'draft' | 'open' | 'closed'
     })
@@ -91,7 +93,7 @@ export default function EditEvent() {
         if (!id) return
 
         eventsAPI.get(id)
-            .then((data: Event & { ticket_types?: { name: string; price: number; quota?: number }[] }) => {
+            .then((data: Event & { ticket_types?: { name: string; price: number; quota?: number }[]; payment_mode?: string; whatsapp_cs?: string }) => {
                 setFormData({
                     title: data.title || '',
                     description: data.description || '',
@@ -100,6 +102,8 @@ export default function EditEvent() {
                     location: data.location || '',
                     capacity: data.capacity?.toString() || '',
                     event_mode: data.event_mode || 'free',
+                    payment_mode: (data.payment_mode as 'manual' | 'auto') || 'manual',
+                    whatsapp_cs: data.whatsapp_cs || '',
                     visibility: data.visibility || 'public',
                     status: data.status || 'draft'
                 })
@@ -164,11 +168,13 @@ export default function EditEvent() {
                 location: formData.location,
                 capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
                 event_mode: formData.event_mode,
+                payment_mode: formData.payment_mode,
+                whatsapp_cs: formData.whatsapp_cs,
                 visibility: formData.visibility,
                 status: formData.status,
                 images: images,
                 ticket_types: tickets
-            })
+            } as Record<string, unknown>)
 
             navigate('/events')
         } catch (err) {
@@ -324,6 +330,74 @@ export default function EditEvent() {
 
                                 <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
                             </div>
+
+                            {/* Payment Settings (for paid events) */}
+                            {formData.event_mode === 'paid' && (
+                                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                    <h3 className="text-lg font-bold mb-4">Payment Settings</h3>
+
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Payment Mode</label>
+                                            <div className="flex gap-4">
+                                                <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'manual' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="payment_mode"
+                                                        value="manual"
+                                                        checked={formData.payment_mode === 'manual'}
+                                                        onChange={() => updateField('payment_mode', 'manual')}
+                                                        className="hidden"
+                                                    />
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-primary">chat</span>
+                                                        <div>
+                                                            <p className="font-medium">Manual (WhatsApp)</p>
+                                                            <p className="text-xs text-gray-500">Kirim nota ke WhatsApp CS</p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                                <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto' ? 'border-primary bg-primary/5' : 'border-gray-200'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="payment_mode"
+                                                        value="auto"
+                                                        checked={formData.payment_mode === 'auto'}
+                                                        onChange={() => updateField('payment_mode', 'auto')}
+                                                        className="hidden"
+                                                    />
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="material-symbols-outlined text-primary">credit_card</span>
+                                                        <div>
+                                                            <p className="font-medium">Otomatis (Midtrans)</p>
+                                                            <p className="text-xs text-gray-500">Pembayaran online langsung</p>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        {formData.payment_mode === 'manual' && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-500">+62</span>
+                                                    <input
+                                                        type="tel"
+                                                        value={formData.whatsapp_cs}
+                                                        onChange={(e) => updateField('whatsapp_cs', e.target.value)}
+                                                        placeholder="81234567890"
+                                                        className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    />
+                                                </div>
+                                                <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Ticket Types (for paid events) */}
                             {formData.event_mode === 'paid' && (

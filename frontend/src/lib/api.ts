@@ -100,6 +100,7 @@ export const participantsAPI = {
         full_name: string
         email: string
         phone?: string
+        city?: string
         gender?: string
     }) =>
         fetchAPI<{ id: string; registration_id: string; qr_code: string; payment_status: string; message: string }>(

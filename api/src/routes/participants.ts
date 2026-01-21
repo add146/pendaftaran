@@ -82,7 +82,7 @@ participants.get('/:id', async (c) => {
 // Register for event (public)
 participants.post('/register', async (c) => {
     const body = await c.req.json()
-    const { event_id, ticket_type_id, full_name, email, phone, gender } = body
+    const { event_id, ticket_type_id, full_name, email, phone, city, gender } = body
 
     if (!event_id || !full_name || !email) {
         return c.json({ error: 'Event ID, full name, and email required' }, 400)
@@ -91,7 +91,7 @@ participants.post('/register', async (c) => {
     // Check event exists and is open
     const event = await c.env.DB.prepare(
         'SELECT * FROM events WHERE id = ? AND status = ?'
-    ).bind(event_id, 'open').first()
+    ).bind(event_id, 'open').first() as { id: string; capacity: number; event_mode: string; payment_mode: string; whatsapp_cs: string; title: string } | null
 
     if (!event) {
         return c.json({ error: 'Event not found or not accepting registrations' }, 400)
@@ -103,7 +103,7 @@ participants.post('/register', async (c) => {
             'SELECT COUNT(*) as count FROM participants WHERE event_id = ?'
         ).bind(event_id).first()
 
-        if (participantCount && (participantCount.count as number) >= (event.capacity as number)) {
+        if (participantCount && (participantCount.count as number) >= event.capacity) {
             return c.json({ error: 'Event is full' }, 400)
         }
     }
@@ -124,16 +124,35 @@ participants.post('/register', async (c) => {
     // Determine payment status based on event mode
     const paymentStatus = event.event_mode === 'free' ? 'paid' : 'pending'
 
+    // Get ticket price if paid event
+    let ticketPrice = 0
+    let ticketName = ''
+    if (ticket_type_id) {
+        const ticket = await c.env.DB.prepare(
+            'SELECT name, price FROM ticket_types WHERE id = ?'
+        ).bind(ticket_type_id).first() as { name: string; price: number } | null
+        if (ticket) {
+            ticketPrice = ticket.price
+            ticketName = ticket.name
+        }
+    }
+
     await c.env.DB.prepare(`
-    INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, gender, payment_status, qr_code)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, gender || null, paymentStatus, qrCode).run()
+    INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, city, gender, payment_status, qr_code)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode).run()
 
     return c.json({
         id: participantId,
         registration_id: registrationId,
         qr_code: qrCode,
         payment_status: paymentStatus,
+        event_title: event.title,
+        // Payment info for frontend flow
+        payment_mode: event.payment_mode || 'manual',
+        whatsapp_cs: event.whatsapp_cs || null,
+        ticket_name: ticketName,
+        ticket_price: ticketPrice,
         message: paymentStatus === 'paid' ? 'Registration successful!' : 'Please complete payment'
     }, 201)
 })

@@ -71,7 +71,7 @@ events.get('/:id', async (c) => {
 // Create event
 events.post('/', async (c) => {
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, visibility } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility } = body
 
   if (!title || !event_date) {
     return c.json({ error: 'Title and event date required' }, 400)
@@ -81,9 +81,9 @@ events.post('/', async (c) => {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
   await c.env.DB.prepare(`
-    INSERT INTO events (id, title, description, event_date, event_time, location, capacity, event_mode, visibility, status, slug)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)
-  `).bind(eventId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', visibility || 'public', slug).run()
+    INSERT INTO events (id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility, status, slug)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?)
+  `).bind(eventId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, visibility || 'public', slug).run()
 
   return c.json({ id: eventId, slug }, 201)
 })
@@ -92,7 +92,7 @@ events.post('/', async (c) => {
 events.put('/:id', async (c) => {
   const { id } = c.req.param()
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, visibility, status, images, ticket_types } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility, status, images, ticket_types } = body
 
   const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ?').bind(id).first()
   if (!existing) {
@@ -109,11 +109,13 @@ events.put('/:id', async (c) => {
       location = COALESCE(?, location),
       capacity = COALESCE(?, capacity),
       event_mode = COALESCE(?, event_mode),
+      payment_mode = COALESCE(?, payment_mode),
+      whatsapp_cs = COALESCE(?, whatsapp_cs),
       visibility = COALESCE(?, visibility),
       status = COALESCE(?, status),
       image_url = COALESCE(?, image_url)
     WHERE id = ?
-  `).bind(title, description, event_date, event_time, location, capacity, event_mode, visibility, status, images ? JSON.stringify(images) : null, id).run()
+  `).bind(title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, visibility, status, images ? JSON.stringify(images) : null, id).run()
 
   // Update ticket types if provided
   if (ticket_types && Array.isArray(ticket_types)) {

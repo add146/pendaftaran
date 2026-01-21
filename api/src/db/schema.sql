@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS events (
     location_map_url TEXT,
     capacity INTEGER,
     event_mode TEXT DEFAULT 'free',
+    payment_mode TEXT DEFAULT 'manual', -- 'manual' or 'auto' (Midtrans)
+    whatsapp_cs TEXT, -- WhatsApp number for manual payment
     visibility TEXT DEFAULT 'public',
     status TEXT DEFAULT 'draft',
     image_url TEXT,
@@ -56,6 +58,7 @@ CREATE TABLE IF NOT EXISTS participants (
     full_name TEXT NOT NULL,
     email TEXT NOT NULL,
     phone TEXT,
+    city TEXT, -- Kota tinggal
     gender TEXT,
     payment_status TEXT DEFAULT 'pending',
     check_in_status TEXT DEFAULT 'not_arrived',

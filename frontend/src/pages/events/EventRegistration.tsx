@@ -4,18 +4,27 @@ import { publicAPI, participantsAPI, type PublicEvent, type TicketType } from '.
 
 export default function EventRegistration() {
     const { slug } = useParams<{ slug: string }>()
-    const [event, setEvent] = useState<(PublicEvent & { ticket_types: TicketType[]; registration_available: boolean }) | null>(null)
+    const [event, setEvent] = useState<(PublicEvent & { ticket_types: TicketType[]; registration_available: boolean; payment_mode?: string; whatsapp_cs?: string }) | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [success, setSuccess] = useState(false)
     const [registrationId, setRegistrationId] = useState('')
+    // Payment result from API
+    const [paymentInfo, setPaymentInfo] = useState<{
+        payment_mode: string
+        whatsapp_cs: string | null
+        ticket_name: string
+        ticket_price: number
+        event_title: string
+    } | null>(null)
 
     // Form state
     const [formData, setFormData] = useState({
         full_name: '',
         email: '',
         phone: '',
+        city: '',
         ticket_type_id: ''
     })
 
@@ -55,9 +64,30 @@ export default function EventRegistration() {
                 ticket_type_id: formData.ticket_type_id || undefined,
                 full_name: formData.full_name,
                 email: formData.email,
-                phone: formData.phone || undefined
+                phone: formData.phone || undefined,
+                city: formData.city || undefined
             })
             setRegistrationId(result.registration_id)
+
+            // Store payment info for flow handling
+            const paymentResult = result as typeof result & {
+                payment_mode?: string
+                whatsapp_cs?: string
+                ticket_name?: string
+                ticket_price?: number
+                event_title?: string
+            }
+
+            if (paymentResult.payment_mode) {
+                setPaymentInfo({
+                    payment_mode: paymentResult.payment_mode,
+                    whatsapp_cs: paymentResult.whatsapp_cs || null,
+                    ticket_name: paymentResult.ticket_name || '',
+                    ticket_price: paymentResult.ticket_price || 0,
+                    event_title: paymentResult.event_title || event.title
+                })
+            }
+
             setSuccess(true)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Registration failed')
@@ -106,6 +136,27 @@ export default function EventRegistration() {
     }
 
     if (success) {
+        // Generate WhatsApp nota message
+        const generateWhatsAppNota = () => {
+            if (!paymentInfo) return ''
+            const nota = `*NOTA PENDAFTARAN*
+            
+Event: ${paymentInfo.event_title}
+Nama: ${formData.full_name}
+Email: ${formData.email}
+Phone: ${formData.phone || '-'}
+Kota: ${formData.city || '-'}
+Tiket: ${paymentInfo.ticket_name}
+Harga: Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
+Registration ID: ${registrationId}
+
+Mohon konfirmasi pembayaran ke rekening berikut...`
+            return encodeURIComponent(nota)
+        }
+
+        const waNumber = paymentInfo?.whatsapp_cs?.replace(/^0/, '62') || ''
+        const waLink = `https://wa.me/${waNumber}?text=${generateWhatsAppNota()}`
+
         return (
             <div className="min-h-screen bg-background-light flex flex-col items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full text-center">
@@ -114,12 +165,50 @@ export default function EventRegistration() {
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h1>
                     <p className="text-gray-600 mb-4">Thank you for registering for <strong>{event?.title}</strong></p>
-                    <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
                         <p className="text-sm text-gray-500">Your Registration ID</p>
                         <p className="text-lg font-mono font-bold text-primary">{registrationId}</p>
                     </div>
-                    <p className="text-sm text-gray-500 mb-6">
-                        A confirmation email has been sent to <strong>{formData.email}</strong>
+
+                    {/* Payment flow based on mode */}
+                    {paymentInfo && paymentInfo.ticket_price > 0 && (
+                        <div className="mb-6">
+                            {paymentInfo.payment_mode === 'manual' && paymentInfo.whatsapp_cs ? (
+                                <div className="space-y-3">
+                                    <p className="text-sm text-gray-600">Silakan lanjutkan pembayaran via WhatsApp:</p>
+                                    <a
+                                        href={waLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600"
+                                    >
+                                        <span className="material-symbols-outlined">chat</span>
+                                        Kirim Nota ke WhatsApp
+                                    </a>
+                                    <p className="text-xs text-gray-500">
+                                        Total: Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
+                                    </p>
+                                </div>
+                            ) : paymentInfo.payment_mode === 'auto' ? (
+                                <div className="space-y-3">
+                                    <p className="text-sm text-gray-600">Lanjutkan pembayaran online:</p>
+                                    <button
+                                        className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600"
+                                        onClick={() => {
+                                            // TODO: Integrate with Midtrans
+                                            alert('Midtrans payment integration coming soon')
+                                        }}
+                                    >
+                                        <span className="material-symbols-outlined">credit_card</span>
+                                        Bayar Sekarang - Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
+                                    </button>
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
+
+                    <p className="text-sm text-gray-500 mb-4">
+                        Konfirmasi telah dikirim ke <strong>{formData.email}</strong>
                     </p>
                     <Link
                         to="/"
@@ -255,6 +344,17 @@ export default function EventRegistration() {
                                                 onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                 placeholder="Enter your phone number"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">Kota Tinggal</label>
+                                            <input
+                                                type="text"
+                                                value={formData.city}
+                                                onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                placeholder="Masukkan kota tinggal"
                                             />
                                         </div>
 
