@@ -26,7 +26,9 @@ app.use('*', cors({
 		'http://localhost:5173',
 		'http://localhost:3000',
 		'https://pendaftaran-ccb.pages.dev',
-		'https://pendaftaran.pages.dev'
+		'https://pendaftaran.pages.dev',
+		'https://etiket.my.id',
+		'https://www.etiket.my.id'
 	],
 	allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 	allowHeaders: ['Content-Type', 'Authorization'],

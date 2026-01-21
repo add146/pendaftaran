@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pendaftaran-qr-api.khibrohstudio.workers.dev'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pendaftaran-qr-api.khibroh.workers.dev'
 
 // Generic fetch wrapper
 async function fetchAPI<T>(
