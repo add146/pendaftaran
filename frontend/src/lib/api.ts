@@ -210,6 +210,8 @@ export interface Event {
 export interface PublicEvent extends Event {
     registered_count: number
     organization_name?: string
+    midtrans_client_key?: string
+    midtrans_environment?: string
 }
 
 export interface TicketType {

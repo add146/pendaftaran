@@ -52,9 +52,16 @@ export default function EventRegistration() {
     }, [slug])
 
     // Load Midtrans Snap Script
+    // Load Midtrans Snap Script
     useEffect(() => {
-        const snapScript = 'https://app.sandbox.midtrans.com/snap/snap.js'
-        const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'SB-Mid-client-TEST' // Placeholder
+        if (!event) return
+
+        const isProduction = event.midtrans_environment === 'production'
+        const snapScript = isProduction
+            ? 'https://app.midtrans.com/snap/snap.js'
+            : 'https://app.sandbox.midtrans.com/snap/snap.js'
+
+        const clientKey = event.midtrans_client_key || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'SB-Mid-client-TEST'
 
         const script = document.createElement('script')
         script.src = snapScript
@@ -64,9 +71,12 @@ export default function EventRegistration() {
         document.body.appendChild(script)
 
         return () => {
-            document.body.removeChild(script)
+            // Check if script still exists before removing
+            if (document.body.contains(script)) {
+                document.body.removeChild(script)
+            }
         }
-    }, [])
+    }, [event])
 
     const handleMidtransPayment = async () => {
         if (!participantId || !paymentInfo) {

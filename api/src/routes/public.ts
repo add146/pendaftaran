@@ -49,10 +49,21 @@ publicRoutes.get('/events/:slug', async (c) => {
   const isAvailable = event.status === 'open' &&
     (!event.capacity || (event.registered_count as number) < (event.capacity as number))
 
+  // Get Midtrans config
+  const midtransSettings = await c.env.DB.prepare(`
+    SELECT key, value FROM settings WHERE key IN ('midtrans_client_key', 'midtrans_environment')
+  `).all()
+  const settingsMap = new Map(midtransSettings.results.map((s: any) => [s.key, s.value]))
+
+  const midtransClientKey = settingsMap.get('midtrans_client_key') || c.env.MIDTRANS_CLIENT_KEY
+  const midtransEnvironment = settingsMap.get('midtrans_environment') || (c.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'production' : 'sandbox')
+
   return c.json({
     ...event,
     ticket_types: tickets.results,
-    registration_available: isAvailable
+    registration_available: isAvailable,
+    midtrans_client_key: midtransClientKey,
+    midtrans_environment: midtransEnvironment
   })
 })
 
