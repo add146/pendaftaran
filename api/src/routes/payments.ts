@@ -173,7 +173,7 @@ payments.post('/notification', async (c) => {
 
             if (participant && participant.phone) {
                 const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
-                const frontendUrl = 'https://pendaftaran-qr.pages.dev'
+                const frontendUrl = 'https://etiket.my.id'
                 const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
 
                 const message = generateRegistrationMessage({

@@ -160,7 +160,7 @@ participants.post('/register', async (c) => {
             console.log('[WAHA] WhatsApp module imported successfully')
 
             // Use frontend URL for ticket link
-            const frontendUrl = 'https://pendaftaran-qr.pages.dev'
+            const frontendUrl = 'https://etiket.my.id'
             const ticketLink = `${frontendUrl}/ticket/${registrationId}`
             console.log('[WAHA] Ticket link:', ticketLink)
 
