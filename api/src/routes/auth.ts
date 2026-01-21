@@ -162,3 +162,68 @@ auth.post('/refresh', authMiddleware, async (c) => {
 
     return c.json({ token })
 })
+
+// Update user profile
+auth.put('/profile', authMiddleware, async (c) => {
+    const user = c.get('user')
+    const { name, email } = await c.req.json()
+
+    if (!name || !email) {
+        return c.json({ error: 'Name and email are required' }, 400)
+    }
+
+    // Check if email is already taken by another user
+    const existingUser = await c.env.DB.prepare(
+        'SELECT id FROM users WHERE email = ? AND id != ?'
+    ).bind(email, user.userId).first()
+
+    if (existingUser) {
+        return c.json({ error: 'Email already in use' }, 400)
+    }
+
+    // Update user
+    await c.env.DB.prepare(
+        'UPDATE users SET name = ?, email = ? WHERE id = ?'
+    ).bind(name, email, user.userId).run()
+
+    return c.json({ message: 'Profile updated successfully' })
+})
+
+// Change password
+auth.put('/change-password', authMiddleware, async (c) => {
+    const user = c.get('user')
+    const { current_password, new_password } = await c.req.json()
+
+    if (!current_password || !new_password) {
+        return c.json({ error: 'Current and new password are required' }, 400)
+    }
+
+    if (new_password.length < 6) {
+        return c.json({ error: 'New password must be at least 6 characters' }, 400)
+    }
+
+    // Get current user
+    const dbUser = await c.env.DB.prepare(
+        'SELECT password FROM users WHERE id = ?'
+    ).bind(user.userId).first()
+
+    if (!dbUser) {
+        return c.json({ error: 'User not found' }, 404)
+    }
+
+    // Verify current password
+    const isValid = await verifyPassword(current_password, dbUser.password as string)
+    if (!isValid) {
+        return c.json({ error: 'Current password is incorrect' }, 401)
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(new_password)
+
+    // Update password
+    await c.env.DB.prepare(
+        'UPDATE users SET password = ? WHERE id = ?'
+    ).bind(hashedPassword, user.userId).run()
+
+    return c.json({ message: 'Password changed successfully' })
+})

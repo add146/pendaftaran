@@ -6,6 +6,7 @@ import Events from './pages/Events'
 import Payments from './pages/Payments'
 import Settings from './pages/Settings'
 import OrganizationSettings from './pages/OrganizationSettings'
+import Profile from './pages/Profile'
 import AllParticipants from './pages/AllParticipants'
 import CreateEvent from './pages/events/CreateEvent'
 import EditEvent from './pages/events/EditEvent'
@@ -35,6 +36,7 @@ function App() {
         <Route path="/payments" element={<Payments />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/organization" element={<OrganizationSettings />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   )

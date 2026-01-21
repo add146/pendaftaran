@@ -47,6 +47,18 @@ export const authAPI = {
         fetchAPI<{ id: string; email: string; name: string; role: string; organization: string; organization_id: string }>(
             '/api/auth/me'
         ),
+
+    updateProfile: (data: { name: string; email: string }) =>
+        fetchAPI<{ message: string }>(
+            '/api/auth/profile',
+            { method: 'PUT', body: JSON.stringify(data) }
+        ),
+
+    changePassword: (currentPassword: string, newPassword: string) =>
+        fetchAPI<{ message: string }>(
+            '/api/auth/change-password',
+            { method: 'PUT', body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }
+        ),
 }
 
 // Events API
