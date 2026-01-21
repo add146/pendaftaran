@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { participantsAPI, eventsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
 import QRScanner from '../../components/QRScanner'
+import QRCodeModal from '../../components/QRCodeModal'
 
 // Stat card component
 function StatCard({ icon, label, value, subValue, iconColor }: {
@@ -29,11 +30,13 @@ function StatCard({ icon, label, value, subValue, iconColor }: {
 function ParticipantRow({
     participant,
     onCheckIn,
-    onApprove
+    onApprove,
+    onShowQR
 }: {
     participant: ParticipantType
     onCheckIn: (id: string) => void
     onApprove: (id: string) => void
+    onShowQR: (participant: ParticipantType) => void
 }) {
     const paymentStyles: Record<string, string> = {
         paid: 'bg-green-100 text-green-800',
@@ -122,6 +125,17 @@ function ParticipantRow({
                     )}
 
                     {/* WhatsApp Send QR button for paid participants */}
+                    {participant.payment_status === 'paid' && (
+                        <button
+                            onClick={() => onShowQR(participant)}
+                            className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover flex items-center gap-1"
+                        >
+                            <span className="material-symbols-outlined text-[16px]">qr_code</span>
+                            Show QR
+                        </button>
+                    )}
+
+                    {/* WhatsApp Send link for paid participants with phone */}
                     {participant.payment_status === 'paid' && participant.phone && (
                         <a
                             href={waLink}
@@ -130,7 +144,7 @@ function ParticipantRow({
                             className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
                         >
                             <span className="material-symbols-outlined text-[16px]">send</span>
-                            Send QR
+                            Send WA
                         </a>
                     )}
                 </div>
@@ -142,6 +156,8 @@ function ParticipantRow({
 export default function Participants() {
     const { id } = useParams()
     const [isScannerOpen, setIsScannerOpen] = useState(false)
+    const [isQRModalOpen, setIsQRModalOpen] = useState(false)
+    const [selectedParticipant, setSelectedParticipant] = useState<ParticipantType | null>(null)
     const [participants, setParticipants] = useState<ParticipantType[]>([])
     const [event, setEvent] = useState<Event | null>(null)
     const [stats, setStats] = useState({ total: 0, checked_in: 0, pending: 0, revenue: 0 })
@@ -192,6 +208,11 @@ export default function Participants() {
         } catch (err: any) {
             alert(err.message)
         }
+    }
+
+    const handleShowQR = (participant: ParticipantType) => {
+        setSelectedParticipant(participant)
+        setIsQRModalOpen(true)
     }
 
     const handleScanSuccess = () => {
@@ -311,7 +332,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>
@@ -345,6 +366,18 @@ export default function Participants() {
                 onClose={() => setIsScannerOpen(false)}
                 eventId={id || ''}
                 onCheckInSuccess={handleScanSuccess}
+            />
+
+            {/* QR Code Display Modal */}
+            <QRCodeModal
+                isOpen={isQRModalOpen}
+                onClose={() => setIsQRModalOpen(false)}
+                participant={selectedParticipant ? {
+                    full_name: selectedParticipant.full_name,
+                    registration_id: selectedParticipant.registration_id,
+                    qr_code: selectedParticipant.qr_code || selectedParticipant.registration_id,
+                    event_title: event?.title
+                } : null}
             />
         </div>
     )
