@@ -12,7 +12,7 @@ interface UserProfile {
 
 export default function Settings() {
     const [activeTab, setActiveTab] = useState('general')
-    const [profile, setProfile] = useState<UserProfile | null>(null)
+    const [_profile, setProfile] = useState<UserProfile | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [message, setMessage] = useState('')
@@ -85,8 +85,8 @@ export default function Settings() {
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                                            ? 'border-primary text-primary'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
                                         }`}
                                 >
                                     <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
@@ -242,8 +242,8 @@ export default function Settings() {
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${integration.connected
-                                                            ? 'bg-gray-100 text-gray-600'
-                                                            : 'bg-primary hover:bg-primary-hover text-white'
+                                                        ? 'bg-gray-100 text-gray-600'
+                                                        : 'bg-primary hover:bg-primary-hover text-white'
                                                         }`}
                                                 >
                                                     {integration.connected ? 'Connected' : 'Configure'}
