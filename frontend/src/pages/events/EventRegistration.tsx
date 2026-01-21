@@ -69,11 +69,27 @@ export default function EventRegistration() {
     }, [])
 
     const handleMidtransPayment = async () => {
-        if (!participantId || !paymentInfo) return
+        if (!participantId || !paymentInfo) {
+            alert('Registration data not found. Please try registering again.')
+            return
+        }
 
         try {
+            // Check if Snap.js is loaded
+            // @ts-ignore
+            if (!window.snap) {
+                alert('Payment system is loading. Please wait a moment and try again.')
+                return
+            }
+
             // Get Snap Token from backend
-            const { token } = await paymentsAPI.create({
+            console.log('Creating payment with:', {
+                participantId,
+                amount: paymentInfo.ticket_price,
+                itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`
+            })
+
+            const result = await paymentsAPI.create({
                 participantId,
                 amount: paymentInfo.ticket_price,
                 itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`,
@@ -82,29 +98,29 @@ export default function EventRegistration() {
                 customerPhone: formData.phone
             })
 
+            console.log('Payment token received:', result.token)
+
             // Open Snap Popup
             // @ts-ignore
-            if (window.snap) {
-                // @ts-ignore
-                window.snap.pay(token, {
-                    onSuccess: function (_result: any) {
-                        alert('Payment success!')
-                        // Optional: Redirect or update UI
-                    },
-                    onPending: function (_result: any) {
-                        alert('Waiting for payment...')
-                    },
-                    onError: function (_result: any) {
-                        alert('Payment failed!')
-                    },
-                    onClose: function () {
-                        alert('You closed the popup without finishing the payment')
-                    }
-                })
-            }
-        } catch (error) {
+            window.snap.pay(result.token, {
+                onSuccess: function (_result: any) {
+                    alert('Payment success!')
+                    window.location.reload()
+                },
+                onPending: function (_result: any) {
+                    alert('Waiting for payment confirmation...')
+                },
+                onError: function (_result: any) {
+                    alert('Payment failed! Please try again.')
+                },
+                onClose: function () {
+                    console.log('Payment popup closed')
+                }
+            })
+        } catch (error: any) {
             console.error('Payment error:', error)
-            alert('Failed to initialize payment. Please try again.')
+            const errorMessage = error.message || 'Failed to initialize payment'
+            alert(`Error: ${errorMessage}. Please contact support if this persists.`)
         }
     }
 
