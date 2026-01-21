@@ -198,3 +198,43 @@ export interface Participant {
     event_title?: string
     created_at: string
 }
+
+export interface Payment {
+    id: string
+    participant_id: string
+    order_id: string
+    amount: number
+    status: 'pending' | 'paid' | 'failed' | 'refunded'
+    payment_type?: string
+    created_at: string
+    full_name?: string
+    email?: string
+    event_title?: string
+}
+
+// Payments API
+export const paymentsAPI = {
+    create: (data: {
+        participantId: string
+        amount: number
+        itemName?: string
+        customerName?: string
+        customerEmail?: string
+        customerPhone?: string
+    }) =>
+        fetchAPI<{ paymentId: string; orderId: string; token: string; redirectUrl: string }>(
+            '/api/payments/create',
+            { method: 'POST', body: JSON.stringify(data) }
+        ),
+
+    get: (orderId: string) =>
+        fetchAPI<Payment>(`/api/payments/${orderId}`),
+
+    list: (params?: { limit?: number; offset?: number }) => {
+        const query = new URLSearchParams()
+        if (params?.limit) query.set('limit', params.limit.toString())
+        if (params?.offset) query.set('offset', params.offset.toString())
+        return fetchAPI<{ data: Payment[] }>(`/api/payments?${query}`)
+    },
+}
+
