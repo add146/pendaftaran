@@ -43,18 +43,37 @@ export default function EditEvent() {
         const file = files[0]
 
         try {
-            // Convert to base64
-            const reader = new FileReader()
-            reader.onload = () => {
-                const dataUrl = reader.result as string
+            // Compress image using canvas
+            const img = new Image()
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+
+                // Max 400px width to keep file small for D1
+                let width = img.width
+                let height = img.height
+                const maxWidth = 400
+
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width
+                    width = maxWidth
+                }
+
+                canvas.width = width
+                canvas.height = height
+                ctx?.drawImage(img, 0, 0, width, height)
+
+                // Compress to JPEG 60% quality (~30-50KB per image)
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
                 setImages(prev => [...prev, dataUrl].slice(0, 3))
                 setUploadingImage(false)
+                URL.revokeObjectURL(img.src)
             }
-            reader.onerror = () => {
-                setError('Failed to read file')
+            img.onerror = () => {
+                setError('Failed to load image')
                 setUploadingImage(false)
             }
-            reader.readAsDataURL(file)
+            img.src = URL.createObjectURL(file)
         } catch {
             setError('Failed to upload image')
             setUploadingImage(false)
