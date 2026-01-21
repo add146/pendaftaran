@@ -52,11 +52,13 @@ export default function Settings() {
         // Load Midtrans settings
         settingsAPI.get('midtrans_config')
             .then(data => {
-                if (data.value) {
+                console.log('Loaded Midtrans config:', data)
+                if (data && data.value) {
                     setMidtransConfig(data.value)
                 }
             })
-            .catch(() => {
+            .catch((err) => {
+                console.log('No Midtrans config found or error:', err.message)
                 // No settings yet, use defaults
             })
     }, [])
@@ -67,14 +69,17 @@ export default function Settings() {
 
         try {
             // Save Midtrans config to API
-            await settingsAPI.save('midtrans_config', midtransConfig)
+            console.log('Saving config:', midtransConfig)
+            const result = await settingsAPI.save('midtrans_config', midtransConfig)
+            console.log('Save result:', result)
             setMessage('Konfigurasi berhasil disimpan!')
-        } catch (err) {
-            setMessage('Gagal menyimpan konfigurasi')
+        } catch (err: any) {
+            console.error('Save error:', err)
+            setMessage('Gagal menyimpan: ' + (err.message || 'Unknown error'))
         }
 
         setSaving(false)
-        setTimeout(() => setMessage(''), 3000)
+        setTimeout(() => setMessage(''), 5000)
     }
 
     const tabs = [
