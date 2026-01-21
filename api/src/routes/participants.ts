@@ -180,6 +180,41 @@ participants.post('/:id/check-in', async (c) => {
         }, 400)
     }
 
+    // Fetch event to check timing
+    const event = await c.env.DB.prepare(`
+    SELECT * FROM events WHERE id = ?
+  `).bind(participant.event_id).first()
+
+    if (event) {
+        // Parse event date and time
+        const eventDate = event.event_date as string
+        const eventTime = (event.event_time as string) || '00:00'
+
+        // Create event datetime
+        const [year, month, day] = eventDate.split('-').map(Number)
+        const [hours, minutes] = eventTime.split(':').map(Number)
+        const eventDateTime = new Date(year, month - 1, day, hours, minutes)
+
+        // Check-in allowed 1 hour before event
+        const checkInOpenTime = new Date(eventDateTime.getTime() - 60 * 60 * 1000)
+        const now = new Date()
+
+        if (now < checkInOpenTime) {
+            const formattedEventTime = eventDateTime.toLocaleString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            return c.json({
+                error: `Check-in belum dibuka. Event dimulai ${formattedEventTime}. Check-in dapat dilakukan 1 jam sebelum acara.`,
+                event_start: eventDateTime.toISOString(),
+                check_in_opens: checkInOpenTime.toISOString()
+            }, 400)
+        }
+    }
+
     if (participant.check_in_status === 'checked_in') {
         return c.json({
             error: 'Sudah check-in sebelumnya',
