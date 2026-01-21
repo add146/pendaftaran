@@ -154,7 +154,20 @@ Mohon konfirmasi pembayaran ke rekening berikut...`
             return encodeURIComponent(nota)
         }
 
-        const waNumber = paymentInfo?.whatsapp_cs?.replace(/^0/, '62') || ''
+        const formatWhatsAppNumber = (number: string) => {
+            if (!number) return ''
+            // Remove all non-digit characters
+            let cleaned = number.replace(/\D/g, '')
+            // Remove leading 0 if present
+            cleaned = cleaned.replace(/^0/, '')
+            // Add 62 prefix if not already present
+            if (!cleaned.startsWith('62')) {
+                cleaned = '62' + cleaned
+            }
+            return cleaned
+        }
+
+        const waNumber = formatWhatsAppNumber(paymentInfo?.whatsapp_cs || '')
         const waLink = `https://wa.me/${waNumber}?text=${generateWhatsAppNota()}`
 
         return (
