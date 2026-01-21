@@ -101,6 +101,8 @@ events.put('/:id', async (c) => {
   }
 
   // Update event basic info
+  const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
+
   await c.env.DB.prepare(`
     UPDATE events SET 
       title = COALESCE(?, title),
@@ -119,7 +121,24 @@ events.put('/:id', async (c) => {
       status = COALESCE(?, status),
       image_url = COALESCE(?, image_url)
     WHERE id = ?
-  `).bind(title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images ? JSON.stringify(images) : null, id).run()
+  `).bind(
+    title ?? null,
+    description ?? null,
+    event_date ?? null,
+    event_time ?? null,
+    location ?? null,
+    capacity ?? null,
+    event_mode ?? null,
+    payment_mode ?? null,
+    whatsapp_cs ?? null,
+    bank_name ?? null,
+    account_holder_name ?? null,
+    account_number ?? null,
+    visibility ?? null,
+    status ?? null,
+    imageUrl,
+    id
+  ).run()
 
   // Update ticket types if provided
   if (ticket_types && Array.isArray(ticket_types)) {
