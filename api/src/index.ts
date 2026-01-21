@@ -10,6 +10,7 @@ import { uploads } from './routes/uploads'
 import { settings } from './routes/settings'
 import { organizations } from './routes/organizations'
 import { subscriptions } from './routes/subscriptions'
+import { admin } from './routes/admin'
 
 export type Bindings = {
 	DB: D1Database
@@ -42,7 +43,7 @@ app.get('/', (c) => {
 	return c.json({
 		status: 'ok',
 		message: 'Pendaftaran QR API',
-		version: '1.1.0'
+		version: '1.2.0'
 	})
 })
 
@@ -57,6 +58,7 @@ app.route('/api/uploads', uploads)
 app.route('/api/settings', settings)
 app.route('/api/organizations', organizations)
 app.route('/api/subscriptions', subscriptions)
+app.route('/api/admin', admin)
 
 // 404 handler
 app.notFound((c) => {
