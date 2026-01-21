@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { publicAPI, participantsAPI, type PublicEvent, type TicketType } from '../../lib/api'
+import { publicAPI, participantsAPI, paymentsAPI, type PublicEvent, type TicketType } from '../../lib/api'
 
 export default function EventRegistration() {
     const { slug } = useParams<{ slug: string }>()
@@ -28,6 +28,9 @@ export default function EventRegistration() {
         ticket_type_id: ''
     })
 
+    const [participantId, setParticipantId] = useState('')
+    const [snapToken, setSnapToken] = useState('')
+
     useEffect(() => {
         if (!slug) return
 
@@ -45,6 +48,65 @@ export default function EventRegistration() {
                 setLoading(false)
             })
     }, [slug])
+
+    // Load Midtrans Snap Script
+    useEffect(() => {
+        const snapScript = 'https://app.sandbox.midtrans.com/snap/snap.js'
+        const clientKey = import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'SB-Mid-client-TEST' // Placeholder
+
+        const script = document.createElement('script')
+        script.src = snapScript
+        script.setAttribute('data-client-key', clientKey)
+        script.async = true
+
+        document.body.appendChild(script)
+
+        return () => {
+            document.body.removeChild(script)
+        }
+    }, [])
+
+    const handleMidtransPayment = async () => {
+        if (!participantId || !paymentInfo) return
+
+        try {
+            // Get Snap Token from backend
+            const { token } = await paymentsAPI.create({
+                participantId,
+                amount: paymentInfo.ticket_price,
+                itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`,
+                customerName: formData.full_name,
+                customerEmail: formData.email,
+                customerPhone: formData.phone
+            })
+
+            setSnapToken(token)
+
+            // Open Snap Popup
+            // @ts-ignore
+            if (window.snap) {
+                // @ts-ignore
+                window.snap.pay(token, {
+                    onSuccess: function (_result: any) {
+                        alert('Payment success!')
+                        // Optional: Redirect or update UI
+                    },
+                    onPending: function (_result: any) {
+                        alert('Waiting for payment...')
+                    },
+                    onError: function (_result: any) {
+                        alert('Payment failed!')
+                    },
+                    onClose: function () {
+                        alert('You closed the popup without finishing the payment')
+                    }
+                })
+            }
+        } catch (error) {
+            console.error('Payment error:', error)
+            alert('Failed to initialize payment. Please try again.')
+        }
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -68,6 +130,7 @@ export default function EventRegistration() {
                 city: formData.city || undefined
             })
             setRegistrationId(result.registration_id)
+            setParticipantId(result.id) // Store UUID for payment
 
             // Store payment info for flow handling
             const paymentResult = result as typeof result & {
@@ -95,6 +158,7 @@ export default function EventRegistration() {
             setSubmitting(false)
         }
     }
+
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('id-ID', {
@@ -206,11 +270,9 @@ Mohon konfirmasi pembayaran ke rekening berikut...`
                                 <div className="space-y-3">
                                     <p className="text-sm text-gray-600">Lanjutkan pembayaran online:</p>
                                     <button
-                                        className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600"
-                                        onClick={() => {
-                                            // TODO: Integrate with Midtrans
-                                            alert('Midtrans payment integration coming soon')
-                                        }}
+                                        className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={handleMidtransPayment}
+                                        disabled={!participantId}
                                     >
                                         <span className="material-symbols-outlined">credit_card</span>
                                         Bayar Sekarang - Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
