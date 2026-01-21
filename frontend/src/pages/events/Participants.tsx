@@ -48,9 +48,16 @@ function ParticipantRow({
     const colors = ['bg-primary/10 text-primary', 'bg-purple-100 text-purple-600', 'bg-blue-100 text-blue-600', 'bg-orange-100 text-orange-600']
     const bgColor = colors[participant.full_name.charCodeAt(0) % colors.length]
 
-    // Generate WhatsApp link to user's phone
+    // Generate WhatsApp link to user's phone with ticket link
     const userPhone = participant.phone?.replace(/^0/, '62') || ''
-    const waMessage = encodeURIComponent(`Halo ${participant.full_name}, berikut tiket QR Code Anda untuk event:\n\nRegistration ID: ${participant.registration_id}\nQR Code: ${participant.qr_code || 'Akan dikirim setelah pembayaran dikonfirmasi'}`)
+    const ticketLink = `${window.location.origin}/ticket/${participant.registration_id}`
+    const waMessage = encodeURIComponent(
+        `🎫 *E-TICKET*\n\n` +
+        `👤 *${participant.full_name}*\n` +
+        `🎟️ Registration ID: ${participant.registration_id}\n\n` +
+        `🔗 *Lihat ID Card:*\n${ticketLink}\n\n` +
+        `Tunjukkan QR Code di link tersebut saat check-in.`
+    )
     const waLink = userPhone ? `https://wa.me/${userPhone}?text=${waMessage}` : ''
 
     return (
