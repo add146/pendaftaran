@@ -113,84 +113,111 @@ payments.post('/create', async (c) => {
 
 // Midtrans notification webhook
 payments.post('/notification', async (c) => {
-    const notification = await c.req.json() as {
-        order_id: string
-        transaction_status: string
-        fraud_status?: string
-        payment_type?: string
-        signature_key?: string
-        status_code?: string
-        gross_amount?: string
-    }
+    console.log('[MIDTRANS WEBHOOK] Received notification')
 
-    const { order_id, transaction_status, fraud_status, payment_type } = notification
-
-    // Verify signature (optional but recommended)
-    // const signatureKey = notification.signature_key
-    // const serverKey = c.env.MIDTRANS_SERVER_KEY
-    // Verify: SHA512(order_id + status_code + gross_amount + serverKey)
-
-    // Determine payment status
-    let status = 'pending'
-    if (transaction_status === 'capture' || transaction_status === 'settlement') {
-        if (fraud_status === 'accept' || !fraud_status) {
-            status = 'paid'
+    try {
+        const notification = await c.req.json() as {
+            order_id: string
+            transaction_status: string
+            fraud_status?: string
+            payment_type?: string
+            signature_key?: string
+            status_code?: string
+            gross_amount?: string
         }
-    } else if (transaction_status === 'cancel' || transaction_status === 'deny' || transaction_status === 'expire') {
-        status = 'failed'
-    } else if (transaction_status === 'pending') {
-        status = 'pending'
-    } else if (transaction_status === 'refund') {
-        status = 'refunded'
-    }
 
-    // Update payment record
-    await c.env.DB.prepare(`
-        UPDATE payments 
-        SET status = ?, payment_type = ?, midtrans_response = ?
-        WHERE order_id = ?
-    `).bind(status, payment_type, JSON.stringify(notification), order_id).run()
+        console.log('[MIDTRANS WEBHOOK] Notification data:', JSON.stringify(notification))
 
-    // Get participant ID and update status
-    const payment = await c.env.DB.prepare(`
-        SELECT participant_id FROM payments WHERE order_id = ?
-    `).bind(order_id).first() as { participant_id: string } | null
+        const { order_id, transaction_status, fraud_status, payment_type } = notification
 
-    if (payment) {
-        await c.env.DB.prepare(`
-            UPDATE participants SET payment_status = ? WHERE id = ?
-        `).bind(status, payment.participant_id).run()
+        // Verify signature (optional but recommended)
+        // const signatureKey = notification.signature_key
+        // const serverKey = c.env.MIDTRANS_SERVER_KEY
+        // Verify: SHA512(order_id + status_code + gross_amount + serverKey)
 
-        // Send WhatsApp notification if payment is successful
-        if (status === 'paid') {
-            const participant = await c.env.DB.prepare(`
-                SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
-                FROM participants p
-                LEFT JOIN events e ON p.event_id = e.id
-                LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
-                WHERE p.id = ?
-            `).bind(payment.participant_id).first() as any
-
-            if (participant && participant.phone) {
-                const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
-                const frontendUrl = 'https://etiket.my.id'
-                const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
-
-                const message = generateRegistrationMessage({
-                    eventTitle: participant.event_title,
-                    fullName: participant.full_name,
-                    registrationId: participant.registration_id,
-                    ticketLink,
-                    ticketName: participant.ticket_name,
-                    ticketPrice: participant.ticket_price
-                })
-
-                await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+        // Determine payment status
+        let status = 'pending'
+        if (transaction_status === 'capture' || transaction_status === 'settlement') {
+            if (fraud_status === 'accept' || !fraud_status) {
+                status = 'paid'
             }
+        } else if (transaction_status === 'cancel' || transaction_status === 'deny' || transaction_status === 'expire') {
+            status = 'failed'
+        } else if (transaction_status === 'pending') {
+            status = 'pending'
+        } else if (transaction_status === 'refund') {
+            status = 'refunded'
         }
-    }
 
-    return c.json({ status: 'ok' })
+        console.log('[MIDTRANS WEBHOOK] Determined status:', status, 'for order:', order_id)
+
+        // Update payment record
+        await c.env.DB.prepare(`
+            UPDATE payments 
+            SET status = ?, payment_type = ?, midtrans_response = ?
+            WHERE order_id = ?
+        `).bind(status, payment_type, JSON.stringify(notification), order_id).run()
+
+        console.log('[MIDTRANS WEBHOOK] Updated payment record')
+
+        // Get participant ID and update status
+        const payment = await c.env.DB.prepare(`
+            SELECT participant_id FROM payments WHERE order_id = ?
+        `).bind(order_id).first() as { participant_id: string } | null
+
+        if (payment) {
+            console.log('[MIDTRANS WEBHOOK] Found participant:', payment.participant_id)
+
+            await c.env.DB.prepare(`
+                UPDATE participants SET payment_status = ? WHERE id = ?
+            `).bind(status, payment.participant_id).run()
+
+            console.log('[MIDTRANS WEBHOOK] Updated participant status to:', status)
+
+            // Send WhatsApp notification if payment is successful
+            if (status === 'paid') {
+                console.log('[MIDTRANS WEBHOOK] Payment is paid, fetching participant details for WhatsApp')
+
+                const participant = await c.env.DB.prepare(`
+                    SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+                    FROM participants p
+                    LEFT JOIN events e ON p.event_id = e.id
+                    LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+                    WHERE p.id = ?
+                `).bind(payment.participant_id).first() as any
+
+                if (participant && participant.phone) {
+                    console.log('[MIDTRANS WEBHOOK] Sending WhatsApp to:', participant.phone)
+
+                    const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+                    const frontendUrl = 'https://etiket.my.id'
+                    const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
+
+                    const message = generateRegistrationMessage({
+                        eventTitle: participant.event_title,
+                        fullName: participant.full_name,
+                        registrationId: participant.registration_id,
+                        ticketLink,
+                        ticketName: participant.ticket_name,
+                        ticketPrice: participant.ticket_price
+                    })
+
+                    const result = await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+                    console.log('[MIDTRANS WEBHOOK] WhatsApp send result:', result)
+                } else {
+                    console.log('[MIDTRANS WEBHOOK] No phone number found for participant')
+                }
+            }
+        } else {
+            console.log('[MIDTRANS WEBHOOK] Payment not found for order:', order_id)
+        }
+
+        console.log('[MIDTRANS WEBHOOK] Webhook processing completed successfully')
+        return c.json({ status: 'ok' })
+    } catch (error) {
+        console.error('[MIDTRANS WEBHOOK] Error processing webhook:', error)
+        return c.json({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' }, 500)
+    }
 })
 
 // Get payment status
