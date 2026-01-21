@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { participantsAPI, eventsAPI, Participant as ParticipantType, Event } from '../lib/api'
-import QRScanner from '../components/QRScanner'
+import { participantsAPI, eventsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
+import QRScanner from '../../components/QRScanner'
 
 // Stat card component
 function StatCard({ icon, label, value, subValue, iconColor }: {
@@ -39,7 +39,7 @@ function ParticipantRow({
         failed: 'bg-red-100 text-red-800'
     }
 
-    const initials = participant.full_name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+    const initials = participant.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
     const colors = ['bg-primary/10 text-primary', 'bg-purple-100 text-purple-600', 'bg-blue-100 text-blue-600', 'bg-orange-100 text-orange-600']
     const bgColor = colors[participant.full_name.charCodeAt(0) % colors.length]
 
@@ -226,8 +226,8 @@ export default function Participants() {
                                     key={label}
                                     onClick={() => setFilter(label.toLowerCase().replace(' ', '_'))}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium border whitespace-nowrap transition-colors ${filter === label.toLowerCase().replace(' ', '_')
-                                            ? 'bg-primary/10 text-primary border-primary/20'
-                                            : 'bg-transparent hover:bg-gray-50 text-gray-600 border-gray-200'
+                                        ? 'bg-primary/10 text-primary border-primary/20'
+                                        : 'bg-transparent hover:bg-gray-50 text-gray-600 border-gray-200'
                                         }`}
                                 >
                                     {label}

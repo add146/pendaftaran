@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 
 export default function EventRegistration() {
-    const { slug } = useParams()
+    const { slug: _slug } = useParams()
 
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col">

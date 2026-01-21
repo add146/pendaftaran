@@ -9,7 +9,7 @@ interface QRScannerProps {
     onCheckInSuccess?: (participant: { full_name: string; registration_id: string; check_in_time: string }) => void
 }
 
-export default function QRScanner({ isOpen, onClose, eventId, onCheckInSuccess }: QRScannerProps) {
+export default function QRScanner({ isOpen, onClose, eventId: _eventId, onCheckInSuccess }: QRScannerProps) {
     const [scanning, setScanning] = useState(false)
     const [result, setResult] = useState<{
         success: boolean

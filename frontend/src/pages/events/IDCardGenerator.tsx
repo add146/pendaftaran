@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 
 export default function IDCardGenerator() {
-    const { id } = useParams()
+    const { id: _id } = useParams()
     const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait')
     const [showPunchHole, setShowPunchHole] = useState(true)
     const [includeQR, setIncludeQR] = useState(true)

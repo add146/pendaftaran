@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/layout/Sidebar'
 import Header from '../components/layout/Header'
 import { Link } from 'react-router-dom'
-import { publicAPI, Event } from '../lib/api'
+import { publicAPI, type Event } from '../lib/api'
 
 // Stat card component
 function StatCard({ icon, label, value, trend }: {
