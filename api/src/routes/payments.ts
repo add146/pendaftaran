@@ -223,11 +223,10 @@ payments.get('/', authMiddleware, async (c) => {
         FROM payments p
         LEFT JOIN participants pa ON p.participant_id = pa.id
         LEFT JOIN events e ON pa.event_id = e.id
-        LEFT JOIN users u ON e.organization_id = u.organization_id
-        WHERE u.id = ?
+        WHERE e.organization_id = ?
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?
-    `).bind(user.userId, limit, offset).all()
+    `).bind(user.orgId, limit, offset).all()
 
     return c.json({ data: payments.results })
 })
