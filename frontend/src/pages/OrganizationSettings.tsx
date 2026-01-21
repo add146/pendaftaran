@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../components/layout/AdminLayout'
-import { organizationsAPI, subscriptionsAPI, type Subscription, type User } from '../lib/api'
+import { organizationsAPI, subscriptionsAPI, authAPI, type Subscription, type User } from '../lib/api'
 
 export default function OrganizationSettings() {
     const [subscription, setSubscription] = useState<Subscription | null>(null)
