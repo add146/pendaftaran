@@ -31,13 +31,33 @@ function ParticipantRow({
     participant,
     onCheckIn,
     onApprove,
-    onShowQR
+    onShowQR,
+    eventDate,
+    eventTime
 }: {
     participant: ParticipantType
     onCheckIn: (id: string) => void
     onApprove: (id: string) => void
     onShowQR: (participant: ParticipantType) => void
+    eventDate?: string
+    eventTime?: string
 }) {
+    // Check if check-in is open (1 hour before event)
+    const isCheckInOpen = () => {
+        if (!eventDate) return true // If no date, allow check-in
+        try {
+            const [year, month, day] = eventDate.split('-').map(Number)
+            const [hours, minutes] = (eventTime || '00:00').split(':').map(Number)
+            const eventDateTime = new Date(year, month - 1, day, hours, minutes)
+            const checkInOpenTime = new Date(eventDateTime.getTime() - 60 * 60 * 1000) // 1 hour before
+            return new Date() >= checkInOpenTime
+        } catch {
+            return true
+        }
+    }
+
+    const checkInAvailable = isCheckInOpen()
+
     const paymentStyles: Record<string, string> = {
         paid: 'bg-green-100 text-green-800',
         pending: 'bg-yellow-100 text-yellow-800',
@@ -123,8 +143,13 @@ function ParticipantRow({
                     {/* Check In button for paid participants */}
                     {participant.check_in_status !== 'checked_in' && participant.payment_status === 'paid' && (
                         <button
-                            onClick={() => onCheckIn(participant.registration_id)}
-                            className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover flex items-center gap-1"
+                            onClick={() => checkInAvailable && onCheckIn(participant.registration_id)}
+                            disabled={!checkInAvailable}
+                            className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 ${checkInAvailable
+                                ? 'bg-primary text-white hover:bg-primary-hover'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                            title={!checkInAvailable ? 'Check-in dibuka 1 jam sebelum acara' : ''}
                         >
                             <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
                             Check In
@@ -339,7 +364,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} eventDate={event?.event_date} eventTime={event?.event_time} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>
