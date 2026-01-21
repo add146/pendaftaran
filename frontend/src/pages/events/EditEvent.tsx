@@ -28,6 +28,45 @@ export default function EditEvent() {
     })
 
     const [tickets, setTickets] = useState<TicketType[]>([])
+    const [images, setImages] = useState<string[]>([])
+    const [uploadingImage, setUploadingImage] = useState(false)
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
+        if (images.length >= 3) {
+            setError('Maximum 3 images allowed')
+            return
+        }
+
+        setUploadingImage(true)
+        const file = files[0]
+
+        try {
+            // Convert to base64
+            const reader = new FileReader()
+            reader.onload = () => {
+                const dataUrl = reader.result as string
+                setImages(prev => [...prev, dataUrl].slice(0, 3))
+                setUploadingImage(false)
+            }
+            reader.onerror = () => {
+                setError('Failed to read file')
+                setUploadingImage(false)
+            }
+            reader.readAsDataURL(file)
+        } catch {
+            setError('Failed to upload image')
+            setUploadingImage(false)
+        }
+
+        // Reset input
+        e.target.value = ''
+    }
+
+    const removeImage = (index: number) => {
+        setImages(images.filter((_, i) => i !== index))
+    }
 
     useEffect(() => {
         if (!id) return
@@ -206,6 +245,53 @@ export default function EditEvent() {
                                 </div>
                             </div>
 
+                            {/* Event Images Slider */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold">Event Images (Slider)</h3>
+                                    <span className="text-sm text-gray-500">{images.length}/3</span>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4 mb-4">
+                                    {images.map((img, index) => (
+                                        <div key={index} className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 group">
+                                            <img src={img} alt={`Event ${index + 1}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(index)}
+                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                            </button>
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-1 text-center">
+                                                Image {index + 1}
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {images.length < 3 && (
+                                        <label className="aspect-video rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                                            {uploadingImage ? (
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                            ) : (
+                                                <>
+                                                    <span className="material-symbols-outlined text-gray-400 text-[32px]">add_photo_alternate</span>
+                                                    <span className="text-xs text-gray-500 mt-1">Add Image</span>
+                                                </>
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleImageUpload}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    )}
+                                </div>
+
+                                <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
+                            </div>
+
                             {/* Ticket Types (for paid events) */}
                             {formData.event_mode === 'paid' && (
                                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -313,8 +399,8 @@ export default function EditEvent() {
                                                 type="button"
                                                 onClick={() => updateField('event_mode', 'free')}
                                                 className={`py-2 rounded-lg text-sm font-medium border ${formData.event_mode === 'free'
-                                                        ? 'border-primary bg-primary/5 text-primary'
-                                                        : 'border-gray-200 text-gray-600'
+                                                    ? 'border-primary bg-primary/5 text-primary'
+                                                    : 'border-gray-200 text-gray-600'
                                                     }`}
                                             >
                                                 Free
@@ -323,8 +409,8 @@ export default function EditEvent() {
                                                 type="button"
                                                 onClick={() => updateField('event_mode', 'paid')}
                                                 className={`py-2 rounded-lg text-sm font-medium border ${formData.event_mode === 'paid'
-                                                        ? 'border-primary bg-primary/5 text-primary'
-                                                        : 'border-gray-200 text-gray-600'
+                                                    ? 'border-primary bg-primary/5 text-primary'
+                                                    : 'border-gray-200 text-gray-600'
                                                     }`}
                                             >
                                                 Paid
@@ -339,8 +425,8 @@ export default function EditEvent() {
                                                 type="button"
                                                 onClick={() => updateField('visibility', 'public')}
                                                 className={`py-2 rounded-lg text-sm font-medium border ${formData.visibility === 'public'
-                                                        ? 'border-primary bg-primary/5 text-primary'
-                                                        : 'border-gray-200 text-gray-600'
+                                                    ? 'border-primary bg-primary/5 text-primary'
+                                                    : 'border-gray-200 text-gray-600'
                                                     }`}
                                             >
                                                 Public
@@ -349,8 +435,8 @@ export default function EditEvent() {
                                                 type="button"
                                                 onClick={() => updateField('visibility', 'private')}
                                                 className={`py-2 rounded-lg text-sm font-medium border ${formData.visibility === 'private'
-                                                        ? 'border-primary bg-primary/5 text-primary'
-                                                        : 'border-gray-200 text-gray-600'
+                                                    ? 'border-primary bg-primary/5 text-primary'
+                                                    : 'border-gray-200 text-gray-600'
                                                     }`}
                                             >
                                                 Private

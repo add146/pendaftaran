@@ -6,6 +6,7 @@ import { participants } from './routes/participants'
 import { auth } from './routes/auth'
 import { publicRoutes } from './routes/public'
 import { payments } from './routes/payments'
+import { uploads } from './routes/uploads'
 
 export type Bindings = {
 	DB: D1Database
@@ -46,6 +47,7 @@ app.route('/api/events', events)
 app.route('/api/participants', participants)
 app.route('/api/public', publicRoutes)
 app.route('/api/payments', payments)
+app.route('/api/uploads', uploads)
 
 // 404 handler
 app.notFound((c) => {
