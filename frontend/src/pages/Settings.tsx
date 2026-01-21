@@ -260,7 +260,7 @@ export default function Settings() {
                                                         <div className="flex items-center gap-3">
                                                             <span className="material-symbols-outlined text-blue-600">science</span>
                                                             <div>
-                                                                <p className="font-medium">Sandbox</p>
+                                                                <p className="font-medium text-gray-800">Sandbox</p>
                                                                 <p className="text-xs text-gray-500">Mode testing/development</p>
                                                             </div>
                                                         </div>
@@ -278,7 +278,7 @@ export default function Settings() {
                                                         <div className="flex items-center gap-3">
                                                             <span className="material-symbols-outlined text-green-600">verified</span>
                                                             <div>
-                                                                <p className="font-medium">Production</p>
+                                                                <p className="font-medium text-gray-800">Production</p>
                                                                 <p className="text-xs text-gray-500">Mode transaksi nyata</p>
                                                             </div>
                                                         </div>
@@ -357,7 +357,7 @@ export default function Settings() {
                                             </div>
 
                                             {/* Current Active */}
-                                            <div className={`p-3 rounded-lg ${midtransConfig.environment === 'sandbox' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                            <div className={`p-3 rounded-lg mb-6 ${midtransConfig.environment === 'sandbox' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                                                 <div className="flex items-center gap-2">
                                                     <span className="material-symbols-outlined text-[18px]">info</span>
                                                     <span className="text-sm font-medium">
@@ -365,6 +365,25 @@ export default function Settings() {
                                                     </span>
                                                 </div>
                                             </div>
+
+                                            {/* Save Button */}
+                                            <button
+                                                onClick={handleSave}
+                                                disabled={saving}
+                                                className="w-full px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                                            >
+                                                {saving ? (
+                                                    <>
+                                                        <span className="animate-spin material-symbols-outlined text-[20px]">refresh</span>
+                                                        Menyimpan...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="material-symbols-outlined text-[20px]">save</span>
+                                                        Simpan Konfigurasi Midtrans
+                                                    </>
+                                                )}
+                                            </button>
                                         </div>
 
                                         {/* Other Integrations */}
