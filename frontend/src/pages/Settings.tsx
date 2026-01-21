@@ -37,6 +37,10 @@ export default function Settings() {
     })
 
     useEffect(() => {
+        // Debug: check if token exists
+        const token = localStorage.getItem('auth_token')
+        console.log('Auth token exists:', !!token, token ? token.substring(0, 20) + '...' : 'null')
+
         authAPI.me()
             .then(data => {
                 setProfile(data)
