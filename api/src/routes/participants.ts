@@ -90,8 +90,18 @@ participants.post('/register', async (c) => {
 
     // Check event exists and is open
     const event = await c.env.DB.prepare(
-        'SELECT * FROM events WHERE id = ? AND status = ?'
-    ).bind(event_id, 'open').first() as { id: string; capacity: number; event_mode: string; payment_mode: string; whatsapp_cs: string; title: string } | null
+        'SELECT id, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, title FROM events WHERE id = ? AND status = ?'
+    ).bind(event_id, 'open').first() as {
+        id: string;
+        capacity: number;
+        event_mode: string;
+        payment_mode: string;
+        whatsapp_cs: string;
+        bank_name: string | null;
+        account_holder_name: string | null;
+        account_number: string | null;
+        title: string
+    } | null
 
     if (!event) {
         return c.json({ error: 'Event not found or not accepting registrations' }, 400)
@@ -151,6 +161,9 @@ participants.post('/register', async (c) => {
         // Payment info for frontend flow
         payment_mode: event.payment_mode || 'manual',
         whatsapp_cs: event.whatsapp_cs || null,
+        bank_name: event.bank_name || null,
+        account_holder_name: event.account_holder_name || null,
+        account_number: event.account_number || null,
         ticket_name: ticketName,
         ticket_price: ticketPrice,
         message: paymentStatus === 'paid' ? 'Registration successful!' : 'Please complete payment'

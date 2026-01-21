@@ -14,6 +14,9 @@ export default function EventRegistration() {
     const [paymentInfo, setPaymentInfo] = useState<{
         payment_mode: string
         whatsapp_cs: string | null
+        bank_name: string | null
+        account_holder_name: string | null
+        account_number: string | null
         ticket_name: string
         ticket_price: number
         event_title: string
@@ -133,6 +136,9 @@ export default function EventRegistration() {
             const paymentResult = result as typeof result & {
                 payment_mode?: string
                 whatsapp_cs?: string
+                bank_name?: string
+                account_holder_name?: string
+                account_number?: string
                 ticket_name?: string
                 ticket_price?: number
                 event_title?: string
@@ -142,6 +148,9 @@ export default function EventRegistration() {
                 setPaymentInfo({
                     payment_mode: paymentResult.payment_mode,
                     whatsapp_cs: paymentResult.whatsapp_cs || null,
+                    bank_name: paymentResult.bank_name || null,
+                    account_holder_name: paymentResult.account_holder_name || null,
+                    account_number: paymentResult.account_number || null,
                     ticket_name: paymentResult.ticket_name || '',
                     ticket_price: paymentResult.ticket_price || 0,
                     event_title: paymentResult.event_title || event.title
@@ -200,18 +209,41 @@ export default function EventRegistration() {
         // Generate WhatsApp nota message
         const generateWhatsAppNota = () => {
             if (!paymentInfo) return ''
-            const nota = `*NOTA PENDAFTARAN*
-            
-Event: ${paymentInfo.event_title}
-Nama: ${formData.full_name}
-Email: ${formData.email}
-Phone: ${formData.phone || '-'}
-Kota: ${formData.city || '-'}
-Tiket: ${paymentInfo.ticket_name}
-Harga: Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
-Registration ID: ${registrationId}
 
-Mohon konfirmasi pembayaran ke rekening berikut...`
+            // Format bank account section if available
+            let bankSection = ''
+            if (paymentInfo.bank_name && paymentInfo.account_holder_name && paymentInfo.account_number) {
+                bankSection = `
+━━━━━━━━━━━━━━━━━━━━
+💳 *INFORMASI TRANSFER*
+━━━━━━━━━━━━━━━━━━━━
+
+Bank: *${paymentInfo.bank_name}*
+Atas Nama: *${paymentInfo.account_holder_name}*
+No. Rekening: *${paymentInfo.account_number}*
+Nominal: *Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}*
+
+_Mohon transfer sesuai nominal dan kirim bukti transfer ke nomor ini_`
+            } else {
+                bankSection = `
+Mohon konfirmasi pembayaran sebesar *Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}*`
+            }
+
+            const nota = `━━━━━━━━━━━━━━━━━━━━
+✅ *PENDAFTARAN BERHASIL*
+━━━━━━━━━━━━━━━━━━━━
+
+📌 *Event:* ${paymentInfo.event_title}
+👤 *Nama:* ${formData.full_name}
+📧 *Email:* ${formData.email}
+📱 *Phone:* ${formData.phone || '-'}
+🏙️ *Kota:* ${formData.city || '-'}
+
+🎫 *Tiket:* ${paymentInfo.ticket_name}
+💰 *Harga:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
+🔖 *ID Registrasi:* ${registrationId}
+${bankSection}`
+
             return encodeURIComponent(nota)
         }
 
