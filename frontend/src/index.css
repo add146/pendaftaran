@@ -4,8 +4,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Noto+Sans:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 
-/* Custom theme based on UI designs */
+/* Custom theme with TailwindCSS 4 syntax */
 @theme {
+  /* Colors - Using Tailwind v4 color customization */
   --color-primary: #1e7b49;
   --color-primary-hover: #16643a;
   --color-background-light: #f6f8f7;
@@ -20,8 +21,12 @@
   --color-text-sub: #578e71;
   --color-text-muted: #63756d;
 
+  /* Fonts */
   --font-display: 'Lexend', sans-serif;
   --font-body: 'Noto Sans', sans-serif;
+
+  /* Default font family */
+  --font-family-sans: var(--font-display);
 }
 
 /* Root styles */
@@ -39,6 +44,8 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background-color: var(--color-background-light);
+  color: var(--color-text-main);
 }
 
 /* Material Symbols styles */
@@ -61,4 +68,72 @@ body {
 
 .icon-filled {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom utility classes for our theme colors */
+@layer utilities {
+
+  /* Background colors */
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+
+  .bg-primary-hover {
+    background-color: var(--color-primary-hover);
+  }
+
+  .bg-background-light {
+    background-color: var(--color-background-light);
+  }
+
+  .bg-surface-light {
+    background-color: var(--color-surface-light);
+  }
+
+  .bg-card-light {
+    background-color: var(--color-card-light);
+  }
+
+  /* Text colors */
+  .text-primary {
+    color: var(--color-primary);
+  }
+
+  .text-text-main {
+    color: var(--color-text-main);
+  }
+
+  .text-text-sub {
+    color: var(--color-text-sub);
+  }
+
+  .text-text-muted {
+    color: var(--color-text-muted);
+  }
+
+  /* Border colors */
+  .border-border-light {
+    border-color: var(--color-border-light);
+  }
+
+  .border-primary {
+    border-color: var(--color-primary);
+  }
+
+  /* Hover states */
+  .hover\:bg-primary:hover {
+    background-color: var(--color-primary);
+  }
+
+  .hover\:bg-primary-hover:hover {
+    background-color: var(--color-primary-hover);
+  }
+
+  .hover\:bg-border-light:hover {
+    background-color: var(--color-border-light);
+  }
+
+  .hover\:text-primary:hover {
+    color: var(--color-primary);
+  }
 }
