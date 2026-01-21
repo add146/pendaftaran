@@ -91,6 +91,18 @@ export default function EditEvent() {
                         quota: t.quota?.toString() || ''
                     })))
                 }
+                // Load images from image_url (stored as JSON array)
+                if (data.image_url) {
+                    try {
+                        const imgArray = JSON.parse(data.image_url)
+                        if (Array.isArray(imgArray)) {
+                            setImages(imgArray)
+                        }
+                    } catch {
+                        // Single URL fallback
+                        setImages([data.image_url])
+                    }
+                }
                 setLoading(false)
             })
             .catch(err => {
@@ -134,7 +146,9 @@ export default function EditEvent() {
                 capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
                 event_mode: formData.event_mode,
                 visibility: formData.visibility,
-                status: formData.status
+                status: formData.status,
+                images: images,
+                ticket_types: tickets
             })
 
             navigate('/events')

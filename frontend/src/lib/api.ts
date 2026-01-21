@@ -152,8 +152,11 @@ export interface Event {
     visibility: 'public' | 'private'
     status: 'draft' | 'open' | 'closed'
     image_url?: string
+    images?: string[]
     slug?: string
     created_at: string
+    // For update only
+    ticket_types?: { name: string; price: string; quota?: string }[]
 }
 
 export interface PublicEvent extends Event {
