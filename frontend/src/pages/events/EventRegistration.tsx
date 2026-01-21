@@ -28,9 +28,6 @@ export default function EventRegistration() {
         ticket_type_id: ''
     })
 
-    // Payment method selection for paid tickets
-    const [paymentMethod, setPaymentMethod] = useState<'manual' | 'midtrans' | null>(null)
-
     useEffect(() => {
         if (!slug) return
 
