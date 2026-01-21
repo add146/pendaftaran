@@ -139,10 +139,10 @@ export default function Landing() {
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-3">
-                        <Link to="/dashboard" className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                        <Link to="/login" className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
                             Masuk
                         </Link>
-                        <Link to="/dashboard" className="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all hover:shadow-md">
+                        <Link to="/login" className="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all hover:shadow-md">
                             Mulai Gratis
                         </Link>
                     </div>
