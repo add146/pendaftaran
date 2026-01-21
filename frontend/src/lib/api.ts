@@ -126,6 +126,25 @@ export const participantsAPI = {
         ),
 }
 
+// Settings API
+export const settingsAPI = {
+    getAll: () => fetchAPI<Record<string, any>>('/api/settings'),
+
+    get: (key: string) => fetchAPI<{ key: string; value: any }>(`/api/settings/${key}`),
+
+    save: (key: string, value: any) =>
+        fetchAPI<{ message: string; key: string }>(
+            '/api/settings',
+            { method: 'POST', body: JSON.stringify({ key, value }) }
+        ),
+
+    saveBulk: (settings: Record<string, any>) =>
+        fetchAPI<{ message: string; count: number }>(
+            '/api/settings/bulk',
+            { method: 'POST', body: JSON.stringify(settings) }
+        ),
+}
+
 // Public API
 export const publicAPI = {
     events: () => fetchAPI<{ data: PublicEvent[] }>('/api/public/events'),

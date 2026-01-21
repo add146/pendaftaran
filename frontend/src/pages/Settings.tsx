@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/layout/Sidebar'
 import Header from '../components/layout/Header'
-import { authAPI } from '../lib/api'
+import { authAPI, settingsAPI } from '../lib/api'
 
 interface UserProfile {
     id: string
@@ -48,18 +48,32 @@ export default function Settings() {
             .catch(() => {
                 setLoading(false)
             })
+
+        // Load Midtrans settings
+        settingsAPI.get('midtrans_config')
+            .then(data => {
+                if (data.value) {
+                    setMidtransConfig(data.value)
+                }
+            })
+            .catch(() => {
+                // No settings yet, use defaults
+            })
     }, [])
 
     const handleSave = async () => {
         setSaving(true)
         setMessage('')
 
-        // Simulate save - in production, call API
-        await new Promise(resolve => setTimeout(resolve, 500))
+        try {
+            // Save Midtrans config to API
+            await settingsAPI.save('midtrans_config', midtransConfig)
+            setMessage('Konfigurasi berhasil disimpan!')
+        } catch (err) {
+            setMessage('Gagal menyimpan konfigurasi')
+        }
 
-        setMessage('Settings saved successfully!')
         setSaving(false)
-
         setTimeout(() => setMessage(''), 3000)
     }
 
@@ -300,7 +314,7 @@ export default function Settings() {
                                                             placeholder="SB-Mid-server-xxx"
                                                             value={midtransConfig.sandbox_server_key}
                                                             onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_server_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
                                                         />
                                                     </div>
                                                     <div>
@@ -310,7 +324,7 @@ export default function Settings() {
                                                             placeholder="SB-Mid-client-xxx"
                                                             value={midtransConfig.sandbox_client_key}
                                                             onChange={(e) => setMidtransConfig({ ...midtransConfig, sandbox_client_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
                                                         />
                                                     </div>
                                                 </div>
@@ -335,7 +349,7 @@ export default function Settings() {
                                                             placeholder="Mid-server-xxx"
                                                             value={midtransConfig.production_server_key}
                                                             onChange={(e) => setMidtransConfig({ ...midtransConfig, production_server_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
                                                         />
                                                     </div>
                                                     <div>
@@ -345,7 +359,7 @@ export default function Settings() {
                                                             placeholder="Mid-client-xxx"
                                                             value={midtransConfig.production_client_key}
                                                             onChange={(e) => setMidtransConfig({ ...midtransConfig, production_client_key: e.target.value })}
-                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm"
+                                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono text-sm bg-white text-gray-800"
                                                         />
                                                     </div>
                                                 </div>

@@ -79,6 +79,13 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Settings (key-value storage for app configuration)
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_events_org ON events(organization_id);
 CREATE INDEX IF NOT EXISTS idx_events_slug ON events(slug);
