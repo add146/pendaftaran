@@ -334,8 +334,12 @@ participants.post('/:id/approve-payment', async (c) => {
     const { id } = c.req.param()
 
     const participant = await c.env.DB.prepare(`
-    SELECT * FROM participants WHERE id = ? OR registration_id = ?
-  `).bind(id, id).first()
+    SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+    FROM participants p
+    LEFT JOIN events e ON p.event_id = e.id
+    LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+    WHERE p.id = ? OR p.registration_id = ?
+  `).bind(id, id).first() as any
 
     if (!participant) {
         return c.json({ error: 'Participant not found' }, 404)
@@ -348,6 +352,31 @@ participants.post('/:id/approve-payment', async (c) => {
     await c.env.DB.prepare(`
     UPDATE participants SET payment_status = 'paid' WHERE id = ?
   `).bind(participant.id).run()
+
+    // Send WhatsApp notification after approval
+    if (participant.phone) {
+        try {
+            console.log('[APPROVE] Sending WhatsApp notification to:', participant.phone)
+            const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+            const frontendUrl = 'https://etiket.my.id'
+            const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
+
+            const message = generateRegistrationMessage({
+                eventTitle: participant.event_title,
+                fullName: participant.full_name,
+                registrationId: participant.registration_id,
+                ticketLink,
+                ticketName: participant.ticket_name,
+                ticketPrice: participant.ticket_price
+            })
+
+            const result = await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+            console.log('[APPROVE] WhatsApp send result:', result)
+        } catch (error) {
+            console.error('[APPROVE] Error sending WhatsApp:', error)
+            // Don't fail the approval if WhatsApp fails
+        }
+    }
 
     return c.json({
         message: 'Payment approved',
