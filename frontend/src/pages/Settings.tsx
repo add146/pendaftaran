@@ -173,12 +173,27 @@ export default function Settings() {
     }
 
 
-    const tabs = [
+    // Get user role
+    const getUserRole = () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user') || '{}')
+            return user.role || 'user'
+        } catch {
+            return 'user'
+        }
+    }
+    const userRole = getUserRole()
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin'
+
+    const allTabs = [
         { id: 'general', label: 'General', icon: 'settings' },
         { id: 'organization', label: 'Organization', icon: 'business' },
         { id: 'notifications', label: 'Notifications', icon: 'notifications' },
         { id: 'integrations', label: 'Integrations', icon: 'extension' },
     ]
+
+    // Filter tabs based on role - users can only see General
+    const tabs = isAdmin ? allTabs : allTabs.filter(tab => tab.id === 'general')
 
     return (
         <AdminLayout title="Settings" currentPage="settings" showCreateButton={false}>

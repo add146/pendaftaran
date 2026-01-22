@@ -3,10 +3,23 @@ import { Link } from 'react-router-dom'
 import AdminLayout from '../components/layout/AdminLayout'
 import { eventsAPI, type Event } from '../lib/api'
 
+// Get user role from localStorage
+const getUserRole = () => {
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        return user.role || 'user'
+    } catch {
+        return 'user'
+    }
+}
+
 export default function Events() {
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
+
+    const userRole = getUserRole()
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin'
 
     useEffect(() => {
         eventsAPI.list()
@@ -50,13 +63,16 @@ export default function Events() {
                             </button>
                         ))}
                     </div>
-                    <Link
-                        to="/events/create"
-                        className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">add</span>
-                        Create Event
-                    </Link>
+                    {/* Only show Create button for admin */}
+                    {isAdmin && (
+                        <Link
+                            to="/events/create"
+                            className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">add</span>
+                            Create Event
+                        </Link>
+                    )}
                 </div>
 
                 {/* Events Grid */}
@@ -126,24 +142,28 @@ export default function Events() {
                                                 <span className="material-symbols-outlined text-[16px]">share</span>
                                                 Share
                                             </button>
-                                            <Link
-                                                to={`/events/${event.id}/edit`}
-                                                className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
-                                            >
-                                                Edit
-                                            </Link>
+                                            {isAdmin && (
+                                                <Link
+                                                    to={`/events/${event.id}/edit`}
+                                                    className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
+                                                >
+                                                    Edit
+                                                </Link>
+                                            )}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
                                                 className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
                                             >
                                                 Participants
                                             </Link>
-                                            <Link
-                                                to={`/events/${event.id}/id-cards`}
-                                                className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
-                                            >
-                                                ID Cards
-                                            </Link>
+                                            {isAdmin && (
+                                                <Link
+                                                    to={`/events/${event.id}/id-cards`}
+                                                    className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
+                                                >
+                                                    ID Cards
+                                                </Link>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
