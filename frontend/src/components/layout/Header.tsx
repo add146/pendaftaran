@@ -50,7 +50,7 @@ export default function Header({
                             className={`px-3 py-1.5 rounded-md ${status.connected ? 'bg-emerald-500' : 'bg-gray-600'}`}
                             title={status.connected ? 'WhatsApp session is connected' : 'WhatsApp session not connected'}
                         >
-                            <span className={`text-xs font-bold ${status.connected ? 'text-emerald-950' : 'text-gray-300'}`}>
+                            <span className={`text-xs font-bold ${status.connected ? 'text-white' : 'text-gray-300'}`}>
                                 {status.connected ? 'CONNECTED' : 'DISCONNECTED'}
                             </span>
                         </div>
@@ -58,7 +58,7 @@ export default function Header({
                             className={`px-3 py-1.5 rounded-md ${status.working ? 'bg-emerald-500' : 'bg-gray-600'}`}
                             title={status.working ? 'WAHA is working' : `WAHA status: ${status.sessionStatus || 'Not working'}`}
                         >
-                            <span className={`text-xs font-bold ${status.working ? 'text-emerald-950' : 'text-gray-300'}`}>
+                            <span className={`text-xs font-bold ${status.working ? 'text-white' : 'text-gray-300'}`}>
                                 {status.working ? 'WORKING' : 'STOPPED'}
                             </span>
                         </div>
