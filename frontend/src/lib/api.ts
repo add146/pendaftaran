@@ -413,7 +413,7 @@ export const organizationsAPI = {
         }),
 
     getWahaStatus: (id: string) =>
-        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string }>(
+        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string; connected: boolean; working: boolean; session_status: string }>(
             `/api/organizations/${id}/waha-status`
         ),
 }

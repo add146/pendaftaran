@@ -105,8 +105,17 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
 
     const settingsMap = new Map(wahaSettings.results.map((s: any) => [s.key, s.value]))
     const globalEnabled = settingsMap.get('waha_enabled') === 'true'
-    const apiUrl = settingsMap.get('waha_api_url') || ''
+    let apiUrl = settingsMap.get('waha_api_url') || ''
     const apiKey = settingsMap.get('waha_api_key') || ''
+    const session = settingsMap.get('waha_session') || 'default'
+
+    // Normalize API URL
+    if (apiUrl && !apiUrl.startsWith('http')) {
+        apiUrl = `https://${apiUrl}`
+    }
+    if (apiUrl && apiUrl.endsWith('/')) {
+        apiUrl = apiUrl.slice(0, -1)
+    }
 
     // Check organization WAHA toggle
     const org = await c.env.DB.prepare(
@@ -117,11 +126,58 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     // WAHA is available if global is configured AND enabled, AND organization has enabled it
     const available = globalEnabled && !!apiUrl && !!apiKey && orgEnabled
 
+    // Check live connection status
+    let connected = false
+    let working = false
+    let sessionStatus = ''
+
+    if (available && apiUrl && apiKey) {
+        try {
+            // Check if WAHA API is working and session status
+            const response = await fetch(`${apiUrl}/api/sessions/${session}`, {
+                method: 'GET',
+                headers: {
+                    'X-Api-Key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            })
+
+            if (response.ok) {
+                const data = await response.json() as any
+                sessionStatus = data?.status || ''
+                // Session is WORKING if status is WORKING
+                working = sessionStatus === 'WORKING'
+                // Session is connected if we have me.id (authenticated)
+                connected = !!(data?.me?.id || data?.me?.pushName)
+            } else if (response.status === 422 || response.status === 404) {
+                // Session not found or not started - API is reachable but session not configured
+                working = false
+                connected = false
+                sessionStatus = 'NOT_FOUND'
+            } else {
+                // API returned error
+                working = false
+                connected = false
+                sessionStatus = 'ERROR'
+            }
+        } catch (error) {
+            console.error('[WAHA] Status check error:', error)
+            // API not reachable
+            working = false
+            connected = false
+            sessionStatus = 'UNREACHABLE'
+        }
+    }
+
     return c.json({
         global_enabled: globalEnabled,
         global_configured: !!apiUrl && !!apiKey,
         org_enabled: orgEnabled,
         available,
-        api_url: apiUrl
+        api_url: apiUrl,
+        connected,
+        working,
+        session_status: sessionStatus
     })
 })
+
