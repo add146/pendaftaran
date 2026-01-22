@@ -195,14 +195,8 @@ export default function Settings() {
 
     // Filter tabs based on role:
     // - users: only General
-    // - admin: General, Organization, Notifications (no Integrations)
-    // - super_admin: all tabs
-    const getTabs = () => {
-        if (isSuperAdmin) return allTabs
-        if (isAdmin) return allTabs.filter(tab => tab.id !== 'integrations')
-        return allTabs.filter(tab => tab.id === 'general')
-    }
-    const tabs = getTabs()
+    // - admin & super_admin: all tabs
+    const tabs = isAdmin ? allTabs : allTabs.filter(tab => tab.id === 'general')
 
     return (
         <AdminLayout title="Settings" currentPage="settings" showCreateButton={false}>
@@ -455,117 +449,121 @@ export default function Settings() {
                                         </div>
                                     </div>
 
-                                    {/* Bank Account Configuration */}
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="size-12 rounded-lg bg-orange-100 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-orange-600">account_balance</span>
+                                    {/* Bank Account Configuration - Super Admin only */}
+                                    {isSuperAdmin && (
+                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="size-12 rounded-lg bg-orange-100 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-orange-600">account_balance</span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-text-main">Manual Transfer (Bank Account)</h3>
+                                                    <p className="text-sm text-gray-500">Configure bank account for manual transfers</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h3 className="font-bold text-text-main">Manual Transfer (Bank Account)</h3>
-                                                <p className="text-sm text-gray-500">Configure bank account for manual transfers</p>
+
+                                            <div className="grid md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="contoh: BCA, Mandiri, BRI"
+                                                        value={bankConfig.bank_name}
+                                                        onChange={(e) => setBankConfig({ ...bankConfig, bank_name: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Nama sesuai rekening"
+                                                        value={bankConfig.account_holder_name}
+                                                        onChange={(e) => setBankConfig({ ...bankConfig, account_holder_name: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="1234567890"
+                                                        value={bankConfig.account_number}
+                                                        onChange={(e) => setBankConfig({ ...bankConfig, account_number: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
+                                    )}
 
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="contoh: BCA, Mandiri, BRI"
-                                                    value={bankConfig.bank_name}
-                                                    onChange={(e) => setBankConfig({ ...bankConfig, bank_name: e.target.value })}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                />
+                                    {/* WAHA WhatsApp Gateway - Super Admin only */}
+                                    {isSuperAdmin && (
+                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="size-12 rounded-lg bg-green-100 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-green-600">chat</span>
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-text-main">WhatsApp Gateway (WAHA)</h3>
+                                                    <p className="text-sm text-gray-500">Auto-send QR code links via WhatsApp</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Nama sesuai rekening"
-                                                    value={bankConfig.account_holder_name}
-                                                    onChange={(e) => setBankConfig({ ...bankConfig, account_holder_name: e.target.value })}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                />
+
+                                            {/* Enable Toggle */}
+                                            <div className="mb-6">
+                                                <label className="flex items-center gap-3 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={wahaConfig.enabled}
+                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, enabled: e.target.checked })}
+                                                        className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
+                                                    />
+                                                    <span className="text-sm font-medium text-gray-700">Enable WhatsApp Notifications</span>
+                                                </label>
                                             </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="1234567890"
-                                                    value={bankConfig.account_number}
-                                                    onChange={(e) => setBankConfig({ ...bankConfig, account_number: e.target.value })}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
-                                                />
+
+                                            {/* Configuration Fields */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">WAHA API URL</label>
+                                                    <input
+                                                        type="url"
+                                                        placeholder="https://your-waha-instance.com"
+                                                        value={wahaConfig.api_url}
+                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, api_url: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Your WAHA API key"
+                                                        value={wahaConfig.api_key}
+                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, api_key: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="default"
+                                                        value={wahaConfig.session}
+                                                        onChange={(e) => setWahaConfig({ ...wahaConfig, session: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                    />
+                                                </div>
                                             </div>
+
+                                            <p className="text-xs text-gray-500 mt-4">
+                                                <a href="https://waha.devlike.pro/docs/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                                                    Learn more about WAHA →
+                                                </a>
+                                            </p>
                                         </div>
-                                    </div>
-
-                                    {/* WAHA WhatsApp Gateway */}
-                                    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                        <div className="flex items-center gap-3 mb-6">
-                                            <div className="size-12 rounded-lg bg-green-100 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-green-600">chat</span>
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-text-main">WhatsApp Gateway (WAHA)</h3>
-                                                <p className="text-sm text-gray-500">Auto-send QR code links via WhatsApp</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Enable Toggle */}
-                                        <div className="mb-6">
-                                            <label className="flex items-center gap-3 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={wahaConfig.enabled}
-                                                    onChange={(e) => setWahaConfig({ ...wahaConfig, enabled: e.target.checked })}
-                                                    className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
-                                                />
-                                                <span className="text-sm font-medium text-gray-700">Enable WhatsApp Notifications</span>
-                                            </label>
-                                        </div>
-
-                                        {/* Configuration Fields */}
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">WAHA API URL</label>
-                                                <input
-                                                    type="url"
-                                                    placeholder="https://your-waha-instance.com"
-                                                    value={wahaConfig.api_url}
-                                                    onChange={(e) => setWahaConfig({ ...wahaConfig, api_url: e.target.value })}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
-                                                <input
-                                                    type="password"
-                                                    placeholder="Your WAHA API key"
-                                                    value={wahaConfig.api_key}
-                                                    onChange={(e) => setWahaConfig({ ...wahaConfig, api_key: e.target.value })}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="default"
-                                                    value={wahaConfig.session}
-                                                    onChange={(e) => setWahaConfig({ ...wahaConfig, session: e.target.value })}
-                                                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <p className="text-xs text-gray-500 mt-4">
-                                            <a href="https://waha.devlike.pro/docs/" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                                                Learn more about WAHA →
-                                            </a>
-                                        </p>
-                                    </div>
+                                    )}
 
                                     <button
                                         onClick={handleSave}
