@@ -425,7 +425,8 @@ export default function Participants() {
                     event_title: event?.title,
                     event_date: event?.event_date,
                     city: selectedParticipant.city,
-                    ticket_name: selectedParticipant.ticket_name
+                    ticket_name: selectedParticipant.ticket_name,
+                    phone: selectedParticipant.phone
                 } : null}
             />
         </AdminLayout>
