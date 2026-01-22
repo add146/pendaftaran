@@ -8,19 +8,27 @@ interface CustomFieldsEditorProps {
 export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps) {
     const [fields, setFields] = useState<CustomField[]>([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<string>('')
     const [showAddModal, setShowAddModal] = useState(false)
     const [editingField, setEditingField] = useState<CustomField | null>(null)
 
     useEffect(() => {
+        if (!eventId) {
+            setLoading(false)
+            return
+        }
         loadFields()
     }, [eventId])
 
     const loadFields = async () => {
         try {
+            setError('')
             const data = await customFieldsAPI.list(eventId)
-            setFields(data)
-        } catch (error) {
-            console.error('Failed to load custom fields:', error)
+            setFields(Array.isArray(data) ? data : [])
+        } catch (err) {
+            console.error('Failed to load custom fields:', err)
+            setError(err instanceof Error ? err.message : 'Failed to load fields')
+            setFields([])
         } finally {
             setLoading(false)
         }
@@ -60,8 +68,38 @@ export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps)
         setFields(newFields)
     }
 
+    if (!eventId) {
+        return null
+    }
+
     if (loading) {
-        return <div className="animate-pulse bg-gray-100 h-48 rounded-xl"></div>
+        return (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="h-16 bg-gray-100 rounded"></div>
+                        <div className="h-16 bg-gray-100 rounded"></div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    if (error) {
+        return (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 className="text-lg font-bold mb-2">Custom Form Fields</h3>
+                <p className="text-sm text-red-600">{error}</p>
+                <button
+                    type="button"
+                    onClick={() => loadFields()}
+                    className="mt-2 text-sm text-primary hover:underline"
+                >
+                    Retry
+                </button>
+            </div>
+        )
     }
 
     return (
