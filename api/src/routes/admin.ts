@@ -77,6 +77,49 @@ admin.get('/organizations', async (c) => {
     return c.json({ organizations: orgs.results })
 })
 
+// Create new organization (super admin only)
+admin.post('/organizations', async (c) => {
+    const { name, slug, plan = 'nonprofit' } = await c.req.json()
+
+    if (!name) {
+        return c.json({ error: 'Organization name is required' }, 400)
+    }
+
+    if (!['nonprofit', 'profit'].includes(plan)) {
+        return c.json({ error: 'Invalid plan. Must be nonprofit or profit' }, 400)
+    }
+
+    // Generate slug if not provided
+    const orgSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+    // Check if slug already exists
+    const existingSlug = await c.env.DB.prepare(
+        'SELECT id FROM organizations WHERE slug = ?'
+    ).bind(orgSlug).first()
+
+    if (existingSlug) {
+        return c.json({ error: 'Organization slug already exists' }, 400)
+    }
+
+    // Create organization
+    const orgId = `org_${crypto.randomUUID().slice(0, 8)}`
+    await c.env.DB.prepare(
+        'INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)'
+    ).bind(orgId, name, orgSlug).run()
+
+    // Create subscription
+    const subId = `sub_${crypto.randomUUID().slice(0, 8)}`
+    const amount = plan === 'profit' ? 100000 : 0 // Example pricing
+    await c.env.DB.prepare(
+        'INSERT INTO subscriptions (id, organization_id, plan, status, payment_status, amount) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(subId, orgId, plan, 'active', plan === 'nonprofit' ? 'paid' : 'pending', amount).run()
+
+    return c.json({
+        message: 'Organization created successfully',
+        organization: { id: orgId, name, slug: orgSlug, plan }
+    })
+})
+
 // List all users
 admin.get('/users', async (c) => {
     const { organization_id, limit = '100', offset = '0' } = c.req.query()

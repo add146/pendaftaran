@@ -39,7 +39,8 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
     // Super admin menu items
     const superAdminItems: NavItem[] = [
         { id: 'super-dashboard', label: 'Dashboard', icon: 'admin_panel_settings', href: '/super-admin' },
-        { id: 'super-users', label: 'Manage Users', icon: 'manage_accounts', href: '/super-admin/users' },
+        { id: 'super-orgs', label: 'Organizations', icon: 'apartment', href: '/super-admin/organizations' },
+        { id: 'super-users', label: 'Users', icon: 'manage_accounts', href: '/super-admin/users' },
     ]
 
     return (

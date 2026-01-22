@@ -17,6 +17,7 @@ import PublicTicket from './pages/events/PublicTicket'
 // Super Admin Pages
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
 import Users from './pages/admin/Users'
+import Organizations from './pages/admin/Organizations'
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
         {/* Super Admin routes */}
         <Route path="/super-admin" element={<SuperAdminDashboard />} />
         <Route path="/super-admin/users" element={<Users />} />
+        <Route path="/super-admin/organizations" element={<Organizations />} />
       </Routes>
     </BrowserRouter>
   )
