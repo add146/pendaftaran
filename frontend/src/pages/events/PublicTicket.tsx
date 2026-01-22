@@ -3,6 +3,12 @@ import { useParams, Link } from 'react-router-dom'
 import { publicAPI } from '../../lib/api'
 import QRCode from 'qrcode'
 
+interface IdCardDesign {
+    primaryColor: string
+    backgroundColor: string
+    sponsorLogo: string | null
+}
+
 interface TicketData {
     registration_id: string
     full_name: string
@@ -16,6 +22,7 @@ interface TicketData {
     event_date: string
     event_time?: string
     location?: string
+    id_card_design?: IdCardDesign
 }
 
 export default function PublicTicket() {
@@ -24,6 +31,15 @@ export default function PublicTicket() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const canvasRef = useRef<HTMLCanvasElement>(null)
+
+    // Default design
+    const defaultDesign: IdCardDesign = {
+        primaryColor: '#1e7b49',
+        backgroundColor: '#ffffff',
+        sponsorLogo: null
+    }
+
+    const design = ticket?.id_card_design || defaultDesign
 
     useEffect(() => {
         if (registrationId) {
@@ -69,6 +85,23 @@ export default function PublicTicket() {
         }
     }
 
+    // Format Hijri date (approximate - simplified calculation)
+    const formatHijriDate = (dateStr?: string) => {
+        if (!dateStr) return ''
+        try {
+            const date = new Date(dateStr)
+            // Use Intl for Hijri calendar if available
+            const hijriFormatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            })
+            return hijriFormatter.format(date)
+        } catch {
+            return ''
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -111,20 +144,30 @@ export default function PublicTicket() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-primary/10 to-gray-100 flex items-center justify-center p-4">
+        <div
+            className="min-h-screen flex items-center justify-center p-4"
+            style={{ background: `linear-gradient(to bottom, ${design.primaryColor}20, #f3f4f6)` }}
+        >
             {/* ID Card */}
-            <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
-                {/* Green Header */}
-                <div className="bg-primary px-6 py-6 text-center">
+            <div
+                className="rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+                style={{ backgroundColor: design.backgroundColor }}
+            >
+                {/* Header with primary color */}
+                <div
+                    className="px-6 py-6 text-center"
+                    style={{ backgroundColor: design.primaryColor }}
+                >
                     <h2 className="text-white font-black text-xl tracking-wider uppercase">
                         {ticket.event_title}
                     </h2>
-                    <div className="mt-3 inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full">
-                        <span className="material-symbols-outlined text-white text-[18px]">calendar_month</span>
-                        <span className="text-white text-sm font-bold uppercase tracking-wide">
-                            {formatDate(ticket.event_date)}
-                        </span>
-                    </div>
+                    {/* Simplified date - two formats */}
+                    <p className="text-white/90 text-sm mt-3">
+                        {formatDate(ticket.event_date)}
+                        {formatHijriDate(ticket.event_date) && (
+                            <span className="text-white/70"> / {formatHijriDate(ticket.event_date)}</span>
+                        )}
+                    </p>
                     {ticket.event_time && (
                         <div className="mt-2 text-white/80 text-sm">
                             <span className="material-symbols-outlined text-[14px] align-middle mr-1">schedule</span>
@@ -134,7 +177,7 @@ export default function PublicTicket() {
                 </div>
 
                 {/* Card Body */}
-                <div className="px-6 py-6">
+                <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
                     {/* QR Code Container */}
                     <div className="flex justify-center mb-5">
                         <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
@@ -152,7 +195,10 @@ export default function PublicTicket() {
                         <h3 className="text-2xl font-black text-gray-800 uppercase tracking-wide">
                             {ticket.full_name}
                         </h3>
-                        <p className="text-primary font-bold text-sm uppercase tracking-wider mt-1">
+                        <p
+                            className="font-bold text-sm uppercase tracking-wider mt-1"
+                            style={{ color: design.primaryColor }}
+                        >
                             {ticket.ticket_name || 'PARTICIPANT'}
                         </p>
                     </div>
@@ -166,8 +212,14 @@ export default function PublicTicket() {
                     )}
 
                     {/* Registration ID Badge */}
-                    <div className="bg-primary/10 rounded-xl py-3 px-4 text-center mb-4">
-                        <p className="text-primary font-mono font-bold text-sm tracking-wider">
+                    <div
+                        className="rounded-xl py-3 px-4 text-center mb-4"
+                        style={{ backgroundColor: `${design.primaryColor}15` }}
+                    >
+                        <p
+                            className="font-mono font-bold text-sm tracking-wider"
+                            style={{ color: design.primaryColor }}
+                        >
                             {ticket.registration_id}
                         </p>
                     </div>
@@ -179,10 +231,27 @@ export default function PublicTicket() {
                             {ticket.location}
                         </div>
                     )}
+
+                    {/* Sponsor Logo */}
+                    {design.sponsorLogo && (
+                        <div className="mt-4 flex justify-center">
+                            <img
+                                src={design.sponsorLogo}
+                                alt="Sponsor"
+                                className="max-h-12 max-w-[150px] object-contain"
+                            />
+                        </div>
+                    )}
                 </div>
 
+                {/* Footer accent with primary color */}
+                <div
+                    className="h-2 w-full"
+                    style={{ backgroundColor: design.primaryColor }}
+                ></div>
+
                 {/* Footer */}
-                <div className="px-6 pb-6 text-center">
+                <div className="px-6 pb-6 pt-4 text-center" style={{ backgroundColor: design.backgroundColor }}>
                     <p className="text-xs text-gray-400">
                         Tunjukkan QR Code ini saat check-in di lokasi event
                     </p>

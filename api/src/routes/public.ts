@@ -119,7 +119,7 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 
   const participant = await c.env.DB.prepare(`
     SELECT p.*, t.name as ticket_name, t.price as ticket_price,
-           e.title as event_title, e.event_date, e.event_time, e.location
+           e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design
     FROM participants p
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     JOIN events e ON p.event_id = e.id
@@ -128,6 +128,21 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 
   if (!participant) {
     return c.json({ error: 'Ticket not found' }, 404)
+  }
+
+  // Parse id_card_design or use defaults
+  let idCardDesign = {
+    primaryColor: '#1e7b49',
+    backgroundColor: '#ffffff',
+    sponsorLogo: null as string | null
+  }
+
+  if (participant.id_card_design) {
+    try {
+      idCardDesign = JSON.parse(participant.id_card_design as string)
+    } catch {
+      // Use defaults
+    }
   }
 
   return c.json({
@@ -142,6 +157,7 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     event_title: participant.event_title,
     event_date: participant.event_date,
     event_time: participant.event_time,
-    location: participant.location
+    location: participant.location,
+    id_card_design: idCardDesign
   })
 })
