@@ -20,7 +20,6 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const cardCanvasRef = useRef<HTMLCanvasElement>(null)
     const [cardDataUrl, setCardDataUrl] = useState<string>('')
-    const [sendingWA, setSendingWA] = useState(false)
     const [waMessage, setWaMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
     useEffect(() => {
@@ -198,43 +197,32 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
     }
 
     const handleSendWhatsApp = async () => {
-        if (!participant?.registration_id) return
-
-        // If no phone, show error
-        if (!participant.phone) {
+        if (!participant?.phone) {
             setWaMessage({ type: 'error', text: 'No phone number found for this participant' })
             setTimeout(() => setWaMessage(null), 3000)
             return
         }
 
-        try {
-            setSendingWA(true)
-            setWaMessage(null)
+        // Format phone number (remove leading 0 and add 62 for Indonesia)
+        const formattedPhone = participant.phone.replace(/^0/, '62').replace(/[^0-9]/g, '')
 
-            const token = localStorage.getItem('auth_token')
-            const response = await fetch(`/api/participants/${participant.registration_id}/resend-wa`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            })
+        // Generate ticket link
+        const ticketLink = `https://etiket.my.id/ticket/${participant.registration_id}`
 
-            const data = await response.json()
+        // Create message with ticket info
+        const message = encodeURIComponent(
+            `🎫 *E-TICKET*\n\n` +
+            `📌 *${participant.event_title || 'Event'}*\n` +
+            `📅 ${formatDate(participant.event_date)}\n\n` +
+            `👤 *${participant.full_name}*\n` +
+            `📍 ${participant.city || '-'}\n` +
+            `🎟️ Registration ID: ${participant.registration_id}\n\n` +
+            `🔗 *Lihat ID Card:*\n${ticketLink}\n\n` +
+            `Tunjukkan QR Code di link tersebut saat check-in.`
+        )
 
-            if (!response.ok) {
-                throw new Error(data.error || data.details || 'Failed to send WhatsApp')
-            }
-
-            setWaMessage({ type: 'success', text: 'WhatsApp sent successfully!' })
-            setTimeout(() => setWaMessage(null), 3000)
-        } catch (err: any) {
-            console.error('Send WA error:', err)
-            setWaMessage({ type: 'error', text: err.message || 'Failed to send WhatsApp' })
-            setTimeout(() => setWaMessage(null), 5000)
-        } finally {
-            setSendingWA(false)
-        }
+        // Open WhatsApp with the participant's phone number
+        window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank')
     }
 
     return (
@@ -309,8 +297,8 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
                     {/* WhatsApp Status Message */}
                     {waMessage && (
                         <div className={`mb-3 p-3 rounded-lg text-sm font-medium ${waMessage.type === 'success'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                             }`}>
                             {waMessage.text}
                         </div>
@@ -327,12 +315,12 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
                         </button>
                         <button
                             onClick={handleSendWhatsApp}
-                            disabled={sendingWA || !participant?.phone}
+                            disabled={!participant?.phone}
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             title={!participant?.phone ? 'No phone number available' : 'Send ticket via WhatsApp'}
                         >
-                            <span className="material-symbols-outlined text-[20px]">{sendingWA ? 'hourglass_empty' : 'send'}</span>
-                            {sendingWA ? 'Sending...' : 'Send WA'}
+                            <span className="material-symbols-outlined text-[20px]">send</span>
+                            Send WA
                         </button>
                     </div>
                 </div>
