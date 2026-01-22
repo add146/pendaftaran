@@ -66,7 +66,7 @@ settings.post('/', async (c) => {
 
     // Check if setting exists for this organization
     const existing = await c.env.DB.prepare(
-        'SELECT id FROM settings WHERE key = ? AND organization_id = ?'
+        'SELECT key FROM settings WHERE key = ? AND organization_id = ?'
     ).bind(key, user.orgId).first()
 
     if (existing) {
@@ -96,7 +96,7 @@ settings.post('/bulk', async (c) => {
         const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
         const existing = await c.env.DB.prepare(
-            'SELECT id FROM settings WHERE key = ? AND organization_id = ?'
+            'SELECT key FROM settings WHERE key = ? AND organization_id = ?'
         ).bind(key, user.orgId).first()
 
         if (existing) {
