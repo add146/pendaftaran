@@ -21,6 +21,8 @@ export default function Settings() {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [orgName, setOrgName] = useState('')
+    const [orgAddress, setOrgAddress] = useState('')
+    const [orgLogo, setOrgLogo] = useState('')
     const [notifications, setNotifications] = useState({
         email: true,
         whatsapp: false,
@@ -115,6 +117,27 @@ export default function Settings() {
             .catch((err) => {
                 console.log('No notification preferences found or error:', err.message)
             })
+
+        // Load organization settings
+        settingsAPI.get('organization_address')
+            .then(data => {
+                if (data && data.value) {
+                    setOrgAddress(data.value)
+                }
+            })
+            .catch((err) => {
+                console.log('No organization address found:', err.message)
+            })
+
+        settingsAPI.get('organization_logo')
+            .then(data => {
+                if (data && data.value) {
+                    setOrgLogo(data.value)
+                }
+            })
+            .catch((err) => {
+                console.log('No organization logo found:', err.message)
+            })
     }, [])
 
     const handleSave = async () => {
@@ -154,6 +177,13 @@ export default function Settings() {
             console.log('Saving notification preferences:', notifications)
             await settingsAPI.save('notification_preferences', notifications)
 
+            // Save organization settings
+            console.log('Saving organization settings')
+            await settingsAPI.save('organization_address', orgAddress)
+            if (orgLogo) {
+                await settingsAPI.save('organization_logo', orgLogo)
+            }
+
             setMessage('Semua konfigurasi berhasil disimpan!')
         } catch (err: any) {
             console.error('Save error:', err)
@@ -162,6 +192,42 @@ export default function Settings() {
 
         setSaving(false)
         setTimeout(() => setMessage(''), 5000)
+    }
+
+    // Handle logo upload
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        try {
+            setSaving(true)
+            setMessage('')
+
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const response = await fetch('/api/uploads', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                },
+                body: formData
+            })
+
+            if (!response.ok) {
+                throw new Error('Upload failed')
+            }
+
+            const data = await response.json()
+            setOrgLogo(data.url)
+            setMessage('Logo berhasil diupload!')
+        } catch (err: any) {
+            console.error('Upload error:', err)
+            setMessage('Gagal upload logo: ' + (err.message || 'Unknown error'))
+        } finally {
+            setSaving(false)
+            setTimeout(() => setMessage(''), 5000)
+        }
     }
 
     // Save profile to users table (separate from settings)
@@ -313,6 +379,8 @@ export default function Settings() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
                                             <textarea
                                                 rows={3}
+                                                value={orgAddress}
+                                                onChange={(e) => setOrgAddress(e.target.value)}
                                                 placeholder="Enter organization address"
                                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                             />
@@ -320,12 +388,26 @@ export default function Settings() {
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
                                             <div className="flex items-center gap-4">
-                                                <div className="size-20 rounded-lg bg-primary/10 flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-primary text-[32px]">business</span>
+                                                <div className="size-20 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+                                                    {orgLogo ? (
+                                                        <img src={orgLogo} alt="Organization Logo" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <span className="material-symbols-outlined text-primary text-[32px]">business</span>
+                                                    )}
                                                 </div>
-                                                <button className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50">
+                                                <input
+                                                    type="file"
+                                                    id="logo-upload"
+                                                    accept="image/*"
+                                                    onChange={handleLogoUpload}
+                                                    className="hidden"
+                                                />
+                                                <label
+                                                    htmlFor="logo-upload"
+                                                    className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 cursor-pointer"
+                                                >
                                                     Upload Logo
-                                                </button>
+                                                </label>
                                             </div>
                                         </div>
                                     </div>
