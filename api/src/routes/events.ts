@@ -84,7 +84,8 @@ events.post('/', authMiddleware, async (c) => {
   }
 
   const eventId = `evt_${crypto.randomUUID().slice(0, 8)}`
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const slug = `${baseSlug}-${crypto.randomUUID().slice(0, 6)}` // Add unique suffix
   const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
   await c.env.DB.prepare(`
