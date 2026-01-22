@@ -10,6 +10,7 @@ export default function EventRegistration() {
     const [submitting, setSubmitting] = useState(false)
     const [success, setSuccess] = useState(false)
     const [registrationId, setRegistrationId] = useState('')
+    const [showImagePopup, setShowImagePopup] = useState(false)
     // Payment result from API
     const [paymentInfo, setPaymentInfo] = useState<{
         payment_mode: string
@@ -372,16 +373,24 @@ ${bankSection}`
                         {/* Event Details */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Hero Image */}
-                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/30 to-primary/10">
+                            <div
+                                className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/30 to-primary/10 cursor-pointer group"
+                                onClick={() => eventImage && setShowImagePopup(true)}
+                            >
                                 {eventImage ? (
-                                    <img src={eventImage} alt={event?.title} className="w-full h-full object-cover" />
+                                    <>
+                                        <img src={eventImage} alt={event?.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-[48px] text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg">zoom_in</span>
+                                        </div>
+                                    </>
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center">
                                         <span className="material-symbols-outlined text-[80px] text-primary/30">event</span>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                                <div className="absolute bottom-0 left-0 p-6">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+                                <div className="absolute bottom-0 left-0 p-6 pointer-events-none">
                                     <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'
                                         }`}>
                                         {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
@@ -391,6 +400,27 @@ ${bankSection}`
                                     </h1>
                                 </div>
                             </div>
+
+                            {/* Image Popup Modal */}
+                            {showImagePopup && eventImage && (
+                                <div
+                                    className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
+                                    onClick={() => setShowImagePopup(false)}
+                                >
+                                    <button
+                                        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
+                                        onClick={() => setShowImagePopup(false)}
+                                    >
+                                        <span className="material-symbols-outlined text-[36px]">close</span>
+                                    </button>
+                                    <img
+                                        src={eventImage}
+                                        alt={event?.title}
+                                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            )}
 
                             {/* Event Info */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

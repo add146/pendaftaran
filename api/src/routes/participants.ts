@@ -128,14 +128,8 @@ participants.post('/register', async (c) => {
         }
     }
 
-    // Check if already registered
-    const existing = await c.env.DB.prepare(
-        'SELECT id FROM participants WHERE event_id = ? AND email = ?'
-    ).bind(event_id, email).first()
-
-    if (existing) {
-        return c.json({ error: 'Already registered for this event' }, 400)
-    }
+    // NOTE: Allowing duplicate email registrations per user request
+    // Previously checked for duplicate email per event, now removed
 
     const participantId = `prt_${crypto.randomUUID().slice(0, 8)}`
     const registrationId = generateRegId()
