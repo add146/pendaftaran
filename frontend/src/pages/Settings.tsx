@@ -184,6 +184,7 @@ export default function Settings() {
     }
     const userRole = getUserRole()
     const isAdmin = userRole === 'admin' || userRole === 'super_admin'
+    const isSuperAdmin = userRole === 'super_admin'
 
     const allTabs = [
         { id: 'general', label: 'General', icon: 'settings' },
@@ -192,8 +193,16 @@ export default function Settings() {
         { id: 'integrations', label: 'Integrations', icon: 'extension' },
     ]
 
-    // Filter tabs based on role - users can only see General
-    const tabs = isAdmin ? allTabs : allTabs.filter(tab => tab.id === 'general')
+    // Filter tabs based on role:
+    // - users: only General
+    // - admin: General, Organization, Notifications (no Integrations)
+    // - super_admin: all tabs
+    const getTabs = () => {
+        if (isSuperAdmin) return allTabs
+        if (isAdmin) return allTabs.filter(tab => tab.id !== 'integrations')
+        return allTabs.filter(tab => tab.id === 'general')
+    }
+    const tabs = getTabs()
 
     return (
         <AdminLayout title="Settings" currentPage="settings" showCreateButton={false}>
