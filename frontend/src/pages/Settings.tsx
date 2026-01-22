@@ -447,6 +447,30 @@ export default function Settings() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Notification URL Instructions */}
+                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-6">
+                                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+                                                <span className="material-symbols-outlined text-[18px]">info</span>
+                                                Pengaturan Notification URL
+                                            </h4>
+                                            <p className="text-sm text-amber-700 mb-3">
+                                                Untuk menerima status pembayaran otomatis dari Midtrans, tambahkan URL berikut di akun Midtrans:
+                                            </p>
+                                            <div className="bg-white border border-amber-300 rounded-lg p-3 mb-3">
+                                                <code className="text-xs sm:text-sm font-mono text-gray-800 break-all">
+                                                    https://pendaftaran-qr-api.khibroh.workers.dev/api/payments/notification
+                                                </code>
+                                            </div>
+                                            <p className="text-xs text-amber-600 mb-3">
+                                                <strong>Langkah:</strong> Login ke Midtrans Dashboard → Settings → Payment → Notification URL → Paste URL di atas → Save
+                                            </p>
+                                            <img
+                                                src="/midtrans-notification-url.png"
+                                                alt="Midtrans Notification URL Setup"
+                                                className="w-full rounded-lg border border-gray-200 shadow-sm"
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Bank Account Configuration - Super Admin only */}
