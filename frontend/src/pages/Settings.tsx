@@ -148,6 +148,31 @@ export default function Settings() {
         setTimeout(() => setMessage(''), 5000)
     }
 
+    // Save profile to users table (separate from settings)
+    const handleProfileSave = async () => {
+        setSaving(true)
+        setMessage('')
+
+        try {
+            await authAPI.updateProfile({ name, email })
+
+            // Update localStorage
+            const user = JSON.parse(localStorage.getItem('user') || '{}')
+            user.name = name
+            user.email = email
+            localStorage.setItem('user', JSON.stringify(user))
+
+            setMessage('Profil berhasil diperbarui!')
+        } catch (err: any) {
+            console.error('Profile save error:', err)
+            setMessage('Gagal menyimpan profil: ' + (err.message || 'Unknown error'))
+        }
+
+        setSaving(false)
+        setTimeout(() => setMessage(''), 5000)
+    }
+
+
     const tabs = [
         { id: 'general', label: 'General', icon: 'settings' },
         { id: 'organization', label: 'Organization', icon: 'business' },
@@ -216,11 +241,11 @@ export default function Settings() {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={handleSave}
+                                            onClick={handleProfileSave}
                                             disabled={saving}
                                             className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
                                         >
-                                            {saving ? 'Saving...' : 'Save Changes'}
+                                            {saving ? 'Saving...' : 'Save Profile'}
                                         </button>
                                     </div>
 
