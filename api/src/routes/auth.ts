@@ -211,10 +211,13 @@ auth.put('/change-password', authMiddleware, async (c) => {
         return c.json({ error: 'User not found' }, 404)
     }
 
-    // Verify current password
+    // Verify current password (with plain text fallback for backward compatibility)
     const isValid = await verifyPassword(current_password, dbUser.password_hash as string)
     if (!isValid) {
-        return c.json({ error: 'Current password is incorrect' }, 401)
+        // For backward compatibility with old unhashed passwords
+        if (dbUser.password_hash !== current_password) {
+            return c.json({ error: 'Current password is incorrect' }, 401)
+        }
     }
 
     // Hash new password
