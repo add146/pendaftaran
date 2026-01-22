@@ -1,14 +1,35 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
+import { eventsAPI } from '../../lib/api'
 
 export default function IDCardGenerator() {
-    const { id: _id } = useParams()
-    // Fixed to portrait only, removed landscape option
+    const { id } = useParams<{ id: string }>()
     const [primaryColor, setPrimaryColor] = useState('#1e7b49')
     const [backgroundColor, setBackgroundColor] = useState('#ffffff')
     const [sponsorLogo, setSponsorLogo] = useState<string | null>(null)
+    const [saving, setSaving] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
     const sponsorLogoInputRef = useRef<HTMLInputElement>(null)
+
+    // Load existing design on mount
+    useEffect(() => {
+        if (!id) return
+
+        eventsAPI.getIdCardDesign(id)
+            .then(design => {
+                setPrimaryColor(design.primaryColor || '#1e7b49')
+                setBackgroundColor(design.backgroundColor || '#ffffff')
+                setSponsorLogo(design.sponsorLogo || null)
+            })
+            .catch(err => {
+                console.error('Failed to load ID card design:', err)
+            })
+            .finally(() => {
+                setLoading(false)
+            })
+    }, [id])
 
     const handleSponsorLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -26,6 +47,37 @@ export default function IDCardGenerator() {
         if (sponsorLogoInputRef.current) {
             sponsorLogoInputRef.current.value = ''
         }
+    }
+
+    const handleSaveDesign = async () => {
+        if (!id) return
+
+        setSaving(true)
+        setMessage(null)
+
+        try {
+            await eventsAPI.saveIdCardDesign(id, {
+                primaryColor,
+                backgroundColor,
+                sponsorLogo
+            })
+            setMessage({ type: 'success', text: 'Design saved successfully!' })
+            setTimeout(() => setMessage(null), 3000)
+        } catch (err) {
+            setMessage({ type: 'error', text: 'Failed to save design' })
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    if (loading) {
+        return (
+            <AdminLayout title="ID Card Generator" currentPage="events" showCreateButton={false}>
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+            </AdminLayout>
+        )
     }
 
     return (
@@ -85,7 +137,10 @@ export default function IDCardGenerator() {
                                 </div>
 
                                 {/* QR Code Section - Always shown */}
-                                <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative">
+                                <div
+                                    className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative"
+                                    style={{ backgroundColor }}
+                                >
                                     <div className="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm mb-4">
                                         {/* QR Code Placeholder */}
                                         <div className="w-32 h-32 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
@@ -99,10 +154,13 @@ export default function IDCardGenerator() {
                                     <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
                                 </div>
 
-                                {/* Participant Details */}
-                                <div className="px-6 pb-4 text-center bg-gradient-to-t from-gray-50 to-white">
+                                {/* Participant Details - Apply background color here too */}
+                                <div
+                                    className="px-6 pb-4 text-center"
+                                    style={{ backgroundColor }}
+                                >
                                     <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
-                                    <p className="text-xs font-bold tracking-widest uppercase mb-3 border-b border-gray-100 pb-3" style={{ color: primaryColor }}>Participant</p>
+                                    <p className="text-xs font-bold tracking-widest uppercase mb-3 border-b border-gray-200 pb-3" style={{ color: primaryColor }}>Participant</p>
                                     <div className="flex flex-col gap-1 text-gray-500">
                                         <div className="flex items-center justify-center gap-1 text-xs font-medium">
                                             <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
@@ -116,7 +174,7 @@ export default function IDCardGenerator() {
 
                                 {/* Sponsor Logo Section */}
                                 {sponsorLogo && (
-                                    <div className="px-6 pb-3 flex items-center justify-center">
+                                    <div className="px-6 pb-3 flex items-center justify-center" style={{ backgroundColor }}>
                                         <img
                                             src={sponsorLogo}
                                             alt="Sponsor Logo"
@@ -223,11 +281,31 @@ export default function IDCardGenerator() {
                                     <p className="text-xs text-gray-400 mt-2">Logo will appear at the bottom of the ID card</p>
                                 </div>
 
+                                {/* Message */}
+                                {message && (
+                                    <div className={`mb-4 p-3 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                        {message.text}
+                                    </div>
+                                )}
+
                                 {/* Actions */}
                                 <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
-                                    <button className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-[0.98]">
-                                        <span className="material-symbols-outlined">save</span>
-                                        Save Design
+                                    <button
+                                        onClick={handleSaveDesign}
+                                        disabled={saving}
+                                        className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-[0.98] disabled:opacity-50"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="material-symbols-outlined">save</span>
+                                                Save Design
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>

@@ -220,3 +220,56 @@ events.get('/:id/stats', authMiddleware, async (c) => {
     revenue: revenue?.total_revenue || 0
   })
 })
+
+// Save ID card design for event (organization-scoped)
+events.patch('/:id/id-card-design', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const { id } = c.req.param()
+  const body = await c.req.json()
+
+  // Verify event belongs to organization
+  const event = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+  if (!event) {
+    return c.json({ error: 'Event not found' }, 404)
+  }
+
+  const { primaryColor, backgroundColor, sponsorLogo } = body
+  const designJson = JSON.stringify({
+    primaryColor: primaryColor || '#1e7b49',
+    backgroundColor: backgroundColor || '#ffffff',
+    sponsorLogo: sponsorLogo || null
+  })
+
+  await c.env.DB.prepare(`
+    UPDATE events SET id_card_design = ? WHERE id = ?
+  `).bind(designJson, id).run()
+
+  return c.json({ message: 'ID card design saved', design: JSON.parse(designJson) })
+})
+
+// Get ID card design for event (organization-scoped)
+events.get('/:id/id-card-design', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const { id } = c.req.param()
+
+  const event = await c.env.DB.prepare('SELECT id_card_design FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+  if (!event) {
+    return c.json({ error: 'Event not found' }, 404)
+  }
+
+  const defaultDesign = {
+    primaryColor: '#1e7b49',
+    backgroundColor: '#ffffff',
+    sponsorLogo: null
+  }
+
+  if (event.id_card_design) {
+    try {
+      return c.json(JSON.parse(event.id_card_design as string))
+    } catch {
+      return c.json(defaultDesign)
+    }
+  }
+
+  return c.json(defaultDesign)
+})

@@ -163,6 +163,15 @@ export const eventsAPI = {
         fetchAPI<{ message: string }>(`/api/events/${id}`, { method: 'DELETE' }),
 
     stats: (id: string) => fetchAPI<EventStats>(`/api/events/${id}/stats`),
+
+    getIdCardDesign: (id: string) =>
+        fetchAPI<{ primaryColor: string; backgroundColor: string; sponsorLogo: string | null }>(`/api/events/${id}/id-card-design`),
+
+    saveIdCardDesign: (id: string, design: { primaryColor: string; backgroundColor: string; sponsorLogo: string | null }) =>
+        fetchAPI<{ message: string; design: any }>(`/api/events/${id}/id-card-design`, {
+            method: 'PATCH',
+            body: JSON.stringify(design),
+        }),
 }
 
 // Participants API
