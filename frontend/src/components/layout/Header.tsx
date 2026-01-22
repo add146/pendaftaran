@@ -1,4 +1,5 @@
 import { Link as _Link } from 'react-router-dom'
+import { useWahaStatus } from '../../hooks/useWahaStatus'
 
 interface HeaderProps {
     title?: string
@@ -17,6 +18,8 @@ export default function Header({
     user: _user = { name: 'Imam Ahmed', role: 'Administrator' },
     onMenuClick
 }: HeaderProps) {
+    const { status, refresh } = useWahaStatus()
+
     return (
         <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-border-light bg-surface-light/80 backdrop-blur-md z-10 sticky top-0">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -29,6 +32,50 @@ export default function Header({
                 </button>
                 <h2 className="text-xl font-bold tracking-tight text-text-main">{title}</h2>
             </div>
+
+            {/* WAHA Status Indicators */}
+            <div className="flex items-center gap-2">
+                {status.loading ? (
+                    <>
+                        <div className="px-3 py-1.5 rounded-full bg-gray-200 animate-pulse">
+                            <span className="text-xs font-bold text-transparent">CONNECTED</span>
+                        </div>
+                        <div className="px-3 py-1.5 rounded-full bg-gray-200 animate-pulse">
+                            <span className="text-xs font-bold text-transparent">WORKING</span>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <div
+                            className={`px-3 py-1.5 rounded-full ${status.connected ? 'bg-emerald-500' : 'bg-gray-800'}`}
+                            title={status.connected ? 'WhatsApp session is connected' : 'WhatsApp session not connected'}
+                        >
+                            <span className={`text-xs font-bold ${status.connected ? 'text-emerald-950' : 'text-gray-400'}`}>
+                                CONNECTED
+                            </span>
+                        </div>
+                        <div
+                            className={`px-3 py-1.5 rounded-full ${status.working ? 'bg-emerald-500' : 'bg-gray-800'}`}
+                            title={status.working ? 'WAHA is working' : `WAHA status: ${status.sessionStatus || 'Not working'}`}
+                        >
+                            <span className={`text-xs font-bold ${status.working ? 'text-emerald-950' : 'text-gray-400'}`}>
+                                WORKING
+                            </span>
+                        </div>
+                    </>
+                )}
+                <button
+                    onClick={refresh}
+                    disabled={status.loading}
+                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                    title="Refresh WAHA status"
+                >
+                    <span className={`material-symbols-outlined text-[18px] text-gray-500 ${status.loading ? 'animate-spin' : ''}`}>
+                        refresh
+                    </span>
+                </button>
+            </div>
         </header>
     )
 }
+

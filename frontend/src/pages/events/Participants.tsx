@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { participantsAPI, eventsAPI, organizationsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
+import { participantsAPI, eventsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
 import QRScanner from '../../components/QRScanner'
 import QRCodeModal from '../../components/QRCodeModal'
 import AdminLayout from '../../components/layout/AdminLayout'
@@ -209,8 +209,6 @@ export default function Participants() {
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState('all')
     const [loading, setLoading] = useState(true)
-    const [wahaStatus, setWahaStatus] = useState<{ connected: boolean; working: boolean; loading: boolean }>({ connected: false, working: false, loading: true })
-    const [userOrgId, setUserOrgId] = useState<string | null>(null)
 
     const fetchData = async () => {
         if (!id) return
@@ -235,32 +233,9 @@ export default function Participants() {
         setLoading(false)
     }
 
-    const fetchWahaStatus = async (orgId: string) => {
-        setWahaStatus(prev => ({ ...prev, loading: true }))
-        try {
-            const status = await organizationsAPI.getWahaStatus(orgId)
-            setWahaStatus({
-                connected: status.connected,
-                working: status.working,
-                loading: false
-            })
-        } catch (err) {
-            console.error('Failed to fetch WAHA status:', err)
-            setWahaStatus({ connected: false, working: false, loading: false })
-        }
-    }
-
     useEffect(() => {
         fetchData()
     }, [id, search])
-
-    // Fetch WAHA status when event loads
-    useEffect(() => {
-        if (event?.organization_id) {
-            setUserOrgId(event.organization_id)
-            fetchWahaStatus(event.organization_id)
-        }
-    }, [event?.organization_id])
 
     const handleCheckIn = async (registrationId: string) => {
         try {
@@ -335,43 +310,13 @@ export default function Participants() {
                             </h1>
                             <p className="text-gray-500 mt-1">Manage registrations, payments, and check-in attendees.</p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            {/* WAHA Status Indicator */}
-                            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-xs text-gray-500">Connected:</span>
-                                    {wahaStatus.loading ? (
-                                        <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse"></div>
-                                    ) : (
-                                        <div className={`w-3 h-3 rounded-full ${wahaStatus.connected ? 'bg-green-500 shadow-sm shadow-green-500/50' : 'bg-red-500 shadow-sm shadow-red-500/50'}`} title={wahaStatus.connected ? 'WhatsApp Connected' : 'WhatsApp Not Connected'}></div>
-                                    )}
-                                </div>
-                                <div className="w-px h-4 bg-gray-200"></div>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-xs text-gray-500">Working:</span>
-                                    {wahaStatus.loading ? (
-                                        <div className="w-3 h-3 rounded-full bg-gray-300 animate-pulse"></div>
-                                    ) : (
-                                        <div className={`w-3 h-3 rounded-full ${wahaStatus.working ? 'bg-green-500 shadow-sm shadow-green-500/50' : 'bg-red-500 shadow-sm shadow-red-500/50'}`} title={wahaStatus.working ? 'WAHA Working' : 'WAHA Not Working'}></div>
-                                    )}
-                                </div>
-                                <button
-                                    onClick={() => userOrgId && fetchWahaStatus(userOrgId)}
-                                    disabled={wahaStatus.loading || !userOrgId}
-                                    className="ml-1 p-1 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
-                                    title="Refresh WAHA status"
-                                >
-                                    <span className={`material-symbols-outlined text-[16px] text-gray-500 ${wahaStatus.loading ? 'animate-spin' : ''}`}>refresh</span>
-                                </button>
-                            </div>
-                            <button
-                                onClick={() => setIsScannerOpen(true)}
-                                className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
-                            >
-                                <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                                <span>Launch Web Scanner</span>
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => setIsScannerOpen(true)}
+                            className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+                            <span>Launch Web Scanner</span>
+                        </button>
                     </div>
 
                     {/* Stats Cards */}
