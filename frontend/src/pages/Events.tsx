@@ -137,7 +137,7 @@ export default function Events() {
                                                     navigator.clipboard.writeText(url)
                                                     alert('Link copied: ' + url)
                                                 }}
-                                                className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                                                className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
                                             >
                                                 <span className="material-symbols-outlined text-[16px]">share</span>
                                                 Share
@@ -145,21 +145,21 @@ export default function Events() {
                                             {isAdmin && (
                                                 <Link
                                                     to={`/events/${event.id}/edit`}
-                                                    className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
+                                                    className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md"
                                                 >
                                                     Edit
                                                 </Link>
                                             )}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
+                                                className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md"
                                             >
                                                 Participants
                                             </Link>
                                             {isAdmin && (
                                                 <Link
                                                     to={`/events/${event.id}/id-cards`}
-                                                    className="flex-1 text-center py-2 text-primary text-sm font-medium hover:bg-primary/5 rounded-lg transition-colors"
+                                                    className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md"
                                                 >
                                                     ID Cards
                                                 </Link>
