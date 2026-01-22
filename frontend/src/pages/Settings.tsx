@@ -329,20 +329,22 @@ export default function Settings() {
                                     <h3 className="font-bold text-text-main mb-4">Notification Preferences</h3>
                                     <div className="space-y-4">
                                         {[
-                                            { key: 'email', label: 'Email notifications for new registrations', checked: notifications.email },
-                                            { key: 'whatsapp', label: 'WhatsApp notifications', checked: notifications.whatsapp },
-                                            { key: 'daily', label: 'Daily summary report', checked: notifications.daily },
-                                        ].map((item) => (
-                                            <label key={item.key} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.checked}
-                                                    onChange={(e) => setNotifications(prev => ({ ...prev, [item.key]: e.target.checked }))}
-                                                    className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
-                                                />
-                                                <span className="text-sm text-gray-700">{item.label}</span>
-                                            </label>
-                                        ))}
+                                            { key: 'email', label: 'Email notifications for new registrations', checked: notifications.email, superAdminOnly: true },
+                                            { key: 'whatsapp', label: 'WhatsApp notifications', checked: notifications.whatsapp, superAdminOnly: false },
+                                            { key: 'daily', label: 'Daily summary report', checked: notifications.daily, superAdminOnly: true },
+                                        ]
+                                            .filter(item => !item.superAdminOnly || isSuperAdmin)
+                                            .map((item) => (
+                                                <label key={item.key} className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={item.checked}
+                                                        onChange={(e) => setNotifications(prev => ({ ...prev, [item.key]: e.target.checked }))}
+                                                        className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
+                                                    />
+                                                    <span className="text-sm text-gray-700">{item.label}</span>
+                                                </label>
+                                            ))}
                                     </div>
                                     <button
                                         onClick={handleSave}
