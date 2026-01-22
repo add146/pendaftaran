@@ -100,6 +100,12 @@ export const superAdminAPI = {
             { method: 'POST', body: JSON.stringify(data) }
         ),
 
+    updateUser: (userId: string, data: { name?: string; email?: string; password?: string; organization_id?: string }) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/users/${userId}`,
+            { method: 'PUT', body: JSON.stringify(data) }
+        ),
+
     getPendingSubscriptions: () =>
         fetchAPI<{ payments: any[] }>('/api/admin/subscriptions/pending'),
 

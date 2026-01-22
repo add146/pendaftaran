@@ -159,6 +159,75 @@ admin.post('/users', async (c) => {
     })
 })
 
+// Edit user (super admin only) - update name, email, password
+admin.put('/users/:id', async (c) => {
+    const { id } = c.req.param()
+    const { name, email, password, organization_id } = await c.req.json()
+    const currentUser = c.get('user')
+
+    // Prevent editing super admin's own account through this endpoint
+    if (id === currentUser.userId) {
+        return c.json({ error: 'Use profile page to edit your own account' }, 400)
+    }
+
+    // Check target user exists and is not super admin
+    const targetUser = await c.env.DB.prepare(
+        'SELECT id, role FROM users WHERE id = ?'
+    ).bind(id).first()
+
+    if (!targetUser) {
+        return c.json({ error: 'User not found' }, 404)
+    }
+
+    if ((targetUser as any).role === 'super_admin') {
+        return c.json({ error: 'Cannot edit super admin users' }, 403)
+    }
+
+    // Check if email is already taken
+    if (email) {
+        const existingEmail = await c.env.DB.prepare(
+            'SELECT id FROM users WHERE email = ? AND id != ?'
+        ).bind(email, id).first()
+
+        if (existingEmail) {
+            return c.json({ error: 'Email already in use' }, 400)
+        }
+    }
+
+    // Build update query dynamically
+    const updates: string[] = []
+    const bindings: any[] = []
+
+    if (name) {
+        updates.push('name = ?')
+        bindings.push(name)
+    }
+    if (email) {
+        updates.push('email = ?')
+        bindings.push(email)
+    }
+    if (password && password.length >= 6) {
+        const passwordHash = await hashPassword(password)
+        updates.push('password_hash = ?')
+        bindings.push(passwordHash)
+    }
+    if (organization_id) {
+        updates.push('organization_id = ?')
+        bindings.push(organization_id)
+    }
+
+    if (updates.length === 0) {
+        return c.json({ error: 'No fields to update' }, 400)
+    }
+
+    bindings.push(id)
+    await c.env.DB.prepare(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`
+    ).bind(...bindings).run()
+
+    return c.json({ message: 'User updated successfully' })
+})
+
 // Change user role
 admin.put('/users/:id/role', async (c) => {
     const { id } = c.req.param()

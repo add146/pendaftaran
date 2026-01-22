@@ -94,6 +94,45 @@ export default function Users() {
         }
     }
 
+    // Edit user
+    const [showEditForm, setShowEditForm] = useState(false)
+    const [editUser, setEditUser] = useState<{ id: string; name: string; email: string; password: string; organization_id: string } | null>(null)
+    const [editing, setEditing] = useState(false)
+
+    const openEditForm = (user: User) => {
+        setEditUser({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            password: '',
+            organization_id: user.organization_id
+        })
+        setShowEditForm(true)
+    }
+
+    const handleEditUser = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editUser) return
+
+        try {
+            setEditing(true)
+            setError('')
+            const data: any = { name: editUser.name, email: editUser.email, organization_id: editUser.organization_id }
+            if (editUser.password && editUser.password.length >= 6) {
+                data.password = editUser.password
+            }
+            await superAdminAPI.updateUser(editUser.id, data)
+            setSuccess('User updated successfully!')
+            setShowEditForm(false)
+            setEditUser(null)
+            await loadData()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update user')
+        } finally {
+            setEditing(false)
+        }
+    }
+
     if (loading) {
         return (
             <AdminLayout title="User Management">
@@ -220,6 +259,78 @@ export default function Users() {
                     </div>
                 )}
 
+                {/* Edit User Modal */}
+                {showEditForm && editUser && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                            <h2 className="text-xl font-bold text-text-main mb-4">Edit User</h2>
+                            <form onSubmit={handleEditUser} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={editUser.name}
+                                        onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input
+                                        type="email"
+                                        value={editUser.email}
+                                        onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">New Password (optional)</label>
+                                    <input
+                                        type="password"
+                                        value={editUser.password}
+                                        onChange={(e) => setEditUser({ ...editUser, password: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                        minLength={6}
+                                        placeholder="Leave empty to keep current password"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Minimum 6 characters if changing</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                                    <select
+                                        value={editUser.organization_id}
+                                        onChange={(e) => setEditUser({ ...editUser, organization_id: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                        required
+                                    >
+                                        {organizations.map(org => (
+                                            <option key={org.id} value={org.id}>{org.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowEditForm(false); setEditUser(null) }}
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={editing}
+                                        className="flex-1 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium disabled:opacity-50"
+                                    >
+                                        {editing ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
                 {/* Users Table */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <table className="w-full">
@@ -255,7 +366,13 @@ export default function Users() {
                                     <td className="px-6 py-4 text-gray-500 text-sm">
                                         {new Date(user.created_at).toLocaleDateString()}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right space-x-2">
+                                        <button
+                                            onClick={() => openEditForm(user)}
+                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                        >
+                                            Edit
+                                        </button>
                                         <button
                                             onClick={() => handleDeleteUser(user.id, user.name)}
                                             className="text-red-600 hover:text-red-800 text-sm font-medium"
