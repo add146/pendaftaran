@@ -77,6 +77,12 @@ export const superAdminAPI = {
             `/api/admin/organizations?limit=${limit}&offset=${offset}`
         ),
 
+    createOrganization: (data: { name: string; slug?: string; plan: 'nonprofit' | 'profit' }) =>
+        fetchAPI<{ message: string; organization: any }>(
+            '/api/admin/organizations',
+            { method: 'POST', body: JSON.stringify(data) }
+        ),
+
     getUsers: (orgId?: string, limit = 100, offset = 0) =>
         fetchAPI<{ users: any[] }>(
             `/api/admin/users?${orgId ? `organization_id=${orgId}&` : ''}limit=${limit}&offset=${offset}`
