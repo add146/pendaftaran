@@ -14,6 +14,9 @@ import EventRegistration from './pages/events/EventRegistration'
 import Participants from './pages/events/Participants'
 import IDCardGenerator from './pages/events/IDCardGenerator'
 import PublicTicket from './pages/events/PublicTicket'
+// Super Admin Pages
+import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
+import Users from './pages/admin/Users'
 
 function App() {
   return (
@@ -37,6 +40,10 @@ function App() {
         <Route path="/settings" element={<Settings />} />
         <Route path="/organization" element={<OrganizationSettings />} />
         <Route path="/profile" element={<Profile />} />
+
+        {/* Super Admin routes */}
+        <Route path="/super-admin" element={<SuperAdminDashboard />} />
+        <Route path="/super-admin/users" element={<Users />} />
       </Routes>
     </BrowserRouter>
   )

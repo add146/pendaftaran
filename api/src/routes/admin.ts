@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { authMiddleware } from '../middleware/auth'
 import { superAdminMiddleware } from '../middleware/superAdmin'
+import { hashPassword } from '../lib/jwt'
 import type { Bindings } from '../index'
 
 export const admin = new Hono<{ Bindings: Bindings }>()
@@ -107,6 +108,55 @@ admin.get('/users', async (c) => {
     const users = await c.env.DB.prepare(query).bind(...bindings).all()
 
     return c.json({ users: users.results })
+})
+
+// Create new user (super admin only)
+admin.post('/users', async (c) => {
+    const { email, password, name, organization_id, role = 'admin' } = await c.req.json()
+
+    if (!email || !password || !name || !organization_id) {
+        return c.json({ error: 'Email, password, name, and organization_id are required' }, 400)
+    }
+
+    if (password.length < 6) {
+        return c.json({ error: 'Password must be at least 6 characters' }, 400)
+    }
+
+    if (!['admin', 'user'].includes(role)) {
+        return c.json({ error: 'Invalid role. Must be admin or user' }, 400)
+    }
+
+    // Check if email already exists
+    const existingUser = await c.env.DB.prepare(
+        'SELECT id FROM users WHERE email = ?'
+    ).bind(email).first()
+
+    if (existingUser) {
+        return c.json({ error: 'Email already in use' }, 400)
+    }
+
+    // Check if organization exists
+    const org = await c.env.DB.prepare(
+        'SELECT id FROM organizations WHERE id = ?'
+    ).bind(organization_id).first()
+
+    if (!org) {
+        return c.json({ error: 'Organization not found' }, 404)
+    }
+
+    // Hash password
+    const passwordHash = await hashPassword(password)
+
+    // Create user
+    const userId = `user_${crypto.randomUUID().slice(0, 8)}`
+    await c.env.DB.prepare(
+        'INSERT INTO users (id, organization_id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(userId, organization_id, email, passwordHash, name, role).run()
+
+    return c.json({
+        message: 'User created successfully',
+        user: { id: userId, email, name, role, organization_id }
+    })
 })
 
 // Change user role

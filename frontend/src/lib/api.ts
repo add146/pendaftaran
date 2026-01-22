@@ -94,6 +94,12 @@ export const superAdminAPI = {
             { method: 'DELETE' }
         ),
 
+    createUser: (data: { email: string; password: string; name: string; organization_id: string; role?: string }) =>
+        fetchAPI<{ message: string; user: any }>(
+            '/api/admin/users',
+            { method: 'POST', body: JSON.stringify(data) }
+        ),
+
     getPendingSubscriptions: () =>
         fetchAPI<{ payments: any[] }>('/api/admin/subscriptions/pending'),
 

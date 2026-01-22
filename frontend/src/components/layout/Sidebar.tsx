@@ -6,14 +6,40 @@ interface SidebarProps {
     onClose?: () => void
 }
 
+// Get user role from localStorage
+const getUserRole = () => {
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}')
+        return user.role || 'admin'
+    } catch {
+        return 'admin'
+    }
+}
+
+interface NavItem {
+    id: string
+    label: string
+    icon: string
+    href: string
+}
+
 export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onClose }: SidebarProps) {
-    const navItems = [
+    const userRole = getUserRole()
+    const isSuperAdmin = userRole === 'super_admin'
+
+    const navItems: NavItem[] = [
         { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
         { id: 'events', label: 'Events', icon: 'calendar_today', href: '/events' },
         { id: 'participants', label: 'Participants', icon: 'group', href: '/participants' },
         { id: 'payments', label: 'Payments', icon: 'credit_card', href: '/payments' },
         { id: 'organization', label: 'Organization', icon: 'apartment', href: '/organization' },
         { id: 'settings', label: 'Settings', icon: 'settings', href: '/settings' },
+    ]
+
+    // Super admin menu items
+    const superAdminItems: NavItem[] = [
+        { id: 'super-dashboard', label: 'Dashboard', icon: 'admin_panel_settings', href: '/super-admin' },
+        { id: 'super-users', label: 'Manage Users', icon: 'manage_accounts', href: '/super-admin/users' },
     ]
 
     return (
@@ -70,6 +96,29 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
                         </Link>
                     ))}
                 </nav>
+
+                {/* Super Admin Section */}
+                {isSuperAdmin && (
+                    <div className="px-4 py-2 border-t border-border-light">
+                        <p className="px-3 py-2 text-xs font-semibold text-text-sub uppercase">Super Admin</p>
+                        {superAdminItems.map((item) => (
+                            <Link
+                                key={item.id}
+                                to={item.href}
+                                onClick={onClose}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors ${currentPage === item.id
+                                    ? 'bg-orange-500/10 text-orange-600'
+                                    : 'text-text-main hover:bg-border-light'
+                                    }`}
+                            >
+                                <span className={`material-symbols-outlined text-[24px] ${currentPage === item.id ? 'icon-filled' : ''}`}>
+                                    {item.icon}
+                                </span>
+                                <span>{item.label}</span>
+                            </Link>
+                        ))}
+                    </div>
+                )}
 
                 <div className="p-4 border-t border-border-light">
                     <button
