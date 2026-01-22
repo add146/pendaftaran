@@ -99,9 +99,10 @@ participants.post('/register', async (c) => {
 
     // Check event exists and is open
     const event = await c.env.DB.prepare(
-        'SELECT id, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, title FROM events WHERE id = ? AND status = ?'
+        'SELECT id, organization_id, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, title FROM events WHERE id = ? AND status = ?'
     ).bind(event_id, 'open').first() as {
         id: string;
+        organization_id: string;
         capacity: number;
         event_mode: string;
         payment_mode: string;
@@ -180,7 +181,7 @@ participants.post('/register', async (c) => {
                 ticketPrice
             })
 
-            const result = await sendWhatsAppMessage(c.env.DB, phone, message)
+            const result = await sendWhatsAppMessage(c.env.DB, event.organization_id, phone, message)
             console.log('[REGISTRATION] WhatsApp send result:', result)
         } catch (error) {
             console.error('[REGISTRATION] Error sending WhatsApp:', error)
@@ -362,7 +363,7 @@ participants.post('/:id/approve-payment', authMiddleware, async (c) => {
                 ticketPrice: participant.ticket_price
             })
 
-            const result = await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+            const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
             console.log('[APPROVE] WhatsApp send result:', result)
         } catch (error) {
             console.error('[APPROVE] Error sending WhatsApp:', error)
@@ -426,7 +427,7 @@ participants.post('/:id/resend-whatsapp', authMiddleware, async (c) => {
         })
 
         console.log('[RESEND-WA] Sending WhatsApp to:', participant.phone)
-        const result = await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+        const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
 
         console.log('[RESEND-WA] Result:', result)
 

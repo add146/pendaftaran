@@ -179,7 +179,7 @@ payments.post('/notification', async (c) => {
                 console.log('[MIDTRANS WEBHOOK] Payment is paid, fetching participant details for WhatsApp')
 
                 const participant = await c.env.DB.prepare(`
-                    SELECT p.*, e.title as event_title, t.name as ticket_name, t.price as ticket_price
+                    SELECT p.*, e.title as event_title, e.organization_id, t.name as ticket_name, t.price as ticket_price
                     FROM participants p
                     LEFT JOIN events e ON p.event_id = e.id
                     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
@@ -202,7 +202,7 @@ payments.post('/notification', async (c) => {
                         ticketPrice: participant.ticket_price
                     })
 
-                    const result = await sendWhatsAppMessage(c.env.DB, participant.phone, message)
+                    const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
                     console.log('[MIDTRANS WEBHOOK] WhatsApp send result:', result)
                 } else {
                     console.log('[MIDTRANS WEBHOOK] No phone number found for participant')

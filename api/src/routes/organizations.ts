@@ -97,24 +97,31 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
         return c.json({ error: 'Unauthorized' }, 403)
     }
 
-    // Check global WAHA config
-    const wahaConfig = await c.env.DB.prepare(
-        'SELECT enabled, api_url FROM waha_config WHERE id = ?'
-    ).bind('global').first() as { enabled: number; api_url: string } | null
+    // Check global WAHA config from settings table
+    const wahaSettings = await c.env.DB.prepare(`
+        SELECT key, value FROM settings 
+        WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session', 'waha_enabled')
+    `).all()
+
+    const settingsMap = new Map(wahaSettings.results.map((s: any) => [s.key, s.value]))
+    const globalEnabled = settingsMap.get('waha_enabled') === 'true'
+    const apiUrl = settingsMap.get('waha_api_url') || ''
+    const apiKey = settingsMap.get('waha_api_key') || ''
 
     // Check organization WAHA toggle
     const org = await c.env.DB.prepare(
         'SELECT waha_enabled FROM organizations WHERE id = ?'
     ).bind(id).first() as { waha_enabled: number } | null
 
-    const globalEnabled = wahaConfig?.enabled === 1
     const orgEnabled = org?.waha_enabled === 1
-    const available = globalEnabled && orgEnabled
+    // WAHA is available if global is configured AND enabled, AND organization has enabled it
+    const available = globalEnabled && !!apiUrl && !!apiKey && orgEnabled
 
     return c.json({
         global_enabled: globalEnabled,
+        global_configured: !!apiUrl && !!apiKey,
         org_enabled: orgEnabled,
         available,
-        api_url: wahaConfig?.api_url || ''
+        api_url: apiUrl
     })
 })

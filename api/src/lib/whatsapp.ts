@@ -7,20 +7,32 @@ interface WAHAConfig {
     enabled: boolean
 }
 
-// Fetch WAHA configuration from settings
-async function getWAHAConfig(db: D1Database): Promise<WAHAConfig | null> {
+// Fetch WAHA configuration from settings for a specific organization
+async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WAHAConfig | null> {
+    console.log('[WAHA] Fetching config for organization:', organizationId)
+
     const result = await db.prepare(`
         SELECT key, value FROM settings 
         WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session', 'waha_enabled')
-    `).all()
+        AND organization_id = ?
+    `).bind(organizationId).all()
+
+    console.log('[WAHA] Found settings count:', result.results.length)
 
     const config = new Map(result.results.map((s: any) => [s.key, s.value]))
 
     const enabled = config.get('waha_enabled') === 'true'
+    console.log('[WAHA] Enabled:', enabled, 'Raw value:', config.get('waha_enabled'))
+
     if (!enabled) return null
 
-    const apiUrl = config.get('waha_api_url')
+    let apiUrl = config.get('waha_api_url') || ''
     const apiKey = config.get('waha_api_key')
+
+    // Remove trailing slash to prevent double slashes
+    apiUrl = apiUrl.replace(/\/+$/, '')
+
+    console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET', 'API Key:', apiKey ? 'SET' : 'NOT SET')
 
     if (!apiUrl || !apiKey) return null
 
@@ -52,16 +64,17 @@ function formatWhatsAppNumber(phone: string): string {
 // Send WhatsApp message via WAHA
 export async function sendWhatsAppMessage(
     db: D1Database,
+    organizationId: string,
     phone: string,
     message: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
-        console.log('[WAHA] Starting sendWhatsAppMessage for phone:', phone)
+        console.log('[WAHA] Starting sendWhatsAppMessage for phone:', phone, 'org:', organizationId)
 
-        const config = await getWAHAConfig(db)
+        const config = await getWAHAConfig(db, organizationId)
 
         if (!config) {
-            console.log('[WAHA] WAHA not configured or disabled')
+            console.log('[WAHA] WAHA not configured or disabled for organization:', organizationId)
             return { success: false, error: 'WAHA not configured' }
         }
 
