@@ -53,7 +53,7 @@ export default function SuperAdminDashboard() {
 
     if (loading) {
         return (
-            <AdminLayout title="Super Admin Dashboard">
+            <AdminLayout title="Super Admin Dashboard" currentPage="super-dashboard">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-500">Loading...</div>
                 </div>
@@ -63,7 +63,7 @@ export default function SuperAdminDashboard() {
 
     if (error) {
         return (
-            <AdminLayout title="Super Admin Dashboard">
+            <AdminLayout title="Super Admin Dashboard" currentPage="super-dashboard">
                 <div className="p-6">
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                         {error}
@@ -77,7 +77,7 @@ export default function SuperAdminDashboard() {
     const profitCount = stats?.organizations_by_plan.find((p: any) => p.plan === 'profit')?.count || 0
 
     return (
-        <AdminLayout title="Super Admin Dashboard">
+        <AdminLayout title="Super Admin Dashboard" currentPage="super-dashboard">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div>

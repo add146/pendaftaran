@@ -83,6 +83,12 @@ export const superAdminAPI = {
             { method: 'POST', body: JSON.stringify(data) }
         ),
 
+    updateOrganization: (id: string, data: { name?: string; slug?: string; plan?: 'nonprofit' | 'profit' }) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/organizations/${id}`,
+            { method: 'PUT', body: JSON.stringify(data) }
+        ),
+
     getUsers: (orgId?: string, limit = 100, offset = 0) =>
         fetchAPI<{ users: any[] }>(
             `/api/admin/users?${orgId ? `organization_id=${orgId}&` : ''}limit=${limit}&offset=${offset}`

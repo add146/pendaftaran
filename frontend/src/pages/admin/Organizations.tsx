@@ -26,6 +26,11 @@ export default function Organizations() {
     const [newOrg, setNewOrg] = useState({ name: '', slug: '', plan: 'nonprofit' as 'nonprofit' | 'profit' })
     const [creating, setCreating] = useState(false)
 
+    // Edit form
+    const [showEditForm, setShowEditForm] = useState(false)
+    const [editOrg, setEditOrg] = useState<{ id: string; name: string; slug: string; plan: 'nonprofit' | 'profit' } | null>(null)
+    const [updating, setUpdating] = useState(false)
+
     useEffect(() => {
         loadData()
     }, [])
@@ -61,6 +66,38 @@ export default function Organizations() {
 
     const generateSlug = (name: string) => {
         return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+    }
+
+    const handleEdit = (org: Organization) => {
+        setEditOrg({
+            id: org.id,
+            name: org.name,
+            slug: org.slug,
+            plan: org.plan as 'nonprofit' | 'profit'
+        })
+        setShowEditForm(true)
+    }
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!editOrg) return
+        try {
+            setUpdating(true)
+            setError('')
+            await superAdminAPI.updateOrganization(editOrg.id, {
+                name: editOrg.name,
+                slug: editOrg.slug,
+                plan: editOrg.plan
+            })
+            setSuccess('Organization updated successfully!')
+            setShowEditForm(false)
+            setEditOrg(null)
+            await loadData()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update organization')
+        } finally {
+            setUpdating(false)
+        }
     }
 
     if (loading) {
@@ -190,6 +227,85 @@ export default function Organizations() {
                     </div>
                 )}
 
+                {/* Edit Modal */}
+                {showEditForm && editOrg && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+                            <h2 className="text-xl font-bold text-text-main mb-4">Edit Organization</h2>
+                            <form onSubmit={handleUpdate} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                    <input
+                                        type="text"
+                                        value={editOrg.name}
+                                        onChange={(e) => setEditOrg({ ...editOrg, name: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL)</label>
+                                    <input
+                                        type="text"
+                                        value={editOrg.slug}
+                                        onChange={(e) => setEditOrg({ ...editOrg, slug: e.target.value })}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Plan Type</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${editOrg.plan === 'nonprofit' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                                            <input
+                                                type="radio"
+                                                name="editPlan"
+                                                value="nonprofit"
+                                                checked={editOrg.plan === 'nonprofit'}
+                                                onChange={() => setEditOrg({ ...editOrg, plan: 'nonprofit' })}
+                                                className="sr-only"
+                                            />
+                                            <div>
+                                                <div className="font-semibold text-text-main">Non-Profit</div>
+                                                <div className="text-xs text-gray-500">Free - For masjid, yayasan, etc</div>
+                                            </div>
+                                        </label>
+                                        <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${editOrg.plan === 'profit' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
+                                            <input
+                                                type="radio"
+                                                name="editPlan"
+                                                value="profit"
+                                                checked={editOrg.plan === 'profit'}
+                                                onChange={() => setEditOrg({ ...editOrg, plan: 'profit' })}
+                                                className="sr-only"
+                                            />
+                                            <div>
+                                                <div className="font-semibold text-text-main">Profit</div>
+                                                <div className="text-xs text-gray-500">Paid - For businesses</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowEditForm(false); setEditOrg(null) }}
+                                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={updating}
+                                        className="flex-1 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium disabled:opacity-50"
+                                    >
+                                        {updating ? 'Updating...' : 'Update Organization'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
                 {/* Organizations Grid */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {organizations.map(org => (
@@ -223,7 +339,7 @@ export default function Organizations() {
                                     Created: {new Date(org.created_at).toLocaleDateString()}
                                 </div>
                                 <button
-                                    onClick={() => alert('Edit functionality coming soon')}
+                                    onClick={() => handleEdit(org)}
                                     className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
                                 >
                                     <span className="material-symbols-outlined text-[16px]">edit</span>

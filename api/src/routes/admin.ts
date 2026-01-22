@@ -120,6 +120,60 @@ admin.post('/organizations', async (c) => {
     })
 })
 
+// Update organization (super admin only)
+admin.put('/organizations/:id', async (c) => {
+    const id = c.req.param('id')
+    const { name, slug, plan } = await c.req.json()
+
+    // Check if organization exists
+    const org = await c.env.DB.prepare(
+        'SELECT id FROM organizations WHERE id = ?'
+    ).bind(id).first()
+
+    if (!org) {
+        return c.json({ error: 'Organization not found' }, 404)
+    }
+
+    // Build update query dynamically
+    const updates: string[] = []
+    const bindings: any[] = []
+
+    if (name) {
+        updates.push('name = ?')
+        bindings.push(name)
+    }
+
+    if (slug) {
+        // Check if new slug is already taken by another org
+        const existingSlug = await c.env.DB.prepare(
+            'SELECT id FROM organizations WHERE slug = ? AND id != ?'
+        ).bind(slug, id).first()
+
+        if (existingSlug) {
+            return c.json({ error: 'Organization slug already exists' }, 400)
+        }
+        updates.push('slug = ?')
+        bindings.push(slug)
+    }
+
+    if (updates.length > 0) {
+        bindings.push(id)
+        await c.env.DB.prepare(
+            `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`
+        ).bind(...bindings).run()
+    }
+
+    // Update subscription plan if provided
+    if (plan && ['nonprofit', 'profit'].includes(plan)) {
+        const amount = plan === 'profit' ? 100000 : 0
+        await c.env.DB.prepare(
+            'UPDATE subscriptions SET plan = ?, amount = ? WHERE organization_id = ?'
+        ).bind(plan, amount, id).run()
+    }
+
+    return c.json({ message: 'Organization updated successfully' })
+})
+
 // List all users
 admin.get('/users', async (c) => {
     const { organization_id, limit = '100', offset = '0' } = c.req.query()

@@ -135,7 +135,7 @@ export default function Users() {
 
     if (loading) {
         return (
-            <AdminLayout title="User Management">
+            <AdminLayout title="User Management" currentPage="super-users">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-500">Loading users...</div>
                 </div>
@@ -144,7 +144,7 @@ export default function Users() {
     }
 
     return (
-        <AdminLayout title="User Management">
+        <AdminLayout title="User Management" currentPage="super-users">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">

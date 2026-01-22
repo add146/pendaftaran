@@ -467,13 +467,14 @@ ${bankSection}`
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium mb-1">Phone Number</label>
+                                            <label className="block text-sm font-medium mb-1">No. WhatsApp *</label>
                                             <input
                                                 type="tel"
                                                 value={formData.phone}
                                                 onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                placeholder="Enter your phone number"
+                                                placeholder="Contoh: 08123456789"
+                                                required
                                             />
                                         </div>
 
