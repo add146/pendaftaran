@@ -185,11 +185,6 @@ export default function PublicTicket() {
                         </div>
                     </div>
 
-                    {/* Scan Text */}
-                    <p className="text-center text-xs text-gray-400 uppercase tracking-widest font-medium mb-4">
-                        Scan for Check-in
-                    </p>
-
                     {/* Participant Name */}
                     <div className="text-center mb-4">
                         <h3 className="text-2xl font-black text-gray-800 uppercase tracking-wide">

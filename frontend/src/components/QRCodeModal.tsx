@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
+import { eventsAPI } from '../lib/api'
+
+interface IdCardDesign {
+    primaryColor: string
+    backgroundColor: string
+    sponsorLogo: string | null
+}
 
 interface QRCodeModalProps {
     isOpen: boolean
     onClose: () => void
+    eventId?: string
     participant: {
         full_name: string
         registration_id: string
@@ -16,11 +24,32 @@ interface QRCodeModalProps {
     } | null
 }
 
-export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModalProps) {
+export default function QRCodeModal({ isOpen, onClose, eventId, participant }: QRCodeModalProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const cardCanvasRef = useRef<HTMLCanvasElement>(null)
     const [cardDataUrl, setCardDataUrl] = useState<string>('')
     const [waMessage, setWaMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+    const [design, setDesign] = useState<IdCardDesign>({
+        primaryColor: '#1e7b49',
+        backgroundColor: '#ffffff',
+        sponsorLogo: null
+    })
+
+    // Fetch event design when modal opens
+    useEffect(() => {
+        if (isOpen && eventId) {
+            eventsAPI.getIdCardDesign(eventId)
+                .then(d => setDesign(d))
+                .catch(() => {
+                    // Use default design on error
+                    setDesign({
+                        primaryColor: '#1e7b49',
+                        backgroundColor: '#ffffff',
+                        sponsorLogo: null
+                    })
+                })
+        }
+    }, [isOpen, eventId])
 
     useEffect(() => {
         if (isOpen && participant?.qr_code) {
@@ -41,7 +70,7 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
             // Generate ID Card image
             generateIDCardImage()
         }
-    }, [isOpen, participant])
+    }, [isOpen, participant, design])
 
     const generateIDCardImage = async () => {
         if (!participant) return
@@ -68,11 +97,11 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
         canvas.height = height
 
         // Background
-        ctx.fillStyle = '#ffffff'
+        ctx.fillStyle = design.backgroundColor
         ctx.fillRect(0, 0, width, height)
 
-        // Green header
-        ctx.fillStyle = '#1B4332'
+        // Header with primary color
+        ctx.fillStyle = design.primaryColor
         ctx.fillRect(0, 0, width, 100)
 
         // Event title
@@ -114,11 +143,7 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
             // QR image
             ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
 
-            // Scan text
-            ctx.fillStyle = '#9ca3af'
-            ctx.font = '10px Arial, sans-serif'
-            ctx.textAlign = 'center'
-            ctx.fillText('SCAN FOR CHECK-IN', width / 2, 345)
+            // Removed: Scan text (no longer needed)
 
             // Participant name
             ctx.fillStyle = '#1f2937'
@@ -132,28 +157,35 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
             }
             ctx.fillText(name, width / 2, 380)
 
-            // Ticket type
-            ctx.fillStyle = '#1B4332'
+            // Ticket type with primary color
+            ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px Arial, sans-serif'
-            ctx.fillText((participant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 405)
+            ctx.fillText((participant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 380)
 
             // City
             if (participant.city) {
                 ctx.fillStyle = '#6b7280'
                 ctx.font = '13px Arial, sans-serif'
-                ctx.fillText(`📍 ${participant.city}`, width / 2, 435)
+                ctx.fillText(`📍 ${participant.city}`, width / 2, 410)
             }
 
             // Registration ID badge
-            ctx.fillStyle = 'rgba(27, 67, 50, 0.1)'
+            // Convert hex to rgba
+            const hexToRgba = (hex: string, alpha: number) => {
+                const r = parseInt(hex.slice(1, 3), 16)
+                const g = parseInt(hex.slice(3, 5), 16)
+                const b = parseInt(hex.slice(5, 7), 16)
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`
+            }
+            ctx.fillStyle = hexToRgba(design.primaryColor, 0.1)
             const regBadgeWidth = 200
             const regBadgeHeight = 40
-            roundRect(ctx, (width - regBadgeWidth) / 2, 470, regBadgeWidth, regBadgeHeight, 10)
+            roundRect(ctx, (width - regBadgeWidth) / 2, 445, regBadgeWidth, regBadgeHeight, 10)
             ctx.fill()
 
-            ctx.fillStyle = '#1B4332'
+            ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px, Courier, monospace'
-            ctx.fillText(participant.registration_id, width / 2, 495)
+            ctx.fillText(participant.registration_id, width / 2, 470)
 
             // Generate data URL
             setCardDataUrl(canvas.toDataURL('image/png'))
@@ -247,8 +279,8 @@ Sampai jumpa di acara! 🙏`
 
             {/* ID Card */}
             <div ref={cardCanvasRef as any} className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
-                {/* Green Header */}
-                <div className="bg-primary px-6 py-5 text-center">
+                {/* Header with event color */}
+                <div className="px-6 py-5 text-center" style={{ backgroundColor: design.primaryColor }}>
                     <h2 className="text-white font-black text-xl tracking-wider uppercase">
                         {participant.event_title || 'EVENT REGISTRATION'}
                     </h2>
@@ -263,7 +295,7 @@ Sampai jumpa di acara! 🙏`
                 </div>
 
                 {/* Card Body */}
-                <div className="px-6 py-6">
+                <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
                     {/* QR Code Container */}
                     <div className="flex justify-center mb-5">
                         <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
@@ -271,17 +303,12 @@ Sampai jumpa di acara! 🙏`
                         </div>
                     </div>
 
-                    {/* Scan Text */}
-                    <p className="text-center text-xs text-gray-400 uppercase tracking-widest font-medium mb-4">
-                        Scan for Check-in
-                    </p>
-
                     {/* Participant Name */}
                     <div className="text-center mb-4">
                         <h3 className="text-2xl font-black text-gray-800 uppercase tracking-wide">
                             {participant.full_name}
                         </h3>
-                        <p className="text-primary font-bold text-sm uppercase tracking-wider mt-1">
+                        <p className="font-bold text-sm uppercase tracking-wider mt-1" style={{ color: design.primaryColor }}>
                             {participant.ticket_name || 'PARTICIPANT'}
                         </p>
                     </div>
@@ -295,11 +322,22 @@ Sampai jumpa di acara! 🙏`
                     )}
 
                     {/* Registration ID Badge */}
-                    <div className="bg-primary/10 rounded-xl py-3 px-4 text-center">
-                        <p className="text-primary font-mono font-bold text-sm tracking-wider">
+                    <div className="rounded-xl py-3 px-4 text-center mb-4" style={{ backgroundColor: `${design.primaryColor}15` }}>
+                        <p className="font-mono font-bold text-sm tracking-wider" style={{ color: design.primaryColor }}>
                             {participant.registration_id}
                         </p>
                     </div>
+
+                    {/* Sponsor Logo */}
+                    {design.sponsorLogo && (
+                        <div className="flex justify-center">
+                            <img
+                                src={design.sponsorLogo}
+                                alt="Sponsor"
+                                className="max-h-12 max-w-[150px] object-contain"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Action Buttons */}

@@ -418,6 +418,7 @@ export default function Participants() {
             <QRCodeModal
                 isOpen={isQRModalOpen}
                 onClose={() => setIsQRModalOpen(false)}
+                eventId={id}
                 participant={selectedParticipant ? {
                     full_name: selectedParticipant.full_name,
                     registration_id: selectedParticipant.registration_id,
