@@ -126,12 +126,14 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     // WAHA is available if global is configured AND enabled, AND organization has enabled it
     const available = globalEnabled && !!apiUrl && !!apiKey && orgEnabled
 
-    // Check live connection status
+    // Check live connection status - check if WAHA is globally configured (regardless of org toggle)
     let connected = false
     let working = false
-    let sessionStatus = ''
+    let sessionStatus = 'NOT_CONFIGURED'
 
-    if (available && apiUrl && apiKey) {
+    const globallyConfigured = !!apiUrl && !!apiKey && globalEnabled
+
+    if (globallyConfigured) {
         try {
             // Check if WAHA API is working and session status
             const response = await fetch(`${apiUrl}/api/sessions/${session}`, {
@@ -144,13 +146,13 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
 
             if (response.ok) {
                 const data = await response.json() as any
-                sessionStatus = data?.status || ''
+                sessionStatus = data?.status || 'UNKNOWN'
                 // Session is WORKING if status is WORKING
                 working = sessionStatus === 'WORKING'
                 // Session is connected if we have me.id (authenticated)
                 connected = !!(data?.me?.id || data?.me?.pushName)
             } else if (response.status === 422 || response.status === 404) {
-                // Session not found or not started - API is reachable but session not configured
+                // Session not found or not started
                 working = false
                 connected = false
                 sessionStatus = 'NOT_FOUND'

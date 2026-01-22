@@ -37,29 +37,29 @@ export default function Header({
             <div className="flex items-center gap-2">
                 {status.loading ? (
                     <>
-                        <div className="px-3 py-1.5 rounded-full bg-gray-200 animate-pulse">
+                        <div className="px-3 py-1.5 rounded-md bg-gray-200 animate-pulse">
                             <span className="text-xs font-bold text-transparent">CONNECTED</span>
                         </div>
-                        <div className="px-3 py-1.5 rounded-full bg-gray-200 animate-pulse">
+                        <div className="px-3 py-1.5 rounded-md bg-gray-200 animate-pulse">
                             <span className="text-xs font-bold text-transparent">WORKING</span>
                         </div>
                     </>
                 ) : (
                     <>
                         <div
-                            className={`px-3 py-1.5 rounded-full ${status.connected ? 'bg-emerald-500' : 'bg-gray-800'}`}
+                            className={`px-3 py-1.5 rounded-md ${status.connected ? 'bg-emerald-500' : 'bg-gray-600'}`}
                             title={status.connected ? 'WhatsApp session is connected' : 'WhatsApp session not connected'}
                         >
-                            <span className={`text-xs font-bold ${status.connected ? 'text-emerald-950' : 'text-gray-400'}`}>
-                                CONNECTED
+                            <span className={`text-xs font-bold ${status.connected ? 'text-emerald-950' : 'text-gray-300'}`}>
+                                {status.connected ? 'CONNECTED' : 'DISCONNECTED'}
                             </span>
                         </div>
                         <div
-                            className={`px-3 py-1.5 rounded-full ${status.working ? 'bg-emerald-500' : 'bg-gray-800'}`}
+                            className={`px-3 py-1.5 rounded-md ${status.working ? 'bg-emerald-500' : 'bg-gray-600'}`}
                             title={status.working ? 'WAHA is working' : `WAHA status: ${status.sessionStatus || 'Not working'}`}
                         >
-                            <span className={`text-xs font-bold ${status.working ? 'text-emerald-950' : 'text-gray-400'}`}>
-                                WORKING
+                            <span className={`text-xs font-bold ${status.working ? 'text-emerald-950' : 'text-gray-300'}`}>
+                                {status.working ? 'WORKING' : 'STOPPED'}
                             </span>
                         </div>
                     </>
@@ -67,7 +67,7 @@ export default function Header({
                 <button
                     onClick={refresh}
                     disabled={status.loading}
-                    className="p-1.5 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+                    className="p-1.5 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
                     title="Refresh WAHA status"
                 >
                     <span className={`material-symbols-outlined text-[18px] text-gray-500 ${status.loading ? 'animate-spin' : ''}`}>
