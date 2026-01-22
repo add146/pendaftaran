@@ -103,6 +103,18 @@ export default function Settings() {
             .catch((err) => {
                 console.log('No WAHA config found or error:', err.message)
             })
+
+        // Load notification preferences
+        settingsAPI.get('notification_preferences')
+            .then(data => {
+                console.log('Loaded notification preferences:', data)
+                if (data && data.value) {
+                    setNotifications(data.value)
+                }
+            })
+            .catch((err) => {
+                console.log('No notification preferences found or error:', err.message)
+            })
     }, [])
 
     const handleSave = async () => {
@@ -137,6 +149,10 @@ export default function Settings() {
             await settingsAPI.save('waha_api_key', wahaConfig.api_key)
             await settingsAPI.save('waha_session', wahaConfig.session)
             await settingsAPI.save('waha_config', wahaConfig) // Keep for UI state
+
+            // Save notification preferences
+            console.log('Saving notification preferences:', notifications)
+            await settingsAPI.save('notification_preferences', notifications)
 
             setMessage('Semua konfigurasi berhasil disimpan!')
         } catch (err: any) {
