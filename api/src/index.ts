@@ -33,7 +33,7 @@ app.use('*', cors({
 		'https://etiket.my.id',
 		'https://www.etiket.my.id'
 	],
-	allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+	allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 	allowHeaders: ['Content-Type', 'Authorization'],
 	credentials: true,
 }))

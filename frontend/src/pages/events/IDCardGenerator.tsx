@@ -293,11 +293,24 @@ export default function IDCardGenerator() {
                                 )}
 
                                 {/* Actions */}
-                                <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
+                                <div className="flex gap-3 pt-4 border-t border-gray-100">
+                                    <button
+                                        onClick={() => {
+                                            setPrimaryColor('#1e7b49')
+                                            setBackgroundColor('#ffffff')
+                                            setSponsorLogo(null)
+                                            setMessage({ type: 'success', text: 'Reset to default design' })
+                                            setTimeout(() => setMessage(null), 2000)
+                                        }}
+                                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">restart_alt</span>
+                                        Reset
+                                    </button>
                                     <button
                                         onClick={handleSaveDesign}
                                         disabled={saving}
-                                        className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-[0.98] disabled:opacity-50"
+                                        className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-[0.98] disabled:opacity-50"
                                     >
                                         {saving ? (
                                             <>
