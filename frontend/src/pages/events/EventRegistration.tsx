@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { publicAPI, participantsAPI, paymentsAPI, type PublicEvent, type TicketType } from '../../lib/api'
+import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField } from '../../lib/api'
 
 export default function EventRegistration() {
     const { slug } = useParams<{ slug: string }>()
@@ -32,6 +32,10 @@ export default function EventRegistration() {
         ticket_type_id: ''
     })
 
+    // Custom fields state
+    const [customFields, setCustomFields] = useState<CustomField[]>([])
+    const [customFieldResponses, setCustomFieldResponses] = useState<Record<string, string | string[]>>({})
+
     const [participantId, setParticipantId] = useState('')
 
     useEffect(() => {
@@ -50,6 +54,17 @@ export default function EventRegistration() {
                 setError(err.message || 'Event not found')
                 setLoading(false)
             })
+
+        // Fetch custom fields for this event
+        if (slug) {
+            publicAPI.event(slug)
+                .then(eventData => {
+                    customFieldsAPI.list(eventData.id)
+                        .then(fields => setCustomFields(fields))
+                        .catch(err => console.error('Failed to load custom fields:', err))
+                })
+                .catch(() => { /* Event already handled above */ })
+        }
     }, [slug])
 
     // Load Midtrans Snap Script
@@ -147,14 +162,40 @@ export default function EventRegistration() {
         setSubmitting(true)
         setError('')
 
+        // Validate required custom fields
+        const missingFields = customFields
+            .filter(field => field.required)
+            .filter(field => {
+                const response = customFieldResponses[field.id]
+                if (Array.isArray(response)) {
+                    return response.length === 0
+                }
+                return !response || response.trim() === ''
+            })
+
+        if (missingFields.length > 0) {
+            setError(`Please fill in all required fields: ${missingFields.map(f => f.label).join(', ')}`)
+            setSubmitting(false)
+            return
+        }
+
         try {
+            // Prepare custom fields data
+            const customFieldsData = customFields.map(field => ({
+                field_id: field.id,
+                response: Array.isArray(customFieldResponses[field.id])
+                    ? customFieldResponses[field.id]
+                    : customFieldResponses[field.id] || ''
+            }))
+
             const result = await participantsAPI.register({
                 event_id: event.id,
                 ticket_type_id: formData.ticket_type_id || undefined,
                 full_name: formData.full_name,
                 email: formData.email,
                 phone: formData.phone || undefined,
-                city: formData.city || undefined
+                city: formData.city || undefined,
+                custom_fields: customFieldsData.filter(cf => cf.response)
             })
             setRegistrationId(result.registration_id)
             setParticipantId(result.id) // Store UUID for payment
@@ -551,6 +592,87 @@ ${bankSection}`
                                                 </div>
                                             </div>
                                         )}
+
+                                        {/* Custom Fields */}
+                                        {customFields.map(field => (
+                                            <div key={field.id}>
+                                                <label className="block text-sm font-medium mb-1">
+                                                    {field.label} {field.required && '*'}
+                                                </label>
+                                                {field.field_type === 'text' && (
+                                                    <input
+                                                        type="text"
+                                                        value={(customFieldResponses[field.id] as string) || ''}
+                                                        onChange={e => setCustomFieldResponses(prev => ({
+                                                            ...prev,
+                                                            [field.id]: e.target.value
+                                                        }))}
+                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                        required={field.required}
+                                                    />
+                                                )}
+                                                {field.field_type === 'textarea' && (
+                                                    <textarea
+                                                        value={(customFieldResponses[field.id] as string) || ''}
+                                                        onChange={e => setCustomFieldResponses(prev => ({
+                                                            ...prev,
+                                                            [field.id]: e.target.value
+                                                        }))}
+                                                        rows={4}
+                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                                                        required={field.required}
+                                                    />
+                                                )}
+                                                {field.field_type === 'radio' && field.options && (
+                                                    <div className="space-y-2">
+                                                        {field.options.map((option, index) => (
+                                                            <label key={index} className="flex items-center gap-2 cursor-pointer">
+                                                                <input
+                                                                    type="radio"
+                                                                    name={`field_${field.id}`}
+                                                                    value={option}
+                                                                    checked={customFieldResponses[field.id] === option}
+                                                                    onChange={e => setCustomFieldResponses(prev => ({
+                                                                        ...prev,
+                                                                        [field.id]: e.target.value
+                                                                    }))}
+                                                                    className="w-4 h-4 text-primary"
+                                                                    required={field.required && !customFieldResponses[field.id]}
+                                                                />
+                                                                <span>{option}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {field.field_type === 'checkbox' && field.options && (
+                                                    <div className="space-y-2">
+                                                        {field.options.map((option, index) => {
+                                                            const responses = (customFieldResponses[field.id] || []) as string[]
+                                                            return (
+                                                                <label key={index} className="flex items-center gap-2 cursor-pointer">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        value={option}
+                                                                        checked={responses.includes(option)}
+                                                                        onChange={e => {
+                                                                            const newResponses = e.target.checked
+                                                                                ? [...responses, option]
+                                                                                : responses.filter(r => r !== option)
+                                                                            setCustomFieldResponses(prev => ({
+                                                                                ...prev,
+                                                                                [field.id]: newResponses
+                                                                            }))
+                                                                        }}
+                                                                        className="w-4 h-4 text-primary rounded"
+                                                                    />
+                                                                    <span>{option}</span>
+                                                                </label>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
 
                                         <button
                                             type="submit"

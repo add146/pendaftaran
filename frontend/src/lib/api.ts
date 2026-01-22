@@ -196,6 +196,7 @@ export const participantsAPI = {
         phone?: string
         city?: string
         gender?: string
+        custom_fields?: Array<{ field_id: string; response: string | string[] }>
     }) =>
         fetchAPI<{ id: string; registration_id: string; qr_code: string; payment_status: string; message: string }>(
             '/api/participants/register',
@@ -228,6 +229,41 @@ export const participantsAPI = {
     delete: (id: string) =>
         fetchAPI<{ message: string }>(
             `/api/participants/${id}`,
+            { method: 'DELETE' }
+        ),
+}
+
+// Custom Fields API
+export const customFieldsAPI = {
+    list: (eventId: string) =>
+        fetchAPI<CustomField[]>(`/api/events/${eventId}/custom-fields`),
+
+    create: (eventId: string, data: {
+        field_type: 'text' | 'textarea' | 'radio' | 'checkbox'
+        label: string
+        required: boolean
+        options?: string[]
+        display_order: number
+    }) =>
+        fetchAPI<{ message: string; field_id: string }>(
+            `/api/events/${eventId}/custom-fields`,
+            { method: 'POST', body: JSON.stringify(data) }
+        ),
+
+    update: (eventId: string, fieldId: string, data: {
+        label?: string
+        required?: boolean
+        options?: string[]
+        display_order?: number
+    }) =>
+        fetchAPI<{ message: string }>(
+            `/api/events/${eventId}/custom-fields/${fieldId}`,
+            { method: 'PUT', body: JSON.stringify(data) }
+        ),
+
+    delete: (eventId: string, fieldId: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/events/${eventId}/custom-fields/${fieldId}`,
             { method: 'DELETE' }
         ),
 }
@@ -350,6 +386,17 @@ export interface Participant {
     ticket_name?: string
     ticket_price?: number
     event_title?: string
+    created_at: string
+}
+
+export interface CustomField {
+    id: string
+    event_id: string
+    field_type: 'text' | 'textarea' | 'radio' | 'checkbox'
+    label: string
+    required: boolean
+    options?: string[]
+    display_order: number
     created_at: string
 }
 

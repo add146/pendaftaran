@@ -11,6 +11,7 @@ import { settings } from './routes/settings'
 import { organizations } from './routes/organizations'
 import { subscriptions } from './routes/subscriptions'
 import { admin } from './routes/admin'
+import { customFields } from './routes/custom-fields'
 
 export type Bindings = {
 	DB: D1Database
@@ -50,6 +51,7 @@ app.get('/', (c) => {
 // Routes
 app.route('/api/auth', auth)
 app.route('/api/events', events)
+app.route('/api/events', customFields)
 app.route('/api/participants', participants)
 app.route('/api/public', publicRoutes)
 app.route('/api/public/dashboard', dashboardStatsRoute)

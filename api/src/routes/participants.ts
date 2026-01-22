@@ -11,6 +11,22 @@ function generateRegId(): string {
     return `REG-${year}-${random}`
 }
 
+// Fetch custom field responses for a participant
+async function getCustomFieldResponses(db: D1Database, participantId: string): Promise<Array<{ label: string; response: string }>> {
+    const responses = await db.prepare(`
+        SELECT ecf.label, pfr.response
+        FROM participant_field_responses pfr
+        JOIN event_custom_fields ecf ON pfr.field_id = ecf.id
+        WHERE pfr.participant_id = ?
+        ORDER BY ecf.display_order ASC
+    `).bind(participantId).all()
+
+    return responses.results.map((r: any) => ({
+        label: r.label,
+        response: r.response
+    }))
+}
+
 // List participants for an event (organization-scoped)
 participants.get('/event/:eventId', authMiddleware, async (c) => {
     const user = c.get('user')
@@ -91,7 +107,16 @@ participants.get('/:id', authMiddleware, async (c) => {
 // Register for event (public)
 participants.post('/register', async (c) => {
     const body = await c.req.json()
-    const { event_id, ticket_type_id, full_name, email, phone, city, gender } = body
+    const { event_id, ticket_type_id, full_name, email, phone, city, gender, custom_fields } = body as {
+        event_id: string
+        ticket_type_id?: string
+        full_name: string
+        email: string
+        phone?: string
+        city?: string
+        gender?: string
+        custom_fields?: Array<{ field_id: string; response: string | string[] }>
+    }
 
     if (!event_id || !full_name || !email) {
         return c.json({ error: 'Event ID, full name, and email required' }, 400)
@@ -115,6 +140,23 @@ participants.post('/register', async (c) => {
 
     if (!event) {
         return c.json({ error: 'Event not found or not accepting registrations' }, 400)
+    }
+
+    // Validate custom fields
+    const eventFields = await c.env.DB.prepare(
+        'SELECT id, field_type, label, required, options FROM event_custom_fields WHERE event_id = ?'
+    ).bind(event_id).all()
+
+    const fieldMap = new Map(eventFields.results.map((f: any) => [f.id, f]))
+
+    // Check required fields
+    for (const field of eventFields.results as any[]) {
+        if (field.required === 1) {
+            const response = custom_fields?.find(cf => cf.field_id === field.id)
+            if (!response || !response.response || (Array.isArray(response.response) && response.response.length === 0)) {
+                return c.json({ error: `Field "${field.label}" is required` }, 400)
+            }
+        }
     }
 
     // Check capacity
@@ -156,6 +198,23 @@ participants.post('/register', async (c) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode).run()
 
+    // Store custom field responses
+    if (custom_fields && custom_fields.length > 0) {
+        for (const fieldResponse of custom_fields) {
+            if (!fieldMap.has(fieldResponse.field_id)) continue
+
+            const responseId = `cfr_${crypto.randomUUID().slice(0, 8)}`
+            const responseValue = Array.isArray(fieldResponse.response)
+                ? fieldResponse.response.join(', ')
+                : fieldResponse.response
+
+            await c.env.DB.prepare(`
+                INSERT INTO participant_field_responses (id, participant_id, field_id, response)
+                VALUES (?, ?, ?, ?)
+            `).bind(responseId, participantId, fieldResponse.field_id, responseValue).run()
+        }
+    }
+
     // Send WhatsApp notification ONLY for FREE events (paid status)
     // For PAID events, WhatsApp will be sent after payment confirmation via webhook or manual approve
     if (phone && paymentStatus === 'paid') {
@@ -166,13 +225,17 @@ participants.post('/register', async (c) => {
             const frontendUrl = 'https://etiket.my.id'
             const ticketLink = `${frontendUrl}/ticket/${registrationId}`
 
+            // Fetch custom field responses
+            const customFieldResponses = await getCustomFieldResponses(c.env.DB, participantId)
+
             const message = generateRegistrationMessage({
                 eventTitle: event.title,
                 fullName: full_name,
                 registrationId,
                 ticketLink,
                 ticketName,
-                ticketPrice
+                ticketPrice,
+                customFieldResponses
             })
 
             const result = await sendWhatsAppMessage(c.env.DB, event.organization_id, phone, message)
@@ -348,13 +411,17 @@ participants.post('/:id/approve-payment', authMiddleware, async (c) => {
             const frontendUrl = 'https://etiket.my.id'
             const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
 
+            // Fetch custom field responses
+            const customFieldResponses = await getCustomFieldResponses(c.env.DB, participant.id)
+
             const message = generateRegistrationMessage({
                 eventTitle: participant.event_title,
                 fullName: participant.full_name,
                 registrationId: participant.registration_id,
                 ticketLink,
                 ticketName: participant.ticket_name,
-                ticketPrice: participant.ticket_price
+                ticketPrice: participant.ticket_price,
+                customFieldResponses
             })
 
             const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
@@ -411,13 +478,17 @@ participants.post('/:id/resend-whatsapp', authMiddleware, async (c) => {
         const frontendUrl = 'https://etiket.my.id'
         const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
 
+        // Fetch custom field responses
+        const customFieldResponses = await getCustomFieldResponses(c.env.DB, participant.id)
+
         const message = generateRegistrationMessage({
             eventTitle: participant.event_title,
             fullName: participant.full_name,
             registrationId: participant.registration_id,
             ticketLink,
             ticketName: participant.ticket_name,
-            ticketPrice: participant.ticket_price
+            ticketPrice: participant.ticket_price,
+            customFieldResponses
         })
 
         console.log('[RESEND-WA] Sending WhatsApp to:', participant.phone)

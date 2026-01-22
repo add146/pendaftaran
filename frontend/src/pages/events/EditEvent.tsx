@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { eventsAPI, type Event } from '../../lib/api'
+import CustomFieldsEditor from '../../components/CustomFieldsEditor'
 
 interface TicketType {
     name: string
@@ -526,6 +527,9 @@ export default function EditEvent() {
                                     )}
                                 </div>
                             )}
+
+                            {/* Custom Form Fields */}
+                            {id && <CustomFieldsEditor eventId={id} />}
                         </div>
 
                         {/* Sidebar */}

@@ -130,8 +130,9 @@ export function generateRegistrationMessage(data: {
     ticketLink: string
     ticketName?: string
     ticketPrice?: number
+    customFieldResponses?: Array<{ label: string; response: string }>
 }): string {
-    const { eventTitle, fullName, registrationId, ticketLink, ticketName, ticketPrice } = data
+    const { eventTitle, fullName, registrationId, ticketLink, ticketName, ticketPrice, customFieldResponses } = data
 
     let message = `🎉 *PENDAFTARAN BERHASIL!*
 
@@ -147,6 +148,14 @@ Terima kasih telah mendaftar untuk:
 
     if (ticketPrice && ticketPrice > 0) {
         message += `\n💰 *Harga:* Rp ${ticketPrice.toLocaleString('id-ID')}`
+    }
+
+    // Add custom field responses if any
+    if (customFieldResponses && customFieldResponses.length > 0) {
+        message += `\n\n📋 *Informasi Tambahan:*`
+        for (const field of customFieldResponses) {
+            message += `\n• *${field.label}:* ${field.response}`
+        }
     }
 
     message += `
