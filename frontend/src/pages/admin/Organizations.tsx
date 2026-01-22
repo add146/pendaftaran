@@ -65,7 +65,7 @@ export default function Organizations() {
 
     if (loading) {
         return (
-            <AdminLayout title="Manage Organizations">
+            <AdminLayout title="Manage Organizations" currentPage="super-orgs">
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-500">Loading organizations...</div>
                 </div>
@@ -74,7 +74,7 @@ export default function Organizations() {
     }
 
     return (
-        <AdminLayout title="Manage Organizations">
+        <AdminLayout title="Manage Organizations" currentPage="super-orgs">
             <div className="p-6 space-y-6">
                 {/* Header */}
                 <div className="flex justify-between items-center">
@@ -218,8 +218,17 @@ export default function Organizations() {
                                     </span>
                                 </div>
                             </div>
-                            <div className="mt-3 text-xs text-gray-400">
-                                Created: {new Date(org.created_at).toLocaleDateString()}
+                            <div className="mt-3 flex items-center justify-between">
+                                <div className="text-xs text-gray-400">
+                                    Created: {new Date(org.created_at).toLocaleDateString()}
+                                </div>
+                                <button
+                                    onClick={() => alert('Edit functionality coming soon')}
+                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                                    Edit
+                                </button>
                             </div>
                         </div>
                     ))}
