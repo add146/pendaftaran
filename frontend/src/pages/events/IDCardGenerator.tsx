@@ -34,6 +34,11 @@ export default function IDCardGenerator() {
     const handleSponsorLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
+            // Limit file size to 100KB to avoid database issues
+            if (file.size > 100 * 1024) {
+                setMessage({ type: 'error', text: 'Logo file too large. Max 100KB.' })
+                return
+            }
             const reader = new FileReader()
             reader.onload = (event) => {
                 setSponsorLogo(event.target?.result as string)
@@ -63,8 +68,9 @@ export default function IDCardGenerator() {
             })
             setMessage({ type: 'success', text: 'Design saved successfully!' })
             setTimeout(() => setMessage(null), 3000)
-        } catch (err) {
-            setMessage({ type: 'error', text: 'Failed to save design' })
+        } catch (err: any) {
+            console.error('Save error:', err)
+            setMessage({ type: 'error', text: err.message || 'Failed to save design' })
         } finally {
             setSaving(false)
         }
@@ -120,20 +126,18 @@ export default function IDCardGenerator() {
                                 className="relative rounded-xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex flex-col w-[320px] h-[520px] overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-gray-100 z-10"
                                 style={{ backgroundColor }}
                             >
-                                {/* Header */}
+                                {/* Header - More space for title, simplified date */}
                                 <div
-                                    className="h-[140px] flex flex-col items-center justify-end pb-4 px-4 text-center text-white relative"
+                                    className="h-[120px] flex flex-col items-center justify-center px-4 text-center text-white relative"
                                     style={{ backgroundColor: primaryColor }}
                                 >
-                                    <div className="relative z-10 flex flex-col items-center">
-                                        <h3 className="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm">
-                                            PENGAJIAN AKBAR
-                                        </h3>
-                                        <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                                            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                                            <p className="text-[10px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
-                                        </div>
-                                    </div>
+                                    <h3 className="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm px-2">
+                                        PENGAJIAN AKBAR
+                                    </h3>
+                                    {/* Simplified date - two dates, smaller, not bold */}
+                                    <p className="text-[11px] text-white/90 tracking-wide">
+                                        23 Januari 2026 / 12 Muharram 1446 H
+                                    </p>
                                 </div>
 
                                 {/* QR Code Section - Always shown */}
@@ -278,7 +282,7 @@ export default function IDCardGenerator() {
                                             <span className="text-sm text-gray-500">Upload Sponsor Logo</span>
                                         </label>
                                     )}
-                                    <p className="text-xs text-gray-400 mt-2">Logo will appear at the bottom of the ID card</p>
+                                    <p className="text-xs text-gray-400 mt-2">Logo max 100KB, will appear at bottom of ID card</p>
                                 </div>
 
                                 {/* Message */}
