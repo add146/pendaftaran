@@ -1,0 +1,4 @@
+-- Add WhatsApp message status tracking to participants table
+ALTER TABLE participants ADD COLUMN whatsapp_status TEXT DEFAULT 'pending'; -- pending, sent, failed
+ALTER TABLE participants ADD COLUMN whatsapp_sent_at TEXT;
+ALTER TABLE participants ADD COLUMN whatsapp_error TEXT;

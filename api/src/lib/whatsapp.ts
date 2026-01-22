@@ -61,13 +61,13 @@ function formatWhatsAppNumber(phone: string): string {
     return cleaned + '@c.us'
 }
 
-// Send WhatsApp message via WAHA
+// Send WhatsApp message via WAHA API
 export async function sendWhatsAppMessage(
     db: D1Database,
     organizationId: string,
     phone: string,
     message: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; messageId?: string }> {
     try {
         console.log('[WAHA] Starting sendWhatsAppMessage for phone:', phone, 'org:', organizationId)
 
@@ -110,14 +110,56 @@ export async function sendWhatsAppMessage(
         if (!response.ok) {
             const error = await response.text()
             console.error('[WAHA] API error response:', error)
+
+            // Update participant status to failed
+            try {
+                await db.prepare(`
+                    UPDATE participants 
+                    SET whatsapp_status = 'failed', 
+                        whatsapp_error = ?,
+                        whatsapp_sent_at = CURRENT_TIMESTAMP
+                    WHERE phone = ?
+                `).bind(`WAHA API error: ${response.status}`, phone).run()
+            } catch (dbError) {
+                console.error('[WAHA] Failed to update status:', dbError)
+            }
+
             return { success: false, error: `WAHA API error: ${response.status} - ${error}` }
         }
 
-        const responseData = await response.json()
+        const responseData = await response.json() as any
         console.log('[WAHA] Success! Response:', JSON.stringify(responseData))
-        return { success: true }
+
+        // Update participant status to sent
+        try {
+            await db.prepare(`
+                UPDATE participants 
+                SET whatsapp_status = 'sent',
+                    whatsapp_sent_at = CURRENT_TIMESTAMP,
+                    whatsapp_error = NULL
+                WHERE phone = ?
+            `).bind(phone).run()
+        } catch (dbError) {
+            console.error('[WAHA] Failed to update status:', dbError)
+        }
+
+        return { success: true, messageId: responseData.id }
     } catch (error) {
         console.error('[WAHA] Exception:', error)
+
+        // Update participant status to failed
+        try {
+            await db.prepare(`
+                UPDATE participants 
+                SET whatsapp_status = 'failed',
+                    whatsapp_error = ?,
+                    whatsapp_sent_at = CURRENT_TIMESTAMP
+                WHERE phone = ?
+            `).bind(error instanceof Error ? error.message : 'Unknown error', phone).run()
+        } catch (dbError) {
+            console.error('[WAHA] Failed to update status:', dbError)
+        }
+
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
 }

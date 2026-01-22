@@ -174,14 +174,32 @@ function ParticipantRow({
 
                     {/* Resend WhatsApp button for paid participants with phone */}
                     {participant.payment_status === 'paid' && participant.phone && (
-                        <button
-                            onClick={() => onResendWhatsApp(participant.registration_id)}
-                            className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
-                            title="Resend WhatsApp notification with QR code link"
-                        >
-                            <span className="material-symbols-outlined text-[16px]">send</span>
-                            Resend WA
-                        </button>
+                        <div className="flex items-center gap-1">
+                            {/* WhatsApp status indicator */}
+                            {(participant as any).whatsapp_status === 'sent' ? (
+                                <span
+                                    className="material-symbols-outlined text-green-500 text-[18px]"
+                                    title="WhatsApp terkirim"
+                                >
+                                    check_circle
+                                </span>
+                            ) : (
+                                <span
+                                    className="material-symbols-outlined text-yellow-500 text-[18px]"
+                                    title="WhatsApp belum/gagal terkirim"
+                                >
+                                    warning
+                                </span>
+                            )}
+                            <button
+                                onClick={() => onResendWhatsApp(participant.registration_id)}
+                                className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
+                                title="Resend WhatsApp notification with QR code link"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">send</span>
+                                Resend WA
+                            </button>
+                        </div>
                     )}
 
                     {/* Delete button */}
