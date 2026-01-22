@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -29,23 +30,23 @@ function App() {
         <Route path="/event/:slug" element={<EventRegistration />} />
         <Route path="/ticket/:registrationId" element={<PublicTicket />} />
 
-        {/* Admin routes */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/events" element={<Events />} />
-        <Route path="/events/create" element={<CreateEvent />} />
-        <Route path="/events/:id/edit" element={<EditEvent />} />
-        <Route path="/events/:id/participants" element={<Participants />} />
-        <Route path="/events/:id/id-cards" element={<IDCardGenerator />} />
-        <Route path="/participants" element={<AllParticipants />} />
-        <Route path="/payments" element={<Payments />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/organization" element={<OrganizationSettings />} />
-        <Route path="/profile" element={<Profile />} />
+        {/* Protected Admin routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/events" element={<ProtectedRoute><Events /></ProtectedRoute>} />
+        <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+        <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
+        <Route path="/events/:id/participants" element={<ProtectedRoute><Participants /></ProtectedRoute>} />
+        <Route path="/events/:id/id-cards" element={<ProtectedRoute><IDCardGenerator /></ProtectedRoute>} />
+        <Route path="/participants" element={<ProtectedRoute><AllParticipants /></ProtectedRoute>} />
+        <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/organization" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-        {/* Super Admin routes */}
-        <Route path="/super-admin" element={<SuperAdminDashboard />} />
-        <Route path="/super-admin/users" element={<Users />} />
-        <Route path="/super-admin/organizations" element={<Organizations />} />
+        {/* Super Admin routes (requires super_admin role) */}
+        <Route path="/super-admin" element={<ProtectedRoute requiredRole="super_admin"><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="/super-admin/users" element={<ProtectedRoute requiredRole="super_admin"><Users /></ProtectedRoute>} />
+        <Route path="/super-admin/organizations" element={<ProtectedRoute requiredRole="super_admin"><Organizations /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )
