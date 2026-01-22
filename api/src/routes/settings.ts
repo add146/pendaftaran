@@ -76,10 +76,9 @@ settings.post('/', async (c) => {
         ).bind(valueStr, key, user.orgId).run()
     } else {
         // Insert
-        const id = `set_${crypto.randomUUID().slice(0, 8)}`
         await c.env.DB.prepare(
-            'INSERT INTO settings (id, key, value, organization_id) VALUES (?, ?, ?, ?)'
-        ).bind(id, key, valueStr, user.orgId).run()
+            'INSERT INTO settings (key, value, organization_id) VALUES (?, ?, ?)'
+        ).bind(key, valueStr, user.orgId).run()
     }
 
     return c.json({ message: 'Setting saved', key })
@@ -104,10 +103,9 @@ settings.post('/bulk', async (c) => {
                 'UPDATE settings SET value = ? WHERE key = ? AND organization_id = ?'
             ).bind(valueStr, key, user.orgId).run()
         } else {
-            const id = `set_${crypto.randomUUID().slice(0, 8)}`
             await c.env.DB.prepare(
-                'INSERT INTO settings (id, key, value, organization_id) VALUES (?, ?, ?, ?)'
-            ).bind(id, key, valueStr, user.orgId).run()
+                'INSERT INTO settings (key, value, organization_id) VALUES (?, ?, ?)'
+            ).bind(key, valueStr, user.orgId).run()
         }
         count++
     }
