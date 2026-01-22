@@ -209,20 +209,30 @@ export default function QRCodeModal({ isOpen, onClose, participant }: QRCodeModa
         // Generate ticket link
         const ticketLink = `https://etiket.my.id/ticket/${participant.registration_id}`
 
-        // Create message with ticket info
-        const message = encodeURIComponent(
-            `🎫 *E-TICKET*\n\n` +
-            `📌 *${participant.event_title || 'Event'}*\n` +
-            `📅 ${formatDate(participant.event_date)}\n\n` +
-            `👤 *${participant.full_name}*\n` +
-            `📍 ${participant.city || '-'}\n` +
-            `🎟️ Registration ID: ${participant.registration_id}\n\n` +
-            `🔗 *Lihat ID Card:*\n${ticketLink}\n\n` +
-            `Tunjukkan QR Code di link tersebut saat check-in.`
-        )
+        // Create message matching WAHA gateway format
+        let message = `🎉 *PENDAFTARAN BERHASIL!*
+
+Terima kasih telah mendaftar untuk:
+📌 *Event:* ${participant.event_title || 'Event'}
+
+👤 *Nama:* ${participant.full_name}
+🔖 *ID Registrasi:* ${participant.registration_id}`
+
+        if (participant.ticket_name) {
+            message += `\n🎫 *Tiket:* ${participant.ticket_name}`
+        }
+
+        message += `
+
+🎫 *E-Ticket & QR Code:*
+${ticketLink}
+
+Tunjukkan QR Code saat check-in.
+
+Sampai jumpa di acara! 🙏`
 
         // Open WhatsApp with the participant's phone number
-        window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank')
+        window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank')
     }
 
     return (
