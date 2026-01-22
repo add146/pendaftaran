@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import AdminLayout from '../components/layout/AdminLayout'
 import { authAPI, settingsAPI } from '../lib/api'
 
@@ -225,9 +226,12 @@ export default function Settings() {
 
                                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                                         <h3 className="font-bold text-text-main mb-4">Security</h3>
-                                        <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50">
+                                        <Link
+                                            to="/profile"
+                                            className="inline-block px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50"
+                                        >
                                             Change Password
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
                             )}
