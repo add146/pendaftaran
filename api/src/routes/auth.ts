@@ -204,7 +204,7 @@ auth.put('/change-password', authMiddleware, async (c) => {
 
     // Get current user
     const dbUser = await c.env.DB.prepare(
-        'SELECT password FROM users WHERE id = ?'
+        'SELECT password_hash FROM users WHERE id = ?'
     ).bind(user.userId).first()
 
     if (!dbUser) {
@@ -212,7 +212,7 @@ auth.put('/change-password', authMiddleware, async (c) => {
     }
 
     // Verify current password
-    const isValid = await verifyPassword(current_password, dbUser.password as string)
+    const isValid = await verifyPassword(current_password, dbUser.password_hash as string)
     if (!isValid) {
         return c.json({ error: 'Current password is incorrect' }, 401)
     }
@@ -222,7 +222,7 @@ auth.put('/change-password', authMiddleware, async (c) => {
 
     // Update password
     await c.env.DB.prepare(
-        'UPDATE users SET password = ? WHERE id = ?'
+        'UPDATE users SET password_hash = ? WHERE id = ?'
     ).bind(hashedPassword, user.userId).run()
 
     return c.json({ message: 'Password changed successfully' })
