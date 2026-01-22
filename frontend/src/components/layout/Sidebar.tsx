@@ -26,8 +26,9 @@ interface NavItem {
 export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onClose }: SidebarProps) {
     const userRole = getUserRole()
     const isSuperAdmin = userRole === 'super_admin'
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin'
 
-    const navItems: NavItem[] = [
+    const allNavItems: NavItem[] = [
         { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
         { id: 'events', label: 'Events', icon: 'calendar_today', href: '/events' },
         { id: 'participants', label: 'Participants', icon: 'group', href: '/participants' },
@@ -35,6 +36,9 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
         { id: 'organization', label: 'Organization', icon: 'apartment', href: '/organization' },
         { id: 'settings', label: 'Settings', icon: 'settings', href: '/settings' },
     ]
+
+    // Filter nav items - users cannot see Organization
+    const navItems = isAdmin ? allNavItems : allNavItems.filter(item => item.id !== 'organization')
 
     // Super admin menu items
     const superAdminItems: NavItem[] = [
