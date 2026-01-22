@@ -1,12 +1,32 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
 
 export default function IDCardGenerator() {
     const { id: _id } = useParams()
-    const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait')
-    const [showPunchHole, setShowPunchHole] = useState(true)
-    const [includeQR, setIncludeQR] = useState(true)
+    // Fixed to portrait only, removed landscape option
+    const [primaryColor, setPrimaryColor] = useState('#1e7b49')
+    const [backgroundColor, setBackgroundColor] = useState('#ffffff')
+    const [sponsorLogo, setSponsorLogo] = useState<string | null>(null)
+    const sponsorLogoInputRef = useRef<HTMLInputElement>(null)
+
+    const handleSponsorLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            const reader = new FileReader()
+            reader.onload = (event) => {
+                setSponsorLogo(event.target?.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const removeSponsorLogo = () => {
+        setSponsorLogo(null)
+        if (sponsorLogoInputRef.current) {
+            sponsorLogoInputRef.current.value = ''
+        }
+    }
 
     return (
         <AdminLayout title="ID Card Generator" currentPage="events" showCreateButton={false}>
@@ -38,135 +58,75 @@ export default function IDCardGenerator() {
                             <div
                                 className="absolute inset-0 opacity-5 pointer-events-none"
                                 style={{
-                                    backgroundImage: 'radial-gradient(#1e7b49 1px, transparent 1px)',
+                                    backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px)`,
                                     backgroundSize: '20px 20px'
                                 }}
                             ></div>
 
-                            {/* The ID Card (Portrait Lanyard) */}
-                            <div className={`relative bg-white rounded-xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-gray-100 z-10 ${orientation === 'portrait'
-                                ? 'flex-col w-[320px] h-[520px]'
-                                : 'flex-row w-[520px] h-[320px]'
-                                }`}>
-                                {/* Lanyard Hole */}
-                                {showPunchHole && (
-                                    <div className="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-3 bg-gray-100 rounded-full shadow-inner border border-gray-200 z-20 flex items-center justify-center">
-                                        <div className="w-8 h-1 bg-black/10 rounded-full"></div>
+                            {/* The ID Card (Portrait only) */}
+                            <div
+                                className="relative rounded-xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] flex flex-col w-[320px] h-[520px] overflow-hidden transition-transform duration-300 hover:scale-[1.02] border border-gray-100 z-10"
+                                style={{ backgroundColor }}
+                            >
+                                {/* Header */}
+                                <div
+                                    className="h-[140px] flex flex-col items-center justify-end pb-4 px-4 text-center text-white relative"
+                                    style={{ backgroundColor: primaryColor }}
+                                >
+                                    <div className="relative z-10 flex flex-col items-center">
+                                        <h3 className="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm">
+                                            PENGAJIAN AKBAR
+                                        </h3>
+                                        <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                                            <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                                            <p className="text-[10px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* QR Code Section - Always shown */}
+                                <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative">
+                                    <div className="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm mb-4">
+                                        {/* QR Code Placeholder */}
+                                        <div className="w-32 h-32 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
+                                            <div className="grid grid-cols-5 gap-1 p-2">
+                                                {Array.from({ length: 25 }).map((_, i) => (
+                                                    <div key={i} className={`w-4 h-4 ${Math.random() > 0.5 ? 'bg-white' : 'bg-gray-900'}`}></div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
+                                </div>
+
+                                {/* Participant Details */}
+                                <div className="px-6 pb-4 text-center bg-gradient-to-t from-gray-50 to-white">
+                                    <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
+                                    <p className="text-xs font-bold tracking-widest uppercase mb-3 border-b border-gray-100 pb-3" style={{ color: primaryColor }}>Participant</p>
+                                    <div className="flex flex-col gap-1 text-gray-500">
+                                        <div className="flex items-center justify-center gap-1 text-xs font-medium">
+                                            <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
+                                            <span>Jakarta Selatan</span>
+                                        </div>
+                                        <div className="mt-2 text-[10px] font-mono font-bold text-gray-400 tracking-wider">
+                                            REG-2026-00123
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Sponsor Logo Section */}
+                                {sponsorLogo && (
+                                    <div className="px-6 pb-3 flex items-center justify-center">
+                                        <img
+                                            src={sponsorLogo}
+                                            alt="Sponsor Logo"
+                                            className="max-h-12 max-w-[150px] object-contain"
+                                        />
                                     </div>
                                 )}
 
-                                {orientation === 'portrait' ? (
-                                    // PORTRAIT LAYOUT
-                                    <>
-                                        {/* Header */}
-                                        <div className="bg-primary h-[140px] flex flex-col items-center justify-end pb-4 px-4 text-center text-white relative">
-                                            <div className="relative z-10 flex flex-col items-center">
-                                                <h3 className="font-display font-extrabold text-xl uppercase tracking-wider leading-tight mb-2 drop-shadow-sm">
-                                                    PENGAJIAN AKBAR
-                                                </h3>
-                                                <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
-                                                    <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-                                                    <p className="text-[10px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* QR Code Section */}
-                                        {includeQR && (
-                                            <div className="flex-1 flex flex-col items-center justify-center px-6 pt-6 pb-2 relative">
-                                                <div className="p-3 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm mb-4">
-                                                    {/* QR Code Placeholder */}
-                                                    <div className="w-32 h-32 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
-                                                        <div className="grid grid-cols-5 gap-1 p-2">
-                                                            {Array.from({ length: 25 }).map((_, i) => (
-                                                                <div key={i} className={`w-4 h-4 ${Math.random() > 0.5 ? 'bg-white' : 'bg-gray-900'}`}></div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
-                                            </div>
-                                        )}
-
-                                        {/* Participant Details */}
-                                        <div className="px-6 pb-8 text-center bg-gradient-to-t from-gray-50 to-white">
-                                            <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
-                                            <p className="text-xs font-bold text-primary tracking-widest uppercase mb-3 border-b border-gray-100 pb-3">Participant</p>
-                                            <div className="flex flex-col gap-1 text-gray-500">
-                                                <div className="flex items-center justify-center gap-1 text-xs font-medium">
-                                                    <span className="material-symbols-outlined text-[14px] text-gray-400">location_on</span>
-                                                    <span>Jakarta Selatan</span>
-                                                </div>
-                                                <div className="mt-2 text-[10px] font-mono font-bold text-gray-400 tracking-wider">
-                                                    REG-2026-00123
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Footer Accent */}
-                                        <div className="h-2 bg-primary w-full"></div>
-                                    </>
-                                ) : (
-                                    // LANDSCAPE LAYOUT
-                                    <>
-                                        {/* Left: QR Code */}
-                                        <div className="w-[180px] bg-white border-r border-gray-100 flex flex-col items-center justify-center p-6 relative">
-                                            {includeQR ? (
-                                                <div className="flex flex-col items-center gap-3 mt-4">
-                                                    <div className="p-2 bg-white border-2 border-dashed border-gray-200 rounded-xl shadow-sm">
-                                                        <div className="w-24 h-24 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center relative">
-                                                            <div className="grid grid-cols-5 gap-1 p-1">
-                                                                {Array.from({ length: 25 }).map((_, i) => (
-                                                                    <div key={i} className={`w-[18px] h-[18px] ${Math.random() > 0.5 ? 'bg-white' : 'bg-gray-900'}`}></div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-[9px] text-gray-400 font-mono tracking-widest uppercase text-center leading-tight">Scan for<br />Check-in</p>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-center h-full text-gray-300">
-                                                    <span className="material-symbols-outlined text-4xl">qr_code_2</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Right: Details */}
-                                        <div className="flex-1 flex flex-col relative w-full">
-                                            {/* Header */}
-                                            <div className="bg-primary h-[80px] flex flex-col items-center justify-center px-4 text-center text-white w-full">
-                                                <h3 className="font-display font-extrabold text-lg uppercase tracking-wider leading-tight mb-1 drop-shadow-sm">
-                                                    PENGAJIAN AKBAR
-                                                </h3>
-                                                <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10">
-                                                    <span className="material-symbols-outlined text-[10px]">calendar_today</span>
-                                                    <p className="text-[9px] font-semibold tracking-wide">12 MUHARRAM 1446 H</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Details Body */}
-                                            <div className="flex-1 flex flex-col items-center justify-center p-4 text-center bg-gradient-to-t from-gray-50 to-white w-full">
-                                                <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-0.5">AHMAD FAUZI</h2>
-                                                <p className="text-[10px] font-bold text-primary tracking-widest uppercase mb-2 border-b border-gray-100 pb-2 w-1/2 mx-auto">Participant</p>
-
-                                                <div className="flex flex-col gap-1 text-gray-500">
-                                                    <div className="flex items-center justify-center gap-1 text-[11px] font-medium">
-                                                        <span className="material-symbols-outlined text-[12px] text-gray-400">location_on</span>
-                                                        <span>Jakarta Selatan</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Registration ID Badge */}
-                                            <div className="absolute bottom-4 right-4 bg-gray-100 py-1 px-2 rounded text-[9px] font-mono font-bold text-gray-500 tracking-wider">
-                                                REG-2026-00123
-                                            </div>
-
-                                            {/* Footer Accent */}
-                                            <div className="h-2 bg-primary w-full"></div>
-                                        </div>
-                                    </>
-                                )}
+                                {/* Footer Accent */}
+                                <div className="h-2 w-full" style={{ backgroundColor: primaryColor }}></div>
                             </div>
 
                             <div className="mt-6 text-xs text-gray-400 flex items-center gap-2">
@@ -181,89 +141,93 @@ export default function IDCardGenerator() {
                             <div className="bg-white rounded-xl shadow-sm border border-border-light p-6">
                                 <h3 className="text-text-main tracking-tight text-xl font-bold leading-tight mb-6">Card Settings</h3>
 
-                                {/* Orientation Selector */}
-                                <div className="mb-8">
-                                    <label className="text-sm font-semibold text-gray-700 mb-3 block">Orientation</label>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {/* Portrait Option */}
-                                        <label className="cursor-pointer group relative">
+                                {/* Color Pickers */}
+                                <div className="space-y-4 mb-6">
+                                    {/* Primary Color */}
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Primary Color</label>
+                                        <div className="flex items-center gap-3">
                                             <input
-                                                type="radio"
-                                                name="orientation"
-                                                checked={orientation === 'portrait'}
-                                                onChange={() => setOrientation('portrait')}
-                                                className="peer sr-only"
+                                                type="color"
+                                                value={primaryColor}
+                                                onChange={(e) => setPrimaryColor(e.target.value)}
+                                                className="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer p-1"
                                             />
-                                            <div className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${orientation === 'portrait' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
-                                                }`}>
-                                                <div className={`w-8 h-10 border-2 rounded-sm bg-white ${orientation === 'portrait' ? 'border-primary' : 'border-gray-400'
-                                                    }`}></div>
-                                                <span className={`text-sm font-medium ${orientation === 'portrait' ? 'font-bold text-primary' : 'text-gray-600'
-                                                    }`}>Portrait</span>
-                                            </div>
-                                            {orientation === 'portrait' && (
-                                                <div className="absolute top-2 right-2 text-primary">
-                                                    <span className="material-symbols-outlined text-lg">check_circle</span>
-                                                </div>
-                                            )}
-                                        </label>
+                                            <input
+                                                type="text"
+                                                value={primaryColor}
+                                                onChange={(e) => setPrimaryColor(e.target.value)}
+                                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono uppercase"
+                                                placeholder="#1e7b49"
+                                            />
+                                        </div>
+                                    </div>
 
-                                        {/* Landscape Option */}
-                                        <label className="cursor-pointer group relative">
+                                    {/* Background Color */}
+                                    <div>
+                                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Background Color</label>
+                                        <div className="flex items-center gap-3">
                                             <input
-                                                type="radio"
-                                                name="orientation"
-                                                checked={orientation === 'landscape'}
-                                                onChange={() => setOrientation('landscape')}
-                                                className="peer sr-only"
+                                                type="color"
+                                                value={backgroundColor}
+                                                onChange={(e) => setBackgroundColor(e.target.value)}
+                                                className="w-12 h-12 rounded-lg border-2 border-gray-200 cursor-pointer p-1"
                                             />
-                                            <div className={`flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all ${orientation === 'landscape' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
-                                                }`}>
-                                                <div className={`w-10 h-8 border-2 rounded-sm bg-white ${orientation === 'landscape' ? 'border-primary' : 'border-gray-400'
-                                                    }`}></div>
-                                                <span className={`text-sm font-medium ${orientation === 'landscape' ? 'font-bold text-primary' : 'text-gray-600'
-                                                    }`}>Landscape</span>
-                                            </div>
-                                            {orientation === 'landscape' && (
-                                                <div className="absolute top-2 right-2 text-primary">
-                                                    <span className="material-symbols-outlined text-lg">check_circle</span>
-                                                </div>
-                                            )}
-                                        </label>
+                                            <input
+                                                type="text"
+                                                value={backgroundColor}
+                                                onChange={(e) => setBackgroundColor(e.target.value)}
+                                                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm font-mono uppercase"
+                                                placeholder="#ffffff"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Additional Options */}
-                                <div className="space-y-4 mb-6">
-                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={showPunchHole}
-                                            onChange={(e) => setShowPunchHole(e.target.checked)}
-                                            className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
-                                        />
-                                        <span className="text-sm font-medium text-gray-700">Show Punch Hole</span>
-                                    </label>
-                                    <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                                        <input
-                                            type="checkbox"
-                                            checked={includeQR}
-                                            onChange={(e) => setIncludeQR(e.target.checked)}
-                                            className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
-                                        />
-                                        <span className="text-sm font-medium text-gray-700">Include QR Code</span>
-                                    </label>
+                                {/* Sponsor Logo Upload */}
+                                <div className="mb-6">
+                                    <label className="text-sm font-semibold text-gray-700 mb-2 block">Sponsor Logo</label>
+                                    <input
+                                        ref={sponsorLogoInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleSponsorLogoUpload}
+                                        className="hidden"
+                                        id="sponsorLogoInput"
+                                    />
+
+                                    {sponsorLogo ? (
+                                        <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                            <img
+                                                src={sponsorLogo}
+                                                alt="Sponsor Logo Preview"
+                                                className="h-10 max-w-[80px] object-contain"
+                                            />
+                                            <span className="flex-1 text-sm text-gray-600 truncate">Logo uploaded</span>
+                                            <button
+                                                onClick={removeSponsorLogo}
+                                                className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                            >
+                                                <span className="material-symbols-outlined text-[20px]">delete</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label
+                                            htmlFor="sponsorLogoInput"
+                                            className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 cursor-pointer transition-colors"
+                                        >
+                                            <span className="material-symbols-outlined text-gray-400">add_photo_alternate</span>
+                                            <span className="text-sm text-gray-500">Upload Sponsor Logo</span>
+                                        </label>
+                                    )}
+                                    <p className="text-xs text-gray-400 mt-2">Logo will appear at the bottom of the ID card</p>
                                 </div>
 
                                 {/* Actions */}
                                 <div className="flex flex-col gap-3 pt-4 border-t border-gray-100">
                                     <button className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform active:scale-[0.98]">
-                                        <span className="material-symbols-outlined">download</span>
-                                        Download PDF
-                                    </button>
-                                    <button className="flex items-center justify-center gap-2 w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-4 rounded-lg transition-all">
-                                        <span className="material-symbols-outlined">print</span>
-                                        Print Immediately
+                                        <span className="material-symbols-outlined">save</span>
+                                        Save Design
                                     </button>
                                 </div>
                             </div>
