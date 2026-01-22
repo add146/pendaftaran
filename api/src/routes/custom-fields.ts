@@ -54,13 +54,8 @@ customFields.post('/:eventId/custom-fields', authMiddleware, async (c) => {
     ).run()
 
     return c.json({
-        id: fieldId,
-        event_id: eventId,
-        field_type,
-        label,
-        required: required || false,
-        options,
-        display_order: display_order || 0
+        message: 'Field created successfully',
+        field_id: fieldId
     }, 201)
 })
 
@@ -82,7 +77,7 @@ customFields.get('/:eventId/custom-fields', async (c) => {
         options: field.options ? JSON.parse(field.options) : null
     }))
 
-    return c.json({ fields: parsedFields })
+    return c.json(parsedFields)
 })
 
 // Update custom field

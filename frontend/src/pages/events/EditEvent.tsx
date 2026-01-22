@@ -341,6 +341,9 @@ export default function EditEvent() {
                                 <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
                             </div>
 
+                            {/* Custom Form Fields */}
+                            {id && <CustomFieldsEditor eventId={id} />}
+
                             {/* Payment Settings (for paid events) */}
                             {formData.event_mode === 'paid' && (
                                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -527,9 +530,6 @@ export default function EditEvent() {
                                     )}
                                 </div>
                             )}
-
-                            {/* Custom Form Fields */}
-                            {id && <CustomFieldsEditor eventId={id} />}
                         </div>
 
                         {/* Sidebar */}
