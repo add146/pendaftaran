@@ -9,7 +9,7 @@ publicRoutes.get('/events', async (c) => {
 
   const result = await c.env.DB.prepare(`
     SELECT id, title, description, event_date, event_time, location, capacity, event_mode, image_url, slug,
-      (SELECT COUNT(*) FROM participants WHERE event_id = events.id) as registered_count
+      (SELECT COUNT(*) FROM participants WHERE event_id = events.id AND payment_status = 'paid') as registered_count
     FROM events 
     WHERE visibility = 'public' AND status = 'open'
     ORDER BY event_date ASC
@@ -27,7 +27,7 @@ publicRoutes.get('/events/:slug', async (c) => {
 
   const event = await c.env.DB.prepare(`
     SELECT e.*, o.name as organization_name,
-      (SELECT COUNT(*) FROM participants WHERE event_id = e.id) as registered_count
+      (SELECT COUNT(*) FROM participants WHERE event_id = e.id AND payment_status = 'paid') as registered_count
     FROM events e
     LEFT JOIN organizations o ON e.organization_id = o.id
     WHERE (e.slug = ? OR e.id = ?) AND e.visibility = 'public'
@@ -98,7 +98,7 @@ dashboardStatsRoute.get('/stats', authMiddleware, async (c) => {
   // Get recent events for this organization
   const recentEvents = await c.env.DB.prepare(`
     SELECT e.*, 
-      (SELECT COUNT(*) FROM participants WHERE event_id = e.id) as registered_count
+      (SELECT COUNT(*) FROM participants WHERE event_id = e.id AND payment_status = 'paid') as registered_count
     FROM events e
     WHERE e.organization_id = ?
     ORDER BY e.created_at DESC
