@@ -540,3 +540,126 @@ participants.delete('/:id', authMiddleware, async (c) => {
         message: 'Participant deleted successfully'
     })
 })
+
+// Export participants to CSV (organization-scoped)
+participants.get('/event/:eventId/export-csv', authMiddleware, async (c) => {
+    const user = c.get('user')
+    const { eventId } = c.req.param()
+
+    // Verify event belongs to organization
+    const event = await c.env.DB.prepare('SELECT id, title FROM events WHERE id = ? AND organization_id = ?').bind(eventId, user.orgId).first() as { id: string; title: string } | null
+    if (!event) {
+        return c.json({ error: 'Event not found' }, 404)
+    }
+
+    // Fetch all participants for the event
+    const participants = await c.env.DB.prepare(`
+        SELECT p.*, t.name as ticket_name, t.price as ticket_price
+        FROM participants p
+        LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+        WHERE p.event_id = ?
+        ORDER BY p.created_at DESC
+    `).bind(eventId).all()
+
+    // Fetch all custom fields for the event
+    const customFields = await c.env.DB.prepare(`
+        SELECT id, label, display_order
+        FROM event_custom_fields
+        WHERE event_id = ?
+        ORDER BY display_order ASC
+    `).bind(eventId).all()
+
+    // Fetch all custom field responses for participants
+    const fieldResponses = await c.env.DB.prepare(`
+        SELECT pfr.participant_id, pfr.field_id, pfr.response
+        FROM participant_field_responses pfr
+        JOIN participants p ON pfr.participant_id = p.id
+        WHERE p.event_id = ?
+    `).bind(eventId).all()
+
+    // Create a map of participant_id -> field_id -> response
+    const responseMap = new Map<string, Map<string, string>>()
+    for (const response of fieldResponses.results as any[]) {
+        if (!responseMap.has(response.participant_id)) {
+            responseMap.set(response.participant_id, new Map())
+        }
+        responseMap.get(response.participant_id)!.set(response.field_id, response.response)
+    }
+
+    // Helper function to escape CSV values
+    const escapeCSV = (value: any): string => {
+        if (value === null || value === undefined) return ''
+        const str = String(value)
+        // Escape double quotes and wrap in quotes if contains comma, quote, or newline
+        if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+            return `"${str.replace(/"/g, '""')}"`
+        }
+        return str
+    }
+
+    // Build CSV header
+    const headers = [
+        'Registration ID',
+        'Full Name',
+        'Email',
+        'Phone',
+        'City',
+        'Gender',
+        'Ticket Name',
+        'Ticket Price',
+        'Payment Status',
+        'Check-in Status',
+        'Check-in Time',
+        'Created At'
+    ]
+
+    // Add custom field headers
+    for (const field of customFields.results as any[]) {
+        headers.push(field.label)
+    }
+
+    const csvLines: string[] = [headers.map(escapeCSV).join(',')]
+
+    // Build CSV rows
+    for (const participant of participants.results as any[]) {
+        const row = [
+            participant.registration_id,
+            participant.full_name,
+            participant.email,
+            participant.phone || '',
+            participant.city || '',
+            participant.gender || '',
+            participant.ticket_name || '',
+            participant.ticket_price || '',
+            participant.payment_status,
+            participant.check_in_status,
+            participant.check_in_time || '',
+            participant.created_at
+        ]
+
+        // Add custom field responses
+        const participantResponses = responseMap.get(participant.id)
+        for (const field of customFields.results as any[]) {
+            const response = participantResponses?.get(field.id) || ''
+            row.push(response)
+        }
+
+        csvLines.push(row.map(escapeCSV).join(','))
+    }
+
+    const csvContent = csvLines.join('\n')
+
+    // Generate filename with event title and current date
+    const today = new Date().toISOString().split('T')[0]
+    const eventTitle = event.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()
+    const filename = `participants-${eventTitle}-${today}.csv`
+
+    // Return CSV with proper headers
+    return new Response(csvContent, {
+        headers: {
+            'Content-Type': 'text/csv; charset=utf-8',
+            'Content-Disposition': `attachment; filename="${filename}"`,
+        },
+    })
+})
+

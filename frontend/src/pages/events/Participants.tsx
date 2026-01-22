@@ -227,6 +227,7 @@ export default function Participants() {
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState('all')
     const [loading, setLoading] = useState(true)
+    const [exportLoading, setExportLoading] = useState(false)
 
     const fetchData = async () => {
         if (!id) return
@@ -254,6 +255,18 @@ export default function Participants() {
     useEffect(() => {
         fetchData()
     }, [id, search])
+
+    const handleExportCSV = async () => {
+        if (!id) return
+        setExportLoading(true)
+        try {
+            await participantsAPI.exportCSV(id)
+        } catch (err: any) {
+            alert(`Failed to export CSV: ${err.message}`)
+        } finally {
+            setExportLoading(false)
+        }
+    }
 
     const handleCheckIn = async (registrationId: string) => {
         try {
@@ -328,13 +341,25 @@ export default function Participants() {
                             </h1>
                             <p className="text-gray-500 mt-1">Manage registrations, payments, and check-in attendees.</p>
                         </div>
-                        <button
-                            onClick={() => setIsScannerOpen(true)}
-                            className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                            <span>Launch Web Scanner</span>
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleExportCSV}
+                                disabled={exportLoading}
+                                className="group flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-green-600/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">
+                                    {exportLoading ? 'hourglass_empty' : 'download'}
+                                </span>
+                                <span>{exportLoading ? 'Exporting...' : 'Export to CSV'}</span>
+                            </button>
+                            <button
+                                onClick={() => setIsScannerOpen(true)}
+                                className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+                                <span>Launch Web Scanner</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Stats Cards */}

@@ -231,6 +231,41 @@ export const participantsAPI = {
             `/api/participants/${id}`,
             { method: 'DELETE' }
         ),
+
+    exportCSV: async (eventId: string): Promise<void> => {
+        const token = localStorage.getItem('auth_token')
+        const response = await fetch(`${API_BASE_URL}/api/participants/event/${eventId}/export-csv`, {
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+            },
+        })
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ error: 'Export failed' }))
+            throw new Error(error.error || 'Export failed')
+        }
+
+        // Get filename from Content-Disposition header or use default
+        const contentDisposition = response.headers.get('Content-Disposition')
+        let filename = 'participants-export.csv'
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="(.+)"/)
+            if (filenameMatch) {
+                filename = filenameMatch[1]
+            }
+        }
+
+        // Download the file
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+    },
 }
 
 // Custom Fields API
