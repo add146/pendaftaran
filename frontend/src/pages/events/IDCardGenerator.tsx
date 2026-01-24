@@ -35,6 +35,12 @@ export default function IDCardGenerator() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        // Limit to 20MB (as requested) because it will be compressed
+        if (file.size > 20 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'File too large. Max 20MB.' })
+            return
+        }
+
         try {
             setSaving(true)
             setMessage(null)
@@ -288,7 +294,7 @@ export default function IDCardGenerator() {
                                             <span className="text-sm text-gray-500">Upload Sponsor Logo</span>
                                         </label>
                                     )}
-                                    <p className="text-xs text-gray-400 mt-2">Logo will be auto-compressed, appears at bottom of ID card</p>
+                                    <p className="text-xs text-gray-400 mt-2">Max 20MB (auto-compressed), appears at bottom of ID card</p>
                                 </div>
 
                                 {/* Message */}
