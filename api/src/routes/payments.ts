@@ -9,6 +9,22 @@ interface PaymentBindings extends Bindings {
     MIDTRANS_IS_PRODUCTION: string
 }
 
+// Fetch custom field responses for a participant
+async function getCustomFieldResponses(db: D1Database, participantId: string): Promise<Array<{ label: string; response: string }>> {
+    const responses = await db.prepare(`
+        SELECT ecf.label, pfr.response
+        FROM participant_field_responses pfr
+        JOIN event_custom_fields ecf ON pfr.field_id = ecf.id
+        WHERE pfr.participant_id = ?
+        ORDER BY ecf.display_order ASC
+    `).bind(participantId).all()
+
+    return responses.results.map((r: any) => ({
+        label: r.label,
+        response: r.response
+    }))
+}
+
 export const payments = new Hono<{ Bindings: PaymentBindings }>()
 
 // Midtrans API URLs
@@ -193,13 +209,17 @@ payments.post('/notification', async (c) => {
                     const frontendUrl = 'https://etiket.my.id'
                     const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
 
+                    // Fetch custom field responses
+                    const customFieldResponses = await getCustomFieldResponses(c.env.DB, payment.participant_id)
+
                     const message = generateRegistrationMessage({
                         eventTitle: participant.event_title,
                         fullName: participant.full_name,
                         registrationId: participant.registration_id,
                         ticketLink,
                         ticketName: participant.ticket_name,
-                        ticketPrice: participant.ticket_price
+                        ticketPrice: participant.ticket_price,
+                        customFieldResponses
                     })
 
                     const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
