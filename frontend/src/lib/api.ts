@@ -8,8 +8,13 @@ async function fetchAPI<T>(
     const token = localStorage.getItem('auth_token')
 
     const headers: HeadersInit = {
-        'Content-Type': 'application/json',
         ...options.headers,
+    }
+
+    // Only set Content-Type for non-FormData requests
+    // FormData requires the browser to set Content-Type with boundary automatically
+    if (!(options.body instanceof FormData)) {
+        (headers as Record<string, string>)['Content-Type'] = 'application/json'
     }
 
     if (token) {
