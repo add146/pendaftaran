@@ -2,11 +2,12 @@
 
 -- Default organization
 INSERT OR IGNORE INTO organizations (id, name, slug) VALUES 
+('org_system', 'System', 'system'),
 ('org_default', 'Masjid Al-Ikhlas', 'masjid-al-ikhlas');
 
 -- Default admin user (password: admin123)
 INSERT OR IGNORE INTO users (id, organization_id, email, password_hash, name, role) VALUES 
-('user_admin', 'org_default', 'admin@masjid.com', '$2a$10$dummy_hash_for_dev', 'Imam Ahmed', 'admin');
+('user_admin', 'org_default', 'admin@masjid.com', '$2a$10$dummy_hash_for_dev', 'Imam Ahmed', 'super_admin');
 
 -- Sample events
 INSERT OR IGNORE INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, visibility, status, slug) VALUES 

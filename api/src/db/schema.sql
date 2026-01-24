@@ -84,9 +84,11 @@ CREATE TABLE IF NOT EXISTS payments (
 
 -- Settings (key-value storage for app configuration)
 CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
+    key TEXT NOT NULL,
     value TEXT,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    organization_id TEXT NOT NULL,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (key, organization_id)
 );
 
 -- Create indexes for performance
