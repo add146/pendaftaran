@@ -1,4 +1,4 @@
-// import imageCompression from 'browser-image-compression'
+import imageCompression from 'browser-image-compression'
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pendaftaran-qr-api.khibrohstudio.workers.dev'
 
 // Generic fetch wrapper
@@ -282,44 +282,33 @@ export const participantsAPI = {
 
 // Upload API
 
-export const uploadAPI = {
-    uploadImage: async (file: File) => {
-        // Compress image before upload
-        /*
-        const options = {
-            maxSizeMB: 1,
-            maxWidthOrHeight: 1920,
-            useWebWorker: true
-        }
+uploadImage: async (file: File) => {
+    // Compress image before upload
+    const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true
+    }
 
-        try {
-            const compressedFile = await imageCompression(file, options)
-            const formData = new FormData()
-            formData.append('image', compressedFile)
-            return fetchAPI<{ success: boolean; url: string; filename: string }>(
-                '/api/uploads/image',
-                { method: 'POST', body: formData }
-            )
-        } catch (error) {
-            console.error('Compression failed:', error)
-            // Fallback to original file if compression fails
-            const formData = new FormData()
-            formData.append('image', file)
-            return fetchAPI<{ success: boolean; url: string; filename: string }>(
-                '/api/uploads/image',
-                { method: 'POST', body: formData }
-            )
-        }
-        */
-
-        // Temporary bypass compression to debug Stack Overflow error
+    try {
+        const compressedFile = await imageCompression(file, options)
+        const formData = new FormData()
+        formData.append('image', compressedFile)
+        return fetchAPI<{ success: boolean; url: string; filename: string }>(
+            '/api/uploads/image',
+            { method: 'POST', body: formData }
+        )
+    } catch (error) {
+        console.error('Compression failed:', error)
+        // Fallback to original file if compression fails
         const formData = new FormData()
         formData.append('image', file)
         return fetchAPI<{ success: boolean; url: string; filename: string }>(
             '/api/uploads/image',
             { method: 'POST', body: formData }
         )
-    },
+    }
+},
 }
 
 // Custom Fields API
