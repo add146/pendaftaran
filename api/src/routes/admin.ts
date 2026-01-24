@@ -438,3 +438,42 @@ admin.put('/subscriptions/:id/reject', async (c) => {
 
     return c.json({ message: 'Subscription payment rejected' })
 })
+// Get landing page configuration (admin)
+admin.get('/landing-config', async (c) => {
+    const config = await c.env.DB.prepare(
+        "SELECT value FROM settings WHERE key = 'landing_page_config' AND organization_id = 'org_system'"
+    ).first()
+
+    if (!config) {
+        return c.json({})
+    }
+
+    try {
+        return c.json(JSON.parse(config.value as string))
+    } catch {
+        return c.json({})
+    }
+})
+
+// Update landing page configuration (admin)
+admin.put('/landing-config', async (c) => {
+    const config = await c.req.json()
+    const configStr = JSON.stringify(config)
+
+    // Check if config exists
+    const existing = await c.env.DB.prepare(
+        "SELECT key FROM settings WHERE key = 'landing_page_config' AND organization_id = 'org_system'"
+    ).first()
+
+    if (existing) {
+        await c.env.DB.prepare(
+            "UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = 'landing_page_config' AND organization_id = 'org_system'"
+        ).bind(configStr).run()
+    } else {
+        await c.env.DB.prepare(
+            "INSERT INTO settings (key, value, organization_id) VALUES ('landing_page_config', ?, 'org_system')"
+        ).bind(configStr).run()
+    }
+
+    return c.json({ message: 'Landing page configuration updated' })
+})

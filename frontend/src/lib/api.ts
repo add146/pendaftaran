@@ -268,6 +268,18 @@ export const participantsAPI = {
     },
 }
 
+// Upload API
+export const uploadAPI = {
+    uploadImage: (file: File) => {
+        const formData = new FormData()
+        formData.append('image', file)
+        return fetchAPI<{ success: boolean; url: string; filename: string }>(
+            '/api/uploads/image',
+            { method: 'POST', body: formData }
+        )
+    },
+}
+
 // Custom Fields API
 export const customFieldsAPI = {
     list: (eventId: string) =>
@@ -354,6 +366,20 @@ export const publicAPI = {
             event_time?: string
             location?: string
         }>(`/api/public/ticket/${registrationId}`),
+
+    getLandingConfig: () =>
+        fetchAPI<LandingPageConfig>('/api/public/landing-config'),
+}
+
+// Landing Page API
+export const landingAPI = {
+    get: () => fetchAPI<LandingPageConfig>('/api/admin/landing-config'),
+
+    update: (config: LandingPageConfig) =>
+        fetchAPI<{ message: string }>(
+            '/api/admin/landing-config',
+            { method: 'PUT', body: JSON.stringify(config) }
+        ),
 }
 
 // Types
@@ -569,4 +595,46 @@ export interface SubscriptionPayment {
     period_start: string
     period_end: string
     created_at: string
+}
+
+export interface LandingPageConfig {
+    hero?: {
+        badge?: string
+        title?: string
+        titleHighlight?: string
+        description?: string
+        ctaPrimary?: string
+        ctaSecondary?: string
+        trustedBy?: string
+        image?: string
+    }
+    features?: {
+        title?: string
+        subtitle?: string
+        description?: string
+        items?: Array<{
+            icon: string
+            title: string
+            description: string
+        }>
+    }
+    pricing?: {
+        title?: string
+        subtitle?: string
+        description?: string
+        items?: Array<{
+            name: string
+            description: string
+            price: string
+            period: string
+            popular?: boolean
+            features: Array<{ text: string; included: boolean }>
+        }>
+    }
+    cta?: {
+        title?: string
+        description?: string
+        buttonText?: string
+        note?: string
+    }
 }

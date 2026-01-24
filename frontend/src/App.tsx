@@ -19,6 +19,7 @@ import PublicTicket from './pages/events/PublicTicket'
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
 import Users from './pages/admin/Users'
 import Organizations from './pages/admin/Organizations'
+import LandingPageEditor from './pages/admin/LandingPageEditor'
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/super-admin" element={<ProtectedRoute requiredRole="super_admin"><SuperAdminDashboard /></ProtectedRoute>} />
         <Route path="/super-admin/users" element={<ProtectedRoute requiredRole="super_admin"><Users /></ProtectedRoute>} />
         <Route path="/super-admin/organizations" element={<ProtectedRoute requiredRole="super_admin"><Organizations /></ProtectedRoute>} />
+        <Route path="/super-admin/landing" element={<ProtectedRoute requiredRole="super_admin"><LandingPageEditor /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   )

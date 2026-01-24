@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { publicAPI, type LandingPageConfig } from '../lib/api'
 
 // Feature card component
 function FeatureCard({ icon, title, description }: { icon: string; title: string; description: string }) {
@@ -69,14 +70,22 @@ function PricingCard({
 }
 
 export default function Landing() {
-    const features = [
+    const [config, setConfig] = useState<LandingPageConfig>({})
+    const [isMenuOpen, setIsMenuOpen] = useState(false)
+
+    useEffect(() => {
+        publicAPI.getLandingConfig().then(setConfig).catch(console.error)
+    }, [])
+
+    // Default data with config override
+    const features = config.features?.items || [
         { icon: 'app_registration', title: 'Pendaftaran Otomatis', description: 'Formulir pendaftaran online yang mudah dibuat, disesuaikan, dan dikelola tanpa coding.' },
         { icon: 'qr_code_2', title: 'QR Code ID Card', description: 'Sistem check-in super cepat di lokasi dengan pemindaian kode QR digital unik per peserta.' },
         { icon: 'credit_card', title: 'Integrasi Midtrans', description: 'Terima pembayaran tiket atau donasi secara otomatis, aman, dan langsung terverifikasi.' },
         { icon: 'bar_chart', title: 'Laporan Real-time', description: 'Pantau kehadiran, pemasukan, dan data demografi peserta secara langsung melalui dashboard.' },
     ]
 
-    const pricingPlans = [
+    const pricingPlans = config.pricing?.items || [
         {
             name: 'Gratis',
             description: 'Untuk acara kecil & kajian rutin',
@@ -115,8 +124,6 @@ export default function Landing() {
             ],
         },
     ]
-
-    const [isMenuOpen, setIsMenuOpen] = useState(false)
 
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen">
@@ -207,22 +214,24 @@ export default function Landing() {
                         <div className="flex flex-col gap-6 max-w-2xl">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 w-fit">
                                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                                <span className="text-xs font-semibold text-primary uppercase tracking-wide">Platform No.1 Untuk Masjid</span>
+                                <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                                    {config.hero?.badge || 'Platform No.1 Untuk Masjid'}
+                                </span>
                             </div>
                             <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.15] tracking-tight text-gray-900">
-                                Solusi Manajemen Event <span className="text-primary">Komunitas & Masjid</span>
+                                {config.hero?.title || 'Solusi Manajemen Event'} <span className="text-primary">{config.hero?.titleHighlight || 'Komunitas & Masjid'}</span>
                             </h1>
                             <p className="text-lg text-gray-600 leading-relaxed max-w-lg">
-                                Kelola pendaftaran, pembayaran otomatis, dan absensi QR code dalam satu platform terintegrasi. Modernkan pengelolaan acara Anda sekarang.
+                                {config.hero?.description || 'Kelola pendaftaran, pembayaran otomatis, dan absensi QR code dalam satu platform terintegrasi. Modernkan pengelolaan acara Anda sekarang.'}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 mt-2">
                                 <Link to="/dashboard" className="h-12 px-8 rounded-lg bg-primary text-white font-bold text-base hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
-                                    <span>Mulai Gratis</span>
+                                    <span>{config.hero?.ctaPrimary || 'Mulai Gratis'}</span>
                                     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                                 </Link>
                                 <button className="h-12 px-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
                                     <span className="material-symbols-outlined text-[20px] text-primary">play_circle</span>
-                                    <span>Lihat Demo</span>
+                                    <span>{config.hero?.ctaSecondary || 'Lihat Demo'}</span>
                                 </button>
                             </div>
                             <div className="pt-4 flex items-center gap-4 text-sm text-gray-500">
@@ -233,16 +242,20 @@ export default function Landing() {
                                         </div>
                                     ))}
                                 </div>
-                                <p>Dipercaya oleh 500+ Masjid</p>
+                                <p>{config.hero?.trustedBy || 'Dipercaya oleh 500+ Masjid'}</p>
                             </div>
                         </div>
                         <div className="relative w-full rounded-2xl shadow-2xl overflow-hidden">
-                            <div className="aspect-[4/3] w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                <div className="text-center p-8">
-                                    <span className="material-symbols-outlined text-[80px] text-primary/50">mosque</span>
-                                    <p className="mt-4 text-gray-500">Your Event Image Here</p>
+                            {config.hero?.image ? (
+                                <img src={config.hero.image} alt="Hero Preview" className="aspect-[4/3] w-full object-cover" />
+                            ) : (
+                                <div className="aspect-[4/3] w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                    <div className="text-center p-8">
+                                        <span className="material-symbols-outlined text-[80px] text-primary/50">mosque</span>
+                                        <p className="mt-4 text-gray-500">Your Event Image Here</p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -252,10 +265,10 @@ export default function Landing() {
             <section className="py-20 bg-background-light" id="features">
                 <div className="max-w-[1280px] mx-auto px-4 md:px-10">
                     <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-primary font-bold text-sm tracking-widest uppercase mb-3">Fitur Unggulan</h2>
-                        <h3 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Semua yang Anda Butuhkan untuk Event Sukses</h3>
+                        <h2 className="text-primary font-bold text-sm tracking-widest uppercase mb-3">{config.features?.subtitle || 'Fitur Unggulan'}</h2>
+                        <h3 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">{config.features?.title || 'Semua yang Anda Butuhkan untuk Event Sukses'}</h3>
                         <p className="text-gray-600 text-lg">
-                            Platform kami dirancang khusus untuk memenuhi kebutuhan unik pengurus masjid dan komunitas dalam mengelola acara.
+                            {config.features?.description || 'Platform kami dirancang khusus untuk memenuhi kebutuhan unik pengurus masjid dan komunitas dalam mengelola acara.'}
                         </p>
                     </div>
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -270,9 +283,9 @@ export default function Landing() {
             <section className="py-20 bg-white border-t border-gray-100" id="pricing">
                 <div className="max-w-[1280px] mx-auto px-4 md:px-10">
                     <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">Pilih Paket Sesuai Kebutuhan</h2>
+                        <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">{config.pricing?.title || 'Pilih Paket Sesuai Kebutuhan'}</h2>
                         <p className="text-gray-600 text-lg">
-                            Mulai dari gratis untuk komunitas kecil hingga fitur lengkap untuk organisasi besar.
+                            {config.pricing?.description || 'Mulai dari gratis untuk komunitas kecil hingga fitur lengkap untuk organisasi besar.'}
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -288,14 +301,14 @@ export default function Landing() {
                 <div className="max-w-[1280px] mx-auto px-4 md:px-10">
                     <div className="relative rounded-3xl overflow-hidden bg-primary px-6 py-16 text-center md:px-12 lg:py-20">
                         <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-6">
-                            <h2 className="text-3xl md:text-4xl font-black text-white">Siap Mengelola Event Masjid Anda?</h2>
+                            <h2 className="text-3xl md:text-4xl font-black text-white">{config.cta?.title || 'Siap Mengelola Event Masjid Anda?'}</h2>
                             <p className="text-green-50 text-lg max-w-2xl">
-                                Bergabunglah dengan ratusan pengurus masjid lainnya yang telah beralih ke sistem digital yang lebih efisien dan transparan.
+                                {config.cta?.description || 'Bergabunglah dengan ratusan pengurus masjid lainnya yang telah beralih ke sistem digital yang lebih efisien dan transparan.'}
                             </p>
                             <Link to="/dashboard" className="h-12 px-8 mt-4 rounded-lg bg-white text-primary font-bold text-base hover:bg-gray-100 shadow-xl transition-all">
-                                Buat Akun Gratis Sekarang
+                                {config.cta?.buttonText || 'Buat Akun Gratis Sekarang'}
                             </Link>
-                            <p className="text-sm text-green-100 mt-2 opacity-80">Tidak perlu kartu kredit. Batal kapan saja.</p>
+                            <p className="text-sm text-green-100 mt-2 opacity-80">{config.cta?.note || 'Tidak perlu kartu kredit. Batal kapan saja.'}</p>
                         </div>
                     </div>
                 </div>

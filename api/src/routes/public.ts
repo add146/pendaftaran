@@ -161,3 +161,19 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     id_card_design: idCardDesign
   })
 })
+// Get landing page configuration
+publicRoutes.get('/landing-config', async (c) => {
+  const config = await c.env.DB.prepare(
+    "SELECT value FROM settings WHERE key = 'landing_page_config' AND organization_id = 'org_system'"
+  ).first()
+
+  if (!config) {
+    return c.json({})
+  }
+
+  try {
+    return c.json(JSON.parse(config.value as string))
+  } catch {
+    return c.json({})
+  }
+})

@@ -45,6 +45,7 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
         { id: 'super-dashboard', label: 'Dashboard', icon: 'admin_panel_settings', href: '/super-admin' },
         { id: 'super-orgs', label: 'Organizations', icon: 'apartment', href: '/super-admin/organizations' },
         { id: 'super-users', label: 'Users', icon: 'manage_accounts', href: '/super-admin/users' },
+        { id: 'landing-editor', label: 'Landing Page', icon: 'web', href: '/super-admin/landing' },
     ]
 
     return (
