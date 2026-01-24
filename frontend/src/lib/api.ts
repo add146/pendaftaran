@@ -282,33 +282,34 @@ export const participantsAPI = {
 
 // Upload API
 
-uploadImage: async (file: File) => {
-    // Compress image before upload
-    const options = {
-        maxSizeMB: 0.5, // Reduced to 0.5MB to prevent SQLITE_TOOBIG D1 error
-        maxWidthOrHeight: 1920,
-        useWebWorker: true
-    }
+export const uploadAPI = {
+    uploadImage: async (file: File) => {
+        // Compress image before upload
+        const options = {
+            maxSizeMB: 0.5, // Reduced to 0.5MB to prevent SQLITE_TOOBIG D1 error
+            maxWidthOrHeight: 1920,
+            useWebWorker: true
+        }
 
-    try {
-        const compressedFile = await imageCompression(file, options)
-        const formData = new FormData()
-        formData.append('image', compressedFile)
-        return fetchAPI<{ success: boolean; url: string; filename: string }>(
-            '/api/uploads/image',
-            { method: 'POST', body: formData }
-        )
-    } catch (error) {
-        console.error('Compression failed:', error)
-        // Fallback to original file if compression fails
-        const formData = new FormData()
-        formData.append('image', file)
-        return fetchAPI<{ success: boolean; url: string; filename: string }>(
-            '/api/uploads/image',
-            { method: 'POST', body: formData }
-        )
-    }
-},
+        try {
+            const compressedFile = await imageCompression(file, options)
+            const formData = new FormData()
+            formData.append('image', compressedFile)
+            return fetchAPI<{ success: boolean; url: string; filename: string }>(
+                '/api/uploads/image',
+                { method: 'POST', body: formData }
+            )
+        } catch (error) {
+            console.error('Compression failed:', error)
+            // Fallback to original file if compression fails
+            const formData = new FormData()
+            formData.append('image', file)
+            return fetchAPI<{ success: boolean; url: string; filename: string }>(
+                '/api/uploads/image',
+                { method: 'POST', body: formData }
+            )
+        }
+    },
 }
 
 // Custom Fields API
