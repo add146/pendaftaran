@@ -7,7 +7,8 @@ INSERT OR IGNORE INTO organizations (id, name, slug) VALUES
 
 -- Default admin user (password: admin123)
 INSERT OR IGNORE INTO users (id, organization_id, email, password_hash, name, role) VALUES 
-('user_admin', 'org_default', 'admin@masjid.com', '$2a$10$dummy_hash_for_dev', 'Imam Ahmed', 'super_admin');
+('user_admin', 'org_default', 'admin@masjid.com', '0630306f-421a-424a-89af-e5d66ffcbbb2:26964094809a5f2c569d0c5519123aa2d9a481bd8fe51c1f5c53c12f7427995b', 'Imam Ahmed', 'admin'),
+('user_khibroh', 'org_system', 'khibrohstudio@gmail.com', '0630306f-421a-424a-89af-e5d66ffcbbb2:26964094809a5f2c569d0c5519123aa2d9a481bd8fe51c1f5c53c12f7427995b', 'Khibroh Studio', 'super_admin');
 
 -- Sample events
 INSERT OR IGNORE INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, visibility, status, slug) VALUES 
