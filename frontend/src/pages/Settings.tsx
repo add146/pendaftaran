@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import AdminLayout from '../components/layout/AdminLayout'
-import { authAPI, settingsAPI } from '../lib/api'
+import { authAPI, settingsAPI, uploadAPI } from '../lib/api'
 
 interface UserProfile {
     id: string
@@ -203,23 +203,8 @@ export default function Settings() {
             setSaving(true)
             setMessage('')
 
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const response = await fetch('/api/uploads', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                },
-                body: formData
-            })
-
-            if (!response.ok) {
-                throw new Error('Upload failed')
-            }
-
-            const data = await response.json()
-            setOrgLogo(data.url)
+            const result = await uploadAPI.uploadImage(file)
+            setOrgLogo(result.url)
             setMessage('Logo berhasil diupload!')
         } catch (err: any) {
             console.error('Upload error:', err)

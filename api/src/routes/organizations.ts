@@ -101,6 +101,7 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     const wahaSettings = await c.env.DB.prepare(`
         SELECT key, value FROM settings 
         WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session', 'waha_enabled')
+        AND organization_id = 'org_system'
     `).all()
 
     const settingsMap = new Map(wahaSettings.results.map((s: any) => [s.key, s.value]))
@@ -130,13 +131,17 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     let connected = false
     let working = false
     let sessionStatus = 'NOT_CONFIGURED'
+    let lastError = ''
 
     const globallyConfigured = !!apiUrl && !!apiKey && globalEnabled
 
     if (globallyConfigured) {
         try {
             // Check if WAHA API is working and session status
-            const response = await fetch(`${apiUrl}/api/sessions/${session}`, {
+            const fetchUrl = `${apiUrl}/api/sessions/${session}`
+            console.log(`[WAHA] Checking status: ${fetchUrl}`)
+
+            const response = await fetch(fetchUrl, {
                 method: 'GET',
                 headers: {
                     'X-Api-Key': apiKey,
@@ -156,19 +161,28 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
                 working = false
                 connected = false
                 sessionStatus = 'NOT_FOUND'
+                lastError = `Session not found (${response.status})`
             } else {
                 // API returned error
                 working = false
                 connected = false
                 sessionStatus = 'ERROR'
+                lastError = `API Error: ${response.status} ${response.statusText}`
+                try {
+                    const errData = await response.text()
+                    lastError += ` - ${errData}`
+                } catch { }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('[WAHA] Status check error:', error)
             // API not reachable
             working = false
             connected = false
             sessionStatus = 'UNREACHABLE'
+            lastError = `Network Error: ${error.message}`
         }
+    } else {
+        lastError = 'Not globally configured'
     }
 
     return c.json({
@@ -179,7 +193,8 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
         api_url: apiUrl,
         connected,
         working,
-        session_status: sessionStatus
+        session_status: sessionStatus,
+        last_error: lastError
     })
 })
 

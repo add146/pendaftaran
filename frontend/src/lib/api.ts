@@ -275,14 +275,35 @@ export const participantsAPI = {
 }
 
 // Upload API
+import imageCompression from 'browser-image-compression'
+
 export const uploadAPI = {
-    uploadImage: (file: File) => {
-        const formData = new FormData()
-        formData.append('image', file)
-        return fetchAPI<{ success: boolean; url: string; filename: string }>(
-            '/api/uploads/image',
-            { method: 'POST', body: formData }
-        )
+    uploadImage: async (file: File) => {
+        // Compress image before upload
+        const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true
+        }
+
+        try {
+            const compressedFile = await imageCompression(file, options)
+            const formData = new FormData()
+            formData.append('image', compressedFile)
+            return fetchAPI<{ success: boolean; url: string; filename: string }>(
+                '/api/uploads/image',
+                { method: 'POST', body: formData }
+            )
+        } catch (error) {
+            console.error('Compression failed:', error)
+            // Fallback to original file if compression fails
+            const formData = new FormData()
+            formData.append('image', file)
+            return fetchAPI<{ success: boolean; url: string; filename: string }>(
+                '/api/uploads/image',
+                { method: 'POST', body: formData }
+            )
+        }
     },
 }
 
@@ -453,6 +474,8 @@ export interface Participant {
     ticket_name?: string
     ticket_price?: number
     event_title?: string
+    whatsapp_status?: 'pending' | 'sent' | 'failed'
+    whatsapp_sent_at?: string
     created_at: string
 }
 
@@ -527,7 +550,7 @@ export const organizationsAPI = {
         }),
 
     getWahaStatus: (id: string) =>
-        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string; connected: boolean; working: boolean; session_status: string }>(
+        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string; connected: boolean; working: boolean; session_status: string; last_error?: string }>(
             `/api/organizations/${id}/waha-status`
         ),
 }

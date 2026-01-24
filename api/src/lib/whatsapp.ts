@@ -8,38 +8,65 @@ interface WAHAConfig {
 }
 
 // Fetch WAHA configuration from settings for a specific organization
+// Fetch WAHA configuration
+// 1. Checks if organization has enabled WAHA (waha_enabled column)
+// 2. Fetches credentials from SYSTEM settings (org_system)
 async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WAHAConfig | null> {
     console.log('[WAHA] Fetching config for organization:', organizationId)
 
+    // 1. Check if organization has enabled WAHA
+    // Wrap in try-catch in case column doesn't exist yet (migration pending)
+    try {
+        const org = await db.prepare(
+            'SELECT waha_enabled FROM organizations WHERE id = ?'
+        ).bind(organizationId).first() as { waha_enabled: number } | null
+
+        if (org && org.waha_enabled !== 1 && org.waha_enabled !== undefined) {
+            console.log('[WAHA] WAHA disabled for organization:', organizationId)
+            return null
+        }
+    } catch (e) {
+        console.warn('[WAHA] Warning: Could not check waha_enabled status (column might be missing). Defaulting to enabled.', e)
+    }
+
+    // 2. Fetch System Configuration
+    // TODO: In the future, we could check for Org-specific overrides here
     const result = await db.prepare(`
         SELECT key, value FROM settings 
         WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session', 'waha_enabled')
-        AND organization_id = ?
-    `).bind(organizationId).all()
-
-    console.log('[WAHA] Found settings count:', result.results.length)
+        AND organization_id = 'org_system'
+    `).all()
 
     const config = new Map(result.results.map((s: any) => [s.key, s.value]))
 
-    const enabled = config.get('waha_enabled') === 'true'
-    console.log('[WAHA] Enabled:', enabled, 'Raw value:', config.get('waha_enabled'))
-
-    if (!enabled) return null
+    // Check if System is globally enabled
+    const globalEnabled = config.get('waha_enabled') === 'true'
+    if (!globalEnabled) {
+        console.log('[WAHA] WAHA globally disabled')
+        return null
+    }
 
     let apiUrl = config.get('waha_api_url') || ''
     const apiKey = config.get('waha_api_key')
 
-    // Remove trailing slash to prevent double slashes
+    // Remove trailing slash
     apiUrl = apiUrl.replace(/\/+$/, '')
 
-    console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET', 'API Key:', apiKey ? 'SET' : 'NOT SET')
+    console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET')
 
-    if (!apiUrl || !apiKey) return null
+    if (!apiUrl || !apiKey) {
+        console.log('[WAHA] Missing API URL or Key')
+        return null
+    }
+
+    // Default session is 'default' unless specified in system config
+    // We could also allow org-specific session names if needed
+    const session = config.get('waha_session') || 'default'
 
     return {
         apiUrl,
         apiKey,
-        session: config.get('waha_session') || 'default',
+        session,
         enabled: true
     }
 }

@@ -204,6 +204,20 @@ payments.post('/notification', async (c) => {
 
                     const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
                     console.log('[MIDTRANS WEBHOOK] WhatsApp send result:', result)
+
+                    if (result.success) {
+                        await c.env.DB.prepare(`
+                            UPDATE participants 
+                            SET whatsapp_status = 'sent', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                            WHERE id = ?
+                        `).bind(payment.participant_id).run()
+                    } else {
+                        await c.env.DB.prepare(`
+                            UPDATE participants 
+                            SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                            WHERE id = ?
+                        `).bind(payment.participant_id).run()
+                    }
                 } else {
                     console.log('[MIDTRANS WEBHOOK] No phone number found for participant')
                 }

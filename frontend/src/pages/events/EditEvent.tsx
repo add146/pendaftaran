@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { eventsAPI, type Event } from '../../lib/api'
+import { eventsAPI, uploadAPI, type Event } from '../../lib/api'
 import CustomFieldsEditor from '../../components/CustomFieldsEditor'
 
 interface TicketType {
@@ -49,38 +49,11 @@ export default function EditEvent() {
         const file = files[0]
 
         try {
-            // Compress image using canvas
-            const img = new Image()
-            img.onload = () => {
-                const canvas = document.createElement('canvas')
-                const ctx = canvas.getContext('2d')
-
-                // Max 400px width to keep file small for D1
-                let width = img.width
-                let height = img.height
-                const maxWidth = 400
-
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width
-                    width = maxWidth
-                }
-
-                canvas.width = width
-                canvas.height = height
-                ctx?.drawImage(img, 0, 0, width, height)
-
-                // Compress to JPEG 60% quality (~30-50KB per image)
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
-                setImages(prev => [...prev, dataUrl].slice(0, 3))
-                setUploadingImage(false)
-                URL.revokeObjectURL(img.src)
-            }
-            img.onerror = () => {
-                setError('Failed to load image')
-                setUploadingImage(false)
-            }
-            img.src = URL.createObjectURL(file)
-        } catch {
+            const result = await uploadAPI.uploadImage(file)
+            setImages(prev => [...prev, result.url].slice(0, 3))
+            setUploadingImage(false)
+        } catch (err: any) {
+            console.error('Upload error:', err)
             setError('Failed to upload image')
             setUploadingImage(false)
         }

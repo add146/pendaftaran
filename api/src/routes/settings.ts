@@ -11,13 +11,27 @@ export const settings = new Hono<{ Bindings: Bindings }>()
 // Enable auth for all settings routes
 settings.use('*', authMiddleware)
 
-// Get all settings for current organization
+// Keys that should be stored globally (org_system)
+const SYSTEM_SETTINGS_KEYS = [
+    'waha_api_url',
+    'waha_api_key',
+    'waha_session',
+    'waha_enabled'
+]
+
+// Get all settings for current organization (and system settings if super_admin)
 settings.get('/', async (c) => {
     const user = c.get('user')
+    const isSuperAdmin = user.role === 'super_admin'
 
-    const result = await c.env.DB.prepare(
-        'SELECT key, value FROM settings WHERE organization_id = ?'
-    ).bind(user.orgId).all()
+    let query = 'SELECT key, value FROM settings WHERE organization_id = ?'
+    const params: any[] = [user.orgId]
+
+    if (isSuperAdmin) {
+        query = 'SELECT key, value, organization_id FROM settings WHERE organization_id = ? OR organization_id = \'org_system\''
+    }
+
+    const result = await c.env.DB.prepare(query).bind(...params).all()
 
     // Convert to object
     const settingsObj: Record<string, any> = {}
@@ -32,14 +46,28 @@ settings.get('/', async (c) => {
     return c.json(settingsObj)
 })
 
-// Get single setting for current organization
+// Get single setting
 settings.get('/:key', async (c) => {
     const user = c.get('user')
     const { key } = c.req.param()
+    const isSuperAdmin = user.role === 'super_admin'
+    const isSystemKey = SYSTEM_SETTINGS_KEYS.includes(key)
 
-    const result = await c.env.DB.prepare(
-        'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
-    ).bind(key, user.orgId).first()
+    let result
+    if (isSuperAdmin && isSystemKey) {
+        result = await c.env.DB.prepare(
+            'SELECT value FROM settings WHERE key = ? AND (organization_id = ? OR organization_id = \'org_system\') ORDER BY organization_id DESC' // org_system fallback? no, we want specific
+        ).bind(key, user.orgId).first()
+
+        // Actually for system keys we prefer org_system value
+        result = await c.env.DB.prepare(
+            'SELECT value FROM settings WHERE key = ? AND organization_id = \'org_system\''
+        ).bind(key).first()
+    } else {
+        result = await c.env.DB.prepare(
+            'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
+        ).bind(key, user.orgId).first()
+    }
 
     if (!result) {
         return c.json({ error: 'Setting not found' }, 404)
@@ -52,7 +80,7 @@ settings.get('/:key', async (c) => {
     }
 })
 
-// Save/Update settings (upsert) for current organization
+// Save/Update settings (upsert)
 settings.post('/', async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
@@ -64,27 +92,33 @@ settings.post('/', async (c) => {
 
     const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
-    // Check if setting exists for this organization
+    // Determine target organization ID
+    let targetOrgId = user.orgId
+    if (user.role === 'super_admin' && SYSTEM_SETTINGS_KEYS.includes(key)) {
+        targetOrgId = 'org_system'
+    }
+
+    // Check if setting exists
     const existing = await c.env.DB.prepare(
         'SELECT key FROM settings WHERE key = ? AND organization_id = ?'
-    ).bind(key, user.orgId).first()
+    ).bind(key, targetOrgId).first()
 
     if (existing) {
         // Update
         await c.env.DB.prepare(
             'UPDATE settings SET value = ? WHERE key = ? AND organization_id = ?'
-        ).bind(valueStr, key, user.orgId).run()
+        ).bind(valueStr, key, targetOrgId).run()
     } else {
         // Insert
         await c.env.DB.prepare(
             'INSERT INTO settings (key, value, organization_id) VALUES (?, ?, ?)'
-        ).bind(key, valueStr, user.orgId).run()
+        ).bind(key, valueStr, targetOrgId).run()
     }
 
-    return c.json({ message: 'Setting saved', key })
+    return c.json({ message: 'Setting saved', key, scope: targetOrgId })
 })
 
-// Bulk save settings for current organization
+// Bulk save settings
 settings.post('/bulk', async (c) => {
     const user = c.get('user')
     const body = await c.req.json()
@@ -94,18 +128,24 @@ settings.post('/bulk', async (c) => {
     for (const [key, value] of Object.entries(settingsObj)) {
         const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
+        // Determine target organization ID
+        let targetOrgId = user.orgId
+        if (user.role === 'super_admin' && SYSTEM_SETTINGS_KEYS.includes(key)) {
+            targetOrgId = 'org_system'
+        }
+
         const existing = await c.env.DB.prepare(
             'SELECT key FROM settings WHERE key = ? AND organization_id = ?'
-        ).bind(key, user.orgId).first()
+        ).bind(key, targetOrgId).first()
 
         if (existing) {
             await c.env.DB.prepare(
                 'UPDATE settings SET value = ? WHERE key = ? AND organization_id = ?'
-            ).bind(valueStr, key, user.orgId).run()
+            ).bind(valueStr, key, targetOrgId).run()
         } else {
             await c.env.DB.prepare(
                 'INSERT INTO settings (key, value, organization_id) VALUES (?, ?, ?)'
-            ).bind(key, valueStr, user.orgId).run()
+            ).bind(key, valueStr, targetOrgId).run()
         }
         count++
     }

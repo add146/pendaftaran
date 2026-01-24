@@ -176,10 +176,10 @@ function ParticipantRow({
                     {participant.payment_status === 'paid' && participant.phone && (
                         <div className="flex items-center gap-1">
                             {/* WhatsApp status indicator */}
-                            {(participant as any).whatsapp_status === 'sent' ? (
+                            {participant.whatsapp_status === 'sent' ? (
                                 <span
                                     className="material-symbols-outlined text-green-500 text-[18px]"
-                                    title="WhatsApp terkirim"
+                                    title={`WhatsApp terkirim ${participant.whatsapp_sent_at ? new Date(participant.whatsapp_sent_at).toLocaleString('id-ID') : ''}`}
                                 >
                                     check_circle
                                 </span>

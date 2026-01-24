@@ -240,9 +240,27 @@ participants.post('/register', async (c) => {
 
             const result = await sendWhatsAppMessage(c.env.DB, event.organization_id, phone, message)
             console.log('[REGISTRATION] WhatsApp send result:', result)
+
+            if (result.success) {
+                await c.env.DB.prepare(`
+                    UPDATE participants 
+                    SET whatsapp_status = 'sent', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                    WHERE id = ?
+                `).bind(participantId).run()
+            } else {
+                await c.env.DB.prepare(`
+                    UPDATE participants 
+                    SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                    WHERE id = ?
+                `).bind(participantId).run()
+            }
         } catch (error) {
             console.error('[REGISTRATION] Error sending WhatsApp:', error)
-            // Don't fail registration if WhatsApp fails
+            await c.env.DB.prepare(`
+                UPDATE participants 
+                SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            `).bind(participantId).run()
         }
     } else if (phone && paymentStatus === 'pending') {
         console.log('[REGISTRATION] Skipping WhatsApp for paid event - will send after payment confirmation')
@@ -426,9 +444,27 @@ participants.post('/:id/approve-payment', authMiddleware, async (c) => {
 
             const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
             console.log('[APPROVE] WhatsApp send result:', result)
+
+            if (result.success) {
+                await c.env.DB.prepare(`
+                    UPDATE participants 
+                    SET whatsapp_status = 'sent', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                    WHERE id = ?
+                `).bind(participant.id).run()
+            } else {
+                await c.env.DB.prepare(`
+                    UPDATE participants 
+                    SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                    WHERE id = ?
+                `).bind(participant.id).run()
+            }
         } catch (error) {
             console.error('[APPROVE] Error sending WhatsApp:', error)
-            // Don't fail the approval if WhatsApp fails
+            await c.env.DB.prepare(`
+                UPDATE participants 
+                SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            `).bind(participant.id).run()
         }
     }
 
@@ -497,12 +533,26 @@ participants.post('/:id/resend-whatsapp', authMiddleware, async (c) => {
         console.log('[RESEND-WA] Result:', result)
 
         if (result.success) {
+            // Update status in database
+            await c.env.DB.prepare(`
+                UPDATE participants 
+                SET whatsapp_status = 'sent', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            `).bind(participant.id).run()
+
             return c.json({
                 message: 'WhatsApp notification sent successfully',
                 phone: participant.phone,
                 registration_id: participant.registration_id
             })
         } else {
+            // Update status to failed
+            await c.env.DB.prepare(`
+                UPDATE participants 
+                SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
+                WHERE id = ?
+            `).bind(participant.id).run()
+
             return c.json({
                 error: 'Failed to send WhatsApp',
                 details: result.error

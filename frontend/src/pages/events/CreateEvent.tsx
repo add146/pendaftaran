@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { eventsAPI } from '../../lib/api'
+import { eventsAPI, uploadAPI } from '../../lib/api'
 
 interface EventFormData {
     title: string
@@ -59,35 +59,11 @@ export default function CreateEvent() {
         const file = files[0]
 
         try {
-            const img = new Image()
-            img.onload = () => {
-                const canvas = document.createElement('canvas')
-                const ctx = canvas.getContext('2d')
-
-                let width = img.width
-                let height = img.height
-                const maxWidth = 400
-
-                if (width > maxWidth) {
-                    height = (height * maxWidth) / width
-                    width = maxWidth
-                }
-
-                canvas.width = width
-                canvas.height = height
-                ctx?.drawImage(img, 0, 0, width, height)
-
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
-                setImages(prev => [...prev, dataUrl].slice(0, 3))
-                setUploadingImage(false)
-                URL.revokeObjectURL(img.src)
-            }
-            img.onerror = () => {
-                setError('Failed to load image')
-                setUploadingImage(false)
-            }
-            img.src = URL.createObjectURL(file)
-        } catch {
+            const result = await uploadAPI.uploadImage(file)
+            setImages(prev => [...prev, result.url].slice(0, 3))
+            setUploadingImage(false)
+        } catch (err: any) {
+            console.error('Upload error:', err)
             setError('Failed to upload image')
             setUploadingImage(false)
         }

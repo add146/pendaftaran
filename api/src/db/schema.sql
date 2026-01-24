@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
     logo_url TEXT,
+    waha_enabled INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -67,6 +68,8 @@ CREATE TABLE IF NOT EXISTS participants (
     check_in_status TEXT DEFAULT 'not_arrived',
     check_in_time TEXT,
     qr_code TEXT,
+    whatsapp_status TEXT DEFAULT 'pending', -- 'pending', 'sent', 'failed'
+    whatsapp_sent_at TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

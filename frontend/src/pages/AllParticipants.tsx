@@ -166,14 +166,40 @@ export default function AllParticipants() {
                                             <td className="px-6 py-4">
                                                 <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{p.registration_id}</span>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600">{p.event_title || '-'}</td>
+                                            <td className="px-6 py-4 text-gray-600">
+                                                <div className="flex items-center gap-2">
+                                                    {p.event_title || '-'}
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${p.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                    p.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-red-100 text-red-800'
-                                                    }`}>
-                                                    {p.payment_status.charAt(0).toUpperCase() + p.payment_status.slice(1)}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${p.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                                                        p.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-red-100 text-red-800'
+                                                        }`}>
+                                                        {p.payment_status.charAt(0).toUpperCase() + p.payment_status.slice(1)}
+                                                    </span>
+                                                    {/* WhatsApp status indicator */}
+                                                    {p.payment_status === 'paid' && (
+                                                        <>
+                                                            {p.whatsapp_status === 'sent' ? (
+                                                                <span
+                                                                    className="material-symbols-outlined text-green-500 text-[18px]"
+                                                                    title={`WhatsApp terkirim ${p.whatsapp_sent_at ? new Date(p.whatsapp_sent_at).toLocaleString('id-ID') : ''}`}
+                                                                >
+                                                                    check_circle
+                                                                </span>
+                                                            ) : (
+                                                                <span
+                                                                    className="material-symbols-outlined text-yellow-500 text-[18px]"
+                                                                    title="WhatsApp belum/gagal terkirim"
+                                                                >
+                                                                    warning
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${p.check_in_status === 'checked_in'

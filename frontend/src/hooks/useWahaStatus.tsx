@@ -28,42 +28,53 @@ export function WahaStatusProvider({ children }: { children: ReactNode }) {
         setStatus(prev => ({ ...prev, loading: true }))
         try {
             const result = await organizationsAPI.getWahaStatus(organizationId)
+            console.log('[WAHA] Status Result:', result)
             setStatus({
                 connected: result.connected,
                 working: result.working,
                 loading: false,
                 sessionStatus: result.session_status
             })
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to fetch WAHA status:', err)
             setStatus({ connected: false, working: false, loading: false, sessionStatus: 'ERROR' })
         }
     }
 
-    const refresh = () => {
-        if (orgId) {
-            fetchWahaStatus(orgId)
-        }
-    }
+    const fetchUserAndStatus = async () => {
+        try {
+            // Check if we already have orgId
+            let currentOrgId = orgId
 
-    useEffect(() => {
-        // Get user's organization on mount
-        const fetchUser = async () => {
-            try {
+            if (!currentOrgId) {
                 const user = await authAPI.me()
                 if (user.organization_id) {
                     setOrgId(user.organization_id)
-                    fetchWahaStatus(user.organization_id)
+                    currentOrgId = user.organization_id
                 }
-            } catch (err) {
-                console.error('Failed to fetch user:', err)
+            }
+
+            if (currentOrgId) {
+                fetchWahaStatus(currentOrgId)
+            } else {
+                // If still no orgId, stop loading
                 setStatus(prev => ({ ...prev, loading: false }))
             }
+        } catch (err) {
+            console.error('Failed to fetch user/status:', err)
+            setStatus(prev => ({ ...prev, loading: false }))
         }
+    }
 
+    const refresh = () => {
+        setStatus(prev => ({ ...prev, loading: true }))
+        fetchUserAndStatus()
+    }
+
+    useEffect(() => {
         const token = localStorage.getItem('auth_token')
         if (token) {
-            fetchUser()
+            fetchUserAndStatus()
         } else {
             setStatus(prev => ({ ...prev, loading: false }))
         }
