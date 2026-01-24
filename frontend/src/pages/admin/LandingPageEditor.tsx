@@ -18,10 +18,9 @@ export default function LandingPageEditor() {
             setLoading(true)
             const data = await landingAPI.get()
             setConfig(data)
-        } catch (err) {
-            console.error(err)
-            // If empty or error, we might want to start with defaults or empty
-            setError('Failed to load configuration')
+        } catch (err: any) {
+            console.error('Landing config load error:', err)
+            setError(err.message || 'Failed to load configuration')
         } finally {
             setLoading(false)
         }

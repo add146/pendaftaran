@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pendaftaran-qr-api.khibroh.workers.dev'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pendaftaran-qr-api.khibrohstudio.workers.dev'
 
 // Generic fetch wrapper
 async function fetchAPI<T>(
@@ -23,7 +23,13 @@ async function fetchAPI<T>(
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Request failed' }))
-        throw new Error(error.error || 'Request failed')
+        console.error('API Error:', {
+            url: `${API_BASE_URL}${endpoint}`,
+            status: response.status,
+            statusText: response.statusText,
+            error
+        })
+        throw new Error(error.error || `Request failed: ${response.status} ${response.statusText}`)
     }
 
     return response.json()
