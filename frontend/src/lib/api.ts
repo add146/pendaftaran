@@ -1,4 +1,4 @@
-import imageCompression from 'browser-image-compression'
+// import imageCompression from 'browser-image-compression'
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://pendaftaran-qr-api.khibrohstudio.workers.dev'
 
 // Generic fetch wrapper
