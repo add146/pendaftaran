@@ -285,6 +285,7 @@ export const participantsAPI = {
 export const uploadAPI = {
     uploadImage: async (file: File) => {
         // Compress image before upload
+        /*
         const options = {
             maxSizeMB: 1,
             maxWidthOrHeight: 1920,
@@ -309,6 +310,15 @@ export const uploadAPI = {
                 { method: 'POST', body: formData }
             )
         }
+        */
+
+        // Temporary bypass compression to debug Stack Overflow error
+        const formData = new FormData()
+        formData.append('image', file)
+        return fetchAPI<{ success: boolean; url: string; filename: string }>(
+            '/api/uploads/image',
+            { method: 'POST', body: formData }
+        )
     },
 }
 
