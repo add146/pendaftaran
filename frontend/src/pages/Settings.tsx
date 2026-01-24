@@ -1,4 +1,14 @@
 import { useState, useEffect } from 'react'
+import midtransWebhookGuideImg from '../assets/midtrans-webhook-guide.png'
+
+// ... existing imports ...
+
+// In the component:
+<img
+    src={midtransWebhookGuideImg}
+    alt="Midtrans Notification URL Setup"
+    className="w-full rounded-lg border border-gray-200 shadow-sm"
+/>
 import { Link } from 'react-router-dom'
 import AdminLayout from '../components/layout/AdminLayout'
 import { authAPI, settingsAPI, uploadAPI } from '../lib/api'
@@ -544,7 +554,7 @@ export default function Settings() {
                                             </p>
                                             <div className="bg-white border border-amber-300 rounded-lg p-3 mb-3">
                                                 <code className="text-xs sm:text-sm font-mono text-gray-800 break-all">
-                                                    https://pendaftaran-qr-api.khibroh.workers.dev/api/payments/notification
+                                                    https://pendaftaran-qr-api.khibrohstudio.workers.dev/api/payments/notification
                                                 </code>
                                             </div>
                                             <p className="text-xs text-amber-600 mb-3">
