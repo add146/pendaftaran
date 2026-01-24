@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AdminLayout from '../../components/layout/AdminLayout'
-import { eventsAPI } from '../../lib/api'
+import { eventsAPI, uploadAPI } from '../../lib/api'
 
 export default function IDCardGenerator() {
     const { id } = useParams<{ id: string }>()
@@ -31,19 +31,25 @@ export default function IDCardGenerator() {
             })
     }, [id])
 
-    const handleSponsorLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSponsorLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        if (file) {
-            // Limit file size to 100KB to avoid database issues
-            if (file.size > 100 * 1024) {
-                setMessage({ type: 'error', text: 'Logo file too large. Max 100KB.' })
-                return
-            }
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                setSponsorLogo(event.target?.result as string)
-            }
-            reader.readAsDataURL(file)
+        if (!file) return
+
+        try {
+            setSaving(true)
+            setMessage(null)
+
+            // Upload and compress image automatically
+            const result = await uploadAPI.uploadImage(file)
+            setSponsorLogo(result.url)
+
+            setMessage({ type: 'success', text: 'Logo uploaded and compressed successfully!' })
+            setTimeout(() => setMessage(null), 3000)
+        } catch (error: any) {
+            console.error('Upload error:', error)
+            setMessage({ type: 'error', text: error.message || 'Failed to upload logo' })
+        } finally {
+            setSaving(false)
         }
     }
 
@@ -282,7 +288,7 @@ export default function IDCardGenerator() {
                                             <span className="text-sm text-gray-500">Upload Sponsor Logo</span>
                                         </label>
                                     )}
-                                    <p className="text-xs text-gray-400 mt-2">Logo max 100KB, will appear at bottom of ID card</p>
+                                    <p className="text-xs text-gray-400 mt-2">Logo will be auto-compressed, appears at bottom of ID card</p>
                                 </div>
 
                                 {/* Message */}
