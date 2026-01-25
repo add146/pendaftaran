@@ -50,6 +50,11 @@ export default function LandingPageEditor() {
             const result = await uploadAPI.uploadImage(file)
             if (section === 'hero') {
                 updateHero(field, result.url)
+            } else if (section === 'header') {
+                setConfig(prev => ({
+                    ...prev,
+                    header: { ...prev.header, [field]: result.url }
+                }))
             }
         } catch (err) {
             setError('Failed to upload image')
@@ -83,6 +88,133 @@ export default function LandingPageEditor() {
 
                 {error && <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>}
                 {success && <div className="bg-green-50 text-green-600 p-4 rounded-lg">{success}</div>}
+
+                {/* Header Section */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 className="text-xl font-bold mb-4">Header Configuration</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+                            <input
+                                type="text"
+                                value={config.header?.brandName || ''}
+                                onChange={e => setConfig(prev => ({ ...prev, header: { ...prev.header, brandName: e.target.value } }))}
+                                className="w-full px-4 py-2 border rounded-lg"
+                                placeholder="MasjidEvent"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Logo Image</label>
+                            <div className="flex items-center gap-4">
+                                {config.header?.logoUrl && (
+                                    <img src={config.header.logoUrl} alt="Logo" className="h-10 object-contain border rounded bg-gray-50 px-2" />
+                                )}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={e => handleImageUpload(e, 'header', 'logoUrl')}
+                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <h3 className="text-sm font-bold text-gray-900 mb-2">Menu Items</h3>
+                            <div className="space-y-2 mb-2">
+                                {(config.header?.menuItems || []).map((item, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={item.label}
+                                            onChange={e => {
+                                                const newItems = [...(config.header?.menuItems || [])]
+                                                newItems[idx].label = e.target.value
+                                                setConfig(prev => ({ ...prev, header: { ...prev.header, menuItems: newItems } }))
+                                            }}
+                                            className="flex-1 px-3 py-1 border rounded"
+                                            placeholder="Label"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={item.link}
+                                            onChange={e => {
+                                                const newItems = [...(config.header?.menuItems || [])]
+                                                newItems[idx].link = e.target.value
+                                                setConfig(prev => ({ ...prev, header: { ...prev.header, menuItems: newItems } }))
+                                            }}
+                                            className="flex-1 px-3 py-1 border rounded"
+                                            placeholder="Link (#section or /url)"
+                                        />
+                                        <button
+                                            onClick={() => {
+                                                const newItems = (config.header?.menuItems || []).filter((_, i) => i !== idx)
+                                                setConfig(prev => ({ ...prev, header: { ...prev.header, menuItems: newItems } }))
+                                            }}
+                                            className="text-red-500 hover:text-red-700 px-2"
+                                        >
+                                            <span className="material-symbols-outlined text-xl">delete</span>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setConfig(prev => ({
+                                    ...prev,
+                                    header: {
+                                        ...prev.header,
+                                        menuItems: [...(prev.header?.menuItems || []), { label: '', link: '#' }]
+                                    }
+                                }))}
+                                className="text-sm text-primary font-medium hover:underline flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-sm">add</span> Add Menu Item
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Login Button Label</label>
+                                <input
+                                    type="text"
+                                    value={config.header?.authButtons?.loginLabel || ''}
+                                    onChange={e => setConfig(prev => ({ ...prev, header: { ...prev.header, authButtons: { ...prev.header?.authButtons, loginLabel: e.target.value } } }))}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="Masuk"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Login Button Link</label>
+                                <input
+                                    type="text"
+                                    value={config.header?.authButtons?.loginLink || ''}
+                                    onChange={e => setConfig(prev => ({ ...prev, header: { ...prev.header, authButtons: { ...prev.header?.authButtons, loginLink: e.target.value } } }))}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="/login"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Register Button Label</label>
+                                <input
+                                    type="text"
+                                    value={config.header?.authButtons?.ctaLabel || ''}
+                                    onChange={e => setConfig(prev => ({ ...prev, header: { ...prev.header, authButtons: { ...prev.header?.authButtons, ctaLabel: e.target.value } } }))}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="Mulai Gratis"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Register Button Link</label>
+                                <input
+                                    type="text"
+                                    value={config.header?.authButtons?.ctaLink || ''}
+                                    onChange={e => setConfig(prev => ({ ...prev, header: { ...prev.header, authButtons: { ...prev.header?.authButtons, ctaLink: e.target.value } } }))}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="/register"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Hero Section */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">

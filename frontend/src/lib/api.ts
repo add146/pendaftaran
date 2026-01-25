@@ -632,6 +632,17 @@ export interface SubscriptionPayment {
 }
 
 export interface LandingPageConfig {
+    header?: {
+        logoUrl?: string
+        brandName?: string
+        menuItems?: Array<{ label: string; link: string }>
+        authButtons?: {
+            loginLabel?: string
+            loginLink?: string
+            ctaLabel?: string
+            ctaLink?: string
+        }
+    }
     hero?: {
         badge?: string
         title?: string

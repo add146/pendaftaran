@@ -121,26 +121,38 @@ export default function Landing() {
             <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-surface-light/95 backdrop-blur">
                 <div className="max-w-[1280px] mx-auto px-4 md:px-10 h-16 md:h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="text-primary">
-                            <span className="material-symbols-outlined text-[32px]">mosque</span>
-                        </div>
-                        <h2 className="text-xl font-bold tracking-tight text-gray-900">MasjidEvent</h2>
+                        {config.header?.logoUrl ? (
+                            <img src={config.header.logoUrl} alt="Logo" className="h-8 md:h-10 w-auto object-contain" />
+                        ) : (
+                            <div className="text-primary">
+                                <span className="material-symbols-outlined text-[32px]">mosque</span>
+                            </div>
+                        )}
+                        <h2 className="text-xl font-bold tracking-tight text-gray-900">{config.header?.brandName || 'MasjidEvent'}</h2>
                     </div>
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-8">
-                        <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#features">Fitur</a>
-                        <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#pricing">Harga</a>
-                        <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#contact">Kontak</a>
+                        {(config.header?.menuItems && config.header.menuItems.length > 0) ? (
+                            config.header.menuItems.map((item, idx) => (
+                                <a key={idx} className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href={item.link}>{item.label}</a>
+                            ))
+                        ) : (
+                            <>
+                                <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#features">Fitur</a>
+                                <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#pricing">Harga</a>
+                                <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#contact">Kontak</a>
+                            </>
+                        )}
                     </nav>
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-3">
-                        <Link to="/login" className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
-                            Masuk
+                        <Link to={config.header?.authButtons?.loginLink || "/login"} className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                            {config.header?.authButtons?.loginLabel || "Masuk"}
                         </Link>
-                        <Link to="/login" className="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all hover:shadow-md">
-                            Mulai Gratis
+                        <Link to={config.header?.authButtons?.ctaLink || "/login"} className="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all hover:shadow-md">
+                            {config.header?.authButtons?.ctaLabel || "Mulai Gratis"}
                         </Link>
                     </div>
 
@@ -157,40 +169,55 @@ export default function Landing() {
                 {isMenuOpen && (
                     <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-lg py-6 px-4 flex flex-col gap-6 animate-fade-in">
                         <nav className="flex flex-col gap-4">
-                            <a
-                                className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
-                                href="#features"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Fitur
-                            </a>
-                            <a
-                                className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
-                                href="#pricing"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Harga
-                            </a>
-                            <a
-                                className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
-                                href="#contact"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Kontak
-                            </a>
+                            {(config.header?.menuItems && config.header.menuItems.length > 0) ? (
+                                config.header.menuItems.map((item, idx) => (
+                                    <a
+                                        key={idx}
+                                        className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                        href={item.link}
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        {item.label}
+                                    </a>
+                                ))
+                            ) : (
+                                <>
+                                    <a
+                                        className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                        href="#features"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Fitur
+                                    </a>
+                                    <a
+                                        className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                        href="#pricing"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Harga
+                                    </a>
+                                    <a
+                                        className="text-base font-medium text-gray-600 hover:text-primary transition-colors py-2 border-b border-gray-50"
+                                        href="#contact"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Kontak
+                                    </a>
+                                </>
+                            )}
                         </nav>
                         <div className="flex flex-col gap-3">
                             <Link
-                                to="/dashboard"
+                                to={config.header?.authButtons?.loginLink || "/dashboard"}
                                 className="flex h-12 w-full items-center justify-center rounded-lg border border-gray-200 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors"
                             >
-                                Masuk
+                                {config.header?.authButtons?.loginLabel || "Masuk"}
                             </Link>
                             <Link
-                                to="/dashboard"
+                                to={config.header?.authButtons?.ctaLink || "/dashboard"}
                                 className="flex h-12 w-full items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all"
                             >
-                                Mulai Gratis
+                                {config.header?.authButtons?.ctaLabel || "Mulai Gratis"}
                             </Link>
                         </div>
                     </div>
