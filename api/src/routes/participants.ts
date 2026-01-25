@@ -554,7 +554,7 @@ participants.post('/:id/resend-whatsapp', authMiddleware, async (c) => {
             `).bind(participant.id).run()
 
             return c.json({
-                error: 'Failed to send WhatsApp',
+                error: `Failed to send WhatsApp: ${result.error}`,
                 details: result.error
             }, 500)
         }
