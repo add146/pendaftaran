@@ -62,9 +62,11 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
     const config = new Map(result.results.map((s: any) => [s.key, s.value]))
 
     // Check if System is globally enabled
-    const globalEnabled = config.get('waha_enabled') === 'true'
-    if (!globalEnabled) {
-        console.log('[WAHA] WAHA globally disabled')
+    // If waha_enabled is explicitly 'false', then it's disabled.
+    // If it's missing but API URL is present, we assume it's enabled (legacy/robustness).
+    const globalEnabledStr = config.get('waha_enabled')
+    if (globalEnabledStr === 'false') {
+        console.log('[WAHA] WAHA globally disabled (explicitly set to false)')
         return null
     }
 
@@ -76,8 +78,8 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
 
     console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET')
 
-    if (!apiUrl || !apiKey) {
-        console.log('[WAHA] Missing API URL or Key')
+    if (!apiUrl) {
+        console.log('[WAHA] Missing API URL')
         return null
     }
 
