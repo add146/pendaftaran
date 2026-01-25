@@ -144,7 +144,7 @@ export default function Events() {
                                             <div className="absolute top-4 right-4 z-10">
                                                 <button
                                                     onClick={() => handleDelete(event.id, event.title)}
-                                                    className="bg-white text-red-600 w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-red-50"
+                                                    className="bg-red-600 text-white w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-red-700"
                                                     title="Delete Event"
                                                 >
                                                     <span className="material-symbols-outlined text-[20px]">delete</span>
