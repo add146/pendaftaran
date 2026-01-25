@@ -21,9 +21,12 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
             'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
         ).bind('notification_preferences', organizationId).first()
 
+        console.log('[WAHA] Notification Prefs Result:', JSON.stringify(result))
+
         if (result && result.value) {
             try {
                 const prefs = JSON.parse(result.value as string)
+                console.log('[WAHA] Parsed Prefs:', JSON.stringify(prefs))
                 if (prefs.whatsapp === true) {
                     orgEnabled = true
                 }
