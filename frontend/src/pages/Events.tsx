@@ -112,17 +112,47 @@ export default function Events() {
                             }
 
                             return (
-                                <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                                    {/* Event Image */}
-                                    <div className="h-40 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden">
+                                <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full group">
+                                    {/* Event Image & Overlay Actions */}
+                                    <div className="relative h-48 bg-gray-100">
+                                        {/* Image */}
                                         {eventImage ? (
                                             <img src={eventImage} alt={event.title} className="w-full h-full object-cover" />
                                         ) : (
-                                            <span className="material-symbols-outlined text-[48px] text-primary/40">event</span>
+                                            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                                <span className="material-symbols-outlined text-[48px] text-primary/40">event</span>
+                                            </div>
+                                        )}
+
+                                        {/* Overlay Actions */}
+                                        <div className="absolute top-4 left-4 z-10">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    const url = `${window.location.origin}/event/${event.slug || event.id}`
+                                                    navigator.clipboard.writeText(url)
+                                                    alert('Link copied: ' + url)
+                                                }}
+                                                className="bg-white text-primary px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md text-sm font-bold flex items-center gap-1.5 transition-all active:scale-95"
+                                            >
+                                                <span className="material-symbols-outlined text-[18px]">share</span>
+                                                Share
+                                            </button>
+                                        </div>
+
+                                        {isAdmin && (
+                                            <div className="absolute top-4 right-4 z-10">
+                                                <Link
+                                                    to={`/events/${event.id}/edit`}
+                                                    className="bg-white text-primary px-4 py-1.5 rounded-lg shadow-sm hover:shadow-md text-sm font-bold block transition-all active:scale-95"
+                                                >
+                                                    Edit
+                                                </Link>
+                                            </div>
                                         )}
                                     </div>
 
-                                    <div className="p-5">
+                                    <div className="p-5 flex flex-col flex-grow">
                                         <div className="flex items-start justify-between mb-3">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${event.status === 'open' ? 'bg-green-100 text-green-800' :
                                                 event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
@@ -134,7 +164,7 @@ export default function Events() {
 
                                         <h3 className="font-bold text-lg text-text-main mb-2 line-clamp-2">{event.title}</h3>
 
-                                        <div className="space-y-2 text-sm text-gray-500 mb-4">
+                                        <div className="space-y-2 text-sm text-gray-500 mb-6 flex-grow">
                                             <div className="flex items-center gap-2">
                                                 <span className="material-symbols-outlined text-[18px]">calendar_today</span>
                                                 {formatDate(event.event_date)}
@@ -145,47 +175,32 @@ export default function Events() {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
-                                            <button
-                                                onClick={() => {
-                                                    const url = `${window.location.origin}/event/${event.slug || event.id}`
-                                                    navigator.clipboard.writeText(url)
-                                                    alert('Link copied: ' + url)
-                                                }}
-                                                className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
-                                            >
-                                                <span className="material-symbols-outlined text-[16px]">share</span>
-                                                Share
-                                            </button>
-                                            {isAdmin && (
-                                                <Link
-                                                    to={`/events/${event.id}/edit`}
-                                                    className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md"
-                                                >
-                                                    Edit
-                                                </Link>
-                                            )}
+                                        {/* Bottom Actions */}
+                                        <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 mt-auto">
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md"
+                                                className="flex-1 text-center py-2 px-2 text-primary text-sm font-bold bg-white border border-primary/30 hover:bg-primary/5 hover:border-primary rounded-lg transition-all"
                                             >
                                                 Participants
                                             </Link>
+
                                             {isAdmin && (
                                                 <Link
                                                     to={`/events/${event.id}/id-cards`}
-                                                    className="flex-1 text-center py-2.5 px-3 text-primary text-sm font-semibold bg-white border border-primary/30 hover:bg-primary hover:text-white hover:border-primary rounded-lg transition-all shadow-sm hover:shadow-md"
+                                                    className="flex-1 text-center py-2 px-2 text-primary text-sm font-bold bg-white border border-primary/30 hover:bg-primary/5 hover:border-primary rounded-lg transition-all whitespace-nowrap"
                                                 >
                                                     ID Cards
                                                 </Link>
                                             )}
+
                                             {isAdmin && (
                                                 <button
                                                     onClick={() => handleDelete(event.id, event.title)}
-                                                    className="flex-1 text-center py-2.5 px-3 text-red-600 text-sm font-semibold bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
+                                                    className="flex-none py-2 px-3 text-red-600 text-sm font-bold bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-lg transition-all flex items-center justify-center gap-1"
                                                     title="Delete Event"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                    <span className="hidden sm:inline">Delete</span>
                                                 </button>
                                             )}
                                         </div>
