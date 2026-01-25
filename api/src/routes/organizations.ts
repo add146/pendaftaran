@@ -105,10 +105,21 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     `).all()
 
     const settingsMap = new Map(wahaSettings.results.map((s: any) => [s.key, s.value]))
-    const globalEnabled = settingsMap.get('waha_enabled') === 'true'
+
+    // Robust Global Check:
+    // If waha_enabled is explicitly 'false', then it's disabled.
+    // If it's missing but API URL is present, we assume it's enabled.
+    const globalEnabledStr = settingsMap.get('waha_enabled')
+    let globalEnabled = globalEnabledStr === 'true'
+
     let apiUrl = settingsMap.get('waha_api_url') || ''
     const apiKey = settingsMap.get('waha_api_key') || ''
     const session = settingsMap.get('waha_session') || 'default'
+
+    // Robustness: If API URL is set and enabled is not explicitly false, assume true
+    if (apiUrl && globalEnabledStr !== 'false') {
+        globalEnabled = true
+    }
 
     // Normalize API URL
     if (apiUrl && !apiUrl.startsWith('http')) {
@@ -119,12 +130,35 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     }
 
     // Check organization WAHA toggle
-    const org = await c.env.DB.prepare(
-        'SELECT waha_enabled FROM organizations WHERE id = ?'
-    ).bind(id).first() as { waha_enabled: number } | null
+    // 1. Check Notification Preferences (New Standard)
+    let orgEnabled = false
+    try {
+        const prefResult = await c.env.DB.prepare(
+            'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
+        ).bind('notification_preferences', id).first()
 
-    const orgEnabled = org?.waha_enabled === 1
+        if (prefResult && prefResult.value) {
+            const prefs = JSON.parse(prefResult.value as string)
+            if (prefs.whatsapp === true) {
+                orgEnabled = true
+            }
+        }
+    } catch (e) {
+        console.warn('Error verifying org preferences:', e)
+    }
+
+    // 2. Legacy Fallback
+    if (!orgEnabled) {
+        const org = await c.env.DB.prepare(
+            'SELECT waha_enabled FROM organizations WHERE id = ?'
+        ).bind(id).first() as { waha_enabled: number } | null
+        if (org?.waha_enabled === 1) {
+            orgEnabled = true
+        }
+    }
+
     // WAHA is available if global is configured AND enabled, AND organization has enabled it
+    // Note: 'configured' means URL and Key are present.
     const available = globalEnabled && !!apiUrl && !!apiKey && orgEnabled
 
     // Check live connection status - check if WAHA is globally configured (regardless of org toggle)
