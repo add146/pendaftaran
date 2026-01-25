@@ -173,6 +173,13 @@ events.put('/:id', authMiddleware, async (c) => {
 events.delete('/:id', authMiddleware, async (c) => {
   const user = c.get('user')
   const { id } = c.req.param()
+  /* 
+   * Strict Role Check: Only Admin and Super Admin can delete events.
+   * Regular users (staff) specific to organization cannot delete.
+   */
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
+    return c.json({ error: 'Unauthorized: Only Admins can delete events' }, 403)
+  }
 
   // Verify event belongs to organization before deleting
   const event = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()

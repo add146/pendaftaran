@@ -47,6 +47,18 @@ export default function Events() {
         })
     }
 
+    const handleDelete = async (id: string, title: string) => {
+        if (!confirm(`Are you sure you want to delete event "${title}"?\nThis action cannot be undone.`)) return
+
+        try {
+            await eventsAPI.delete(id)
+            setEvents(prev => prev.filter(e => e.id !== id))
+        } catch (err) {
+            console.error(err)
+            alert('Failed to delete event')
+        }
+    }
+
     return (
         <AdminLayout title="Events" currentPage="events">
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -166,6 +178,15 @@ export default function Events() {
                                                 >
                                                     ID Cards
                                                 </Link>
+                                            )}
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => handleDelete(event.id, event.title)}
+                                                    className="flex-1 text-center py-2.5 px-3 text-red-600 text-sm font-semibold bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-lg transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1.5"
+                                                    title="Delete Event"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                </button>
                                             )}
                                         </div>
                                     </div>
