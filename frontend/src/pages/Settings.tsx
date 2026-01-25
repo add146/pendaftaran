@@ -35,7 +35,7 @@ export default function Settings() {
     const [orgLogo, setOrgLogo] = useState('')
     const [notifications, setNotifications] = useState({
         email: true,
-        whatsapp: false,
+        whatsapp: true, // Defaults to TRUE now (was false)
         daily: true
     })
 

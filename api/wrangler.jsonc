@@ -15,7 +15,8 @@
 		{
 			"binding": "DB",
 			"database_name": "pendaftaran-qr-db",
-			"database_id": "2a56fb55-23a9-4c83-b9c4-4f5dd2a5170c"
+			"database_id": "2a56fb55-23a9-4c83-b9c4-4f5dd2a5170c",
+			"migrations_dir": "src/db/migrations"
 		}
 	],
 	// Environment Variables

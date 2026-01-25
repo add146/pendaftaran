@@ -233,9 +233,16 @@ export default function Participants() {
         if (!id) return
         setLoading(true)
         try {
+            const params: any = { search, limit: 50 }
+
+            // Map filters to API params
+            if (filter === 'paid') params.payment = 'paid'
+            if (filter === 'pending') params.payment = 'pending'
+            if (filter === 'checked_in') params.status = 'checked_in'
+
             const [eventData, participantsData, statsData] = await Promise.all([
                 eventsAPI.get(id),
-                participantsAPI.list(id, { search, limit: 50 }),
+                participantsAPI.list(id, params),
                 eventsAPI.stats(id)
             ])
             setEvent(eventData)
@@ -254,7 +261,7 @@ export default function Participants() {
 
     useEffect(() => {
         fetchData()
-    }, [id, search])
+    }, [id, search, filter])
 
     const handleExportCSV = async () => {
         if (!id) return
