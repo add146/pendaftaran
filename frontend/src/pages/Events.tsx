@@ -82,7 +82,7 @@ export default function Events() {
                     {isAdmin && (
                         <Link
                             to="/events/create"
-                            className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+                            className="flex items-center gap-2 bg-teal-800 hover:bg-teal-900 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
                         >
                             <span className="material-symbols-outlined text-[20px]">add</span>
                             Create Event
@@ -179,18 +179,21 @@ export default function Events() {
                                         {/* Bottom Actions */}
                                         <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 mt-auto">
                                             {/* ID Cards (Blue) - Left */}
+                                            {/* ID Cards (Teal/Dark Green) - Left */}
                                             <Link
                                                 to={`/events/${event.id}/id-cards`}
-                                                className="flex items-center justify-center py-2 px-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center"
+                                                className="flex items-center justify-center py-2 px-1 bg-teal-800 hover:bg-teal-900 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
                                             >
+                                                <span className="material-symbols-outlined text-[16px]">badge</span>
                                                 ID Cards
                                             </Link>
 
                                             {/* Participants (Orange) - Center */}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className={`flex items-center justify-center py-2 px-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center ${!isAdmin ? 'col-span-2' : ''}`}
+                                                className={`flex items-center justify-center py-2 px-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 ${!isAdmin ? 'col-span-2' : ''}`}
                                             >
+                                                <span className="material-symbols-outlined text-[16px]">group</span>
                                                 Participants
                                             </Link>
 
