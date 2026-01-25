@@ -560,9 +560,10 @@ participants.post('/:id/resend-whatsapp', authMiddleware, async (c) => {
         }
     } catch (error) {
         console.error('[RESEND-WA] Error:', error)
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         return c.json({
-            error: 'Failed to send WhatsApp',
-            details: error instanceof Error ? error.message : 'Unknown error'
+            error: `Failed to send WhatsApp: ${errorMessage}`,
+            details: errorMessage
         }, 500)
     }
 })
