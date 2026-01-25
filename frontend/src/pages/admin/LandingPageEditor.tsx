@@ -56,8 +56,9 @@ export default function LandingPageEditor() {
                     header: { ...prev.header, [field]: result.url }
                 }))
             }
-        } catch (err) {
-            setError('Failed to upload image')
+        } catch (err: any) {
+            console.error('Upload error:', err)
+            setError(err.message || 'Failed to upload image')
         } finally {
             setSaving(false)
         }

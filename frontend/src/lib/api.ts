@@ -286,8 +286,8 @@ export const uploadAPI = {
     uploadImage: async (file: File, compressionOptions?: { maxSizeMB?: number; maxWidthOrHeight?: number }) => {
         // Compress image before upload
         const options = {
-            maxSizeMB: compressionOptions?.maxSizeMB || 0.5, // Default 0.5MB, allow override
-            maxWidthOrHeight: compressionOptions?.maxWidthOrHeight || 1920,
+            maxSizeMB: compressionOptions?.maxSizeMB || 0.2, // Reduced to 0.2MB to fit in D1 (1MB limit with Base64 overhead)
+            maxWidthOrHeight: compressionOptions?.maxWidthOrHeight || 1280,
             useWebWorker: true
         }
 
@@ -302,9 +302,10 @@ export const uploadAPI = {
         } catch (error) {
             console.error('Compression failed:', error)
 
-            // If compression fails, checks if original file is safe to upload (max 1MB for D1)
-            if (file.size > 1024 * 1024) {
-                throw new Error('Image compression failed and original file is too large for database storage (limit 1MB). Please upload a smaller image.')
+            // If compression fails, checks if original file is safe to upload (max 700KB for D1 to be safe)
+            // 700KB * 1.33 (Base64) ~= 930KB < 1MB
+            if (file.size > 700 * 1024) {
+                throw new Error('Image too large. Please upload an image smaller than 700KB or try a different format.')
             }
 
             // Fallback to original file if safe
