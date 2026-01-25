@@ -568,7 +568,7 @@ ${bankSection}`
 
                         {/* Registration Form */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 sticky top-24">
+                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 lg:sticky lg:top-24">
                                 <h3 className="text-xl font-bold mb-6">Register Now</h3>
 
                                 {!event?.registration_available ? (

@@ -348,7 +348,7 @@ export default function Participants() {
                             </h1>
                             <p className="text-gray-500 mt-1">Manage registrations, payments, and check-in attendees.</p>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                             <button
                                 onClick={handleExportCSV}
                                 disabled={exportLoading}
