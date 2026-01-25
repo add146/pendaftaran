@@ -7,8 +7,6 @@ export default function OrganizationSettings() {
     const [members, setMembers] = useState<User[]>([])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [wahaEnabled, setWahaEnabled] = useState(false)
-    const [wahaAvailable, setWahaAvailable] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState('')
 
@@ -43,17 +41,14 @@ export default function OrganizationSettings() {
             }
 
             // Load organization data
-            const [orgData, subData, membersData, wahaStatus] = await Promise.all([
+            const [orgData, subData, membersData] = await Promise.all([
                 organizationsAPI.get(orgId),
                 subscriptionsAPI.getCurrent(),
                 organizationsAPI.getMembers(orgId),
-                organizationsAPI.getWahaStatus(orgId),
             ])
 
             setSubscription(subData)
             setMembers(membersData.members)
-            setWahaEnabled(orgData.waha_enabled === 1)
-            setWahaAvailable(wahaStatus.available)
 
             // Set form values
             setOrgName(orgData.name)
@@ -84,23 +79,6 @@ export default function OrganizationSettings() {
             await loadData()
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update profile')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const handleToggleWaha = async () => {
-        try {
-            setSaving(true)
-            setError('')
-            const orgId = localStorage.getItem('orgId')
-            if (!orgId) throw new Error('Organization ID not found')
-
-            await organizationsAPI.toggleWaha(orgId, !wahaEnabled)
-            setWahaEnabled(!wahaEnabled)
-            setSuccess(`WAHA ${!wahaEnabled ? 'enabled' : 'disabled'} successfully`)
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to toggle WAHA')
         } finally {
             setSaving(false)
         }
@@ -248,31 +226,7 @@ export default function OrganizationSettings() {
                     </div>
                 </div>
 
-                {/* WAHA Integration */}
-                {wahaAvailable && (
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-xl font-semibold mb-4">WhatsApp Integration (WAHA)</h2>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <div className="font-medium">Enable WhatsApp Notifications</div>
-                                <div className="text-sm text-gray-600">
-                                    Send event tickets via WhatsApp automatically
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleToggleWaha}
-                                disabled={saving}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${wahaEnabled ? 'bg-green-600' : 'bg-gray-300'
-                                    }`}
-                            >
-                                <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${wahaEnabled ? 'translate-x-6' : 'translate-x-1'
-                                        }`}
-                                />
-                            </button>
-                        </div>
-                    </div>
-                )}
+
             </div>
         </AdminLayout>
     )
