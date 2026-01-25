@@ -322,7 +322,7 @@ export default function Landing() {
                             <p className="text-green-50 text-lg max-w-2xl">
                                 {config.cta?.description || 'Bergabunglah dengan ratusan pengurus masjid lainnya yang telah beralih ke sistem digital yang lebih efisien dan transparan.'}
                             </p>
-                            <Link to={config.cta?.buttonLink || '/dashboard'} className="h-12 px-8 mt-4 rounded-lg bg-white text-primary font-bold text-base hover:bg-gray-100 shadow-xl transition-all">
+                            <Link to={config.cta?.buttonLink || '/dashboard'} className="h-12 px-8 mt-4 rounded-lg bg-white text-primary font-bold text-base hover:bg-gray-100 shadow-xl transition-all flex items-center justify-center">
                                 {config.cta?.buttonText || 'Buat Akun Gratis Sekarang'}
                             </Link>
                             <p className="text-sm text-green-100 mt-2 opacity-80">{config.cta?.note || 'Tidak perlu kartu kredit. Batal kapan saja.'}</p>
