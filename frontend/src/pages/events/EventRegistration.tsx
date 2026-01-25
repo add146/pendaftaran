@@ -239,7 +239,8 @@ export default function EventRegistration() {
             weekday: 'long',
             day: 'numeric',
             month: 'long',
-            year: 'numeric'
+            year: 'numeric',
+            timeZone: 'Asia/Jakarta'
         })
     }
 

@@ -76,9 +76,11 @@ export default function PublicTicket() {
         try {
             const date = new Date(dateStr)
             return date.toLocaleDateString('id-ID', {
+                weekday: 'long',
                 day: 'numeric',
                 month: 'long',
-                year: 'numeric'
+                year: 'numeric',
+                timeZone: 'Asia/Jakarta'
             })
         } catch {
             return dateStr

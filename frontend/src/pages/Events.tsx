@@ -40,7 +40,10 @@ export default function Events() {
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'short', year: 'numeric'
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'Asia/Jakarta'
         })
     }
 

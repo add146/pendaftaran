@@ -46,7 +46,7 @@ function EventRow({ id, title, event_date, status, registered_count, capacity }:
 
     const quota = capacity || 100
     const progress = Math.round((registered_count / quota) * 100)
-    const formattedDate = new Date(event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const formattedDate = new Date(event_date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Jakarta' })
 
     return (
         <tr className="hover:bg-background-light transition-colors">

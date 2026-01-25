@@ -49,7 +49,12 @@ export default function AllParticipants() {
 
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'short', year: 'numeric'
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta'
         })
     }
 

@@ -209,9 +209,11 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         try {
             const date = new Date(dateStr)
             return date.toLocaleDateString('id-ID', {
+                weekday: 'long',
                 day: 'numeric',
-                month: 'short',
-                year: 'numeric'
+                month: 'long',
+                year: 'numeric',
+                timeZone: 'Asia/Jakarta'
             })
         } catch {
             return dateStr
