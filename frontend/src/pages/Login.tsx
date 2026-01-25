@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { authAPI } from '../lib/api'
+import { authAPI, publicAPI, type LandingPageConfig } from '../lib/api'
 
 export default function Login() {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [config, setConfig] = useState<LandingPageConfig>({})
+
+    useEffect(() => {
+        publicAPI.getLandingConfig().then(setConfig).catch(console.error)
+    }, [])
 
     // Login form
     const [email, setEmail] = useState('')
@@ -41,8 +46,12 @@ export default function Login() {
                 {/* Logo */}
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-2 mb-2">
-                        <span className="material-symbols-outlined text-primary text-[40px]">mosque</span>
-                        <h1 className="text-2xl font-bold text-gray-900">MasjidEvent</h1>
+                        {config.header?.logoUrl ? (
+                            <img src={config.header.logoUrl} alt="Logo" className="h-10 w-auto object-contain" />
+                        ) : (
+                            <span className="material-symbols-outlined text-primary text-[40px]">mosque</span>
+                        )}
+                        <h1 className="text-2xl font-bold text-gray-900">{config.header?.brandName || 'MasjidEvent'}</h1>
                     </div>
                     <p className="text-gray-600">Event Management Platform</p>
                 </div>
