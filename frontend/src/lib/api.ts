@@ -301,7 +301,13 @@ export const uploadAPI = {
             )
         } catch (error) {
             console.error('Compression failed:', error)
-            // Fallback to original file if compression fails
+
+            // If compression fails, checks if original file is safe to upload (max 1MB for D1)
+            if (file.size > 1024 * 1024) {
+                throw new Error('Image compression failed and original file is too large for database storage (limit 1MB). Please upload a smaller image.')
+            }
+
+            // Fallback to original file if safe
             const formData = new FormData()
             formData.append('image', file)
             return fetchAPI<{ success: boolean; url: string; filename: string }>(

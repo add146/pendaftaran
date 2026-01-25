@@ -45,8 +45,8 @@ export default function IDCardGenerator() {
             setSaving(true)
             setMessage(null)
 
-            // Upload and compress image automatically (max 100KB for sponsor logo)
-            const result = await uploadAPI.uploadImage(file, { maxSizeMB: 0.1 })
+            // Upload and compress image automatically (max 0.5MB for D1 storage)
+            const result = await uploadAPI.uploadImage(file, { maxSizeMB: 0.5 })
             setSponsorLogo(result.url)
 
             setMessage({ type: 'success', text: 'Logo uploaded and compressed successfully!' })
