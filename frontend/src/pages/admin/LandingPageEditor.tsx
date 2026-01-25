@@ -458,6 +458,109 @@ export default function LandingPageEditor() {
                     </div>
                 </div>
 
+                {/* Footer Section */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h2 className="text-xl font-bold mb-4">Footer Configuration</h2>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Company Description</label>
+                            <textarea
+                                value={config.footer?.description || ''}
+                                onChange={e => setConfig(prev => ({ ...prev, footer: { ...prev.footer, description: e.target.value } }))}
+                                className="w-full px-4 py-2 border rounded-lg h-20"
+                                placeholder="Platform manajemen event terpercaya..."
+                            />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea
+                                    value={config.footer?.address || ''}
+                                    onChange={e => setConfig(prev => ({ ...prev, footer: { ...prev.footer, address: e.target.value } }))}
+                                    className="w-full px-4 py-2 border rounded-lg h-24"
+                                    placeholder="Jakarta, Indonesia..."
+                                />
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
+                                    <input
+                                        type="text"
+                                        value={config.footer?.contactEmail || ''}
+                                        onChange={e => setConfig(prev => ({ ...prev, footer: { ...prev.footer, contactEmail: e.target.value } }))}
+                                        className="w-full px-4 py-2 border rounded-lg"
+                                        placeholder="support@masjidevent.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Copyright Text</label>
+                                    <input
+                                        type="text"
+                                        value={config.footer?.copyrightText || ''}
+                                        onChange={e => setConfig(prev => ({ ...prev, footer: { ...prev.footer, copyrightText: e.target.value } }))}
+                                        className="w-full px-4 py-2 border rounded-lg"
+                                        placeholder="© 2026 MasjidEvent Platform. All rights reserved."
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <h3 className="text-sm font-bold text-gray-900 mb-2">Social Links</h3>
+                            <div className="grid md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Instagram Link</label>
+                                    <input
+                                        type="text"
+                                        value={config.footer?.socialLinks?.instagram || ''}
+                                        onChange={e => setConfig(prev => ({
+                                            ...prev,
+                                            footer: {
+                                                ...prev.footer,
+                                                socialLinks: { ...prev.footer?.socialLinks, instagram: e.target.value }
+                                            }
+                                        }))}
+                                        className="w-full px-4 py-2 border rounded-lg"
+                                        placeholder="#"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Website Link</label>
+                                    <input
+                                        type="text"
+                                        value={config.footer?.socialLinks?.website || ''}
+                                        onChange={e => setConfig(prev => ({
+                                            ...prev,
+                                            footer: {
+                                                ...prev.footer,
+                                                socialLinks: { ...prev.footer?.socialLinks, website: e.target.value }
+                                            }
+                                        }))}
+                                        className="w-full px-4 py-2 border rounded-lg"
+                                        placeholder="#"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Link (mailto:)</label>
+                                    <input
+                                        type="text"
+                                        value={config.footer?.socialLinks?.email || ''}
+                                        onChange={e => setConfig(prev => ({
+                                            ...prev,
+                                            footer: {
+                                                ...prev.footer,
+                                                socialLinks: { ...prev.footer?.socialLinks, email: e.target.value }
+                                            }
+                                        }))}
+                                        className="w-full px-4 py-2 border rounded-lg"
+                                        placeholder="mailto:support@example.com"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </AdminLayout>
     )

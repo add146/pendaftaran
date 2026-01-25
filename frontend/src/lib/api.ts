@@ -693,4 +693,15 @@ export interface LandingPageConfig {
         buttonLink?: string
         note?: string
     }
+    footer?: {
+        description?: string
+        address?: string
+        contactEmail?: string
+        copyrightText?: string
+        socialLinks?: {
+            instagram?: string
+            website?: string
+            email?: string
+        }
+    }
 }

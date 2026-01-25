@@ -337,18 +337,22 @@ export default function Landing() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary text-[28px]">mosque</span>
-                                <h2 className="text-xl font-bold text-gray-900">MasjidEvent</h2>
+                                {config.header?.logoUrl ? (
+                                    <img src={config.header.logoUrl} alt="Logo" className="h-7 w-auto object-contain" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-primary text-[28px]">mosque</span>
+                                )}
+                                <h2 className="text-xl font-bold text-gray-900">{config.header?.brandName || 'MasjidEvent'}</h2>
                             </div>
                             <p className="text-gray-500 text-sm leading-relaxed">
-                                Platform manajemen event terpercaya untuk masjid dan komunitas Muslim modern.
+                                {config.footer?.description || 'Platform manajemen event terpercaya untuk masjid dan komunitas Muslim modern.'}
                             </p>
                         </div>
                         <div className="flex flex-col gap-4">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Produk</h3>
                             <div className="flex flex-col gap-2">
-                                <a className="text-gray-600 hover:text-primary transition-colors text-sm" href="#">Fitur</a>
-                                <a className="text-gray-600 hover:text-primary transition-colors text-sm" href="#">Harga</a>
+                                <a className="text-gray-600 hover:text-primary transition-colors text-sm" href="#features">Fitur</a>
+                                <a className="text-gray-600 hover:text-primary transition-colors text-sm" href="#pricing">Harga</a>
                                 <a className="text-gray-600 hover:text-primary transition-colors text-sm" href="#">Studi Kasus</a>
                             </div>
                         </div>
@@ -363,21 +367,25 @@ export default function Landing() {
                         <div className="flex flex-col gap-4">
                             <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Hubungi Kami</h3>
                             <div className="flex gap-4">
-                                {['mail', 'photo_camera', 'public'].map((icon) => (
-                                    <a key={icon} className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all" href="#">
-                                        <span className="material-symbols-outlined text-[20px]">{icon}</span>
-                                    </a>
-                                ))}
+                                <a className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all" href={config.footer?.socialLinks?.email || '#'}>
+                                    <span className="material-symbols-outlined text-[20px]">mail</span>
+                                </a>
+                                <a className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all" href={config.footer?.socialLinks?.instagram || '#'}>
+                                    <span className="material-symbols-outlined text-[20px]">photo_camera</span>
+                                </a>
+                                <a className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-primary hover:text-white transition-all" href={config.footer?.socialLinks?.website || '#'}>
+                                    <span className="material-symbols-outlined text-[20px]">public</span>
+                                </a>
                             </div>
-                            <p className="text-sm text-gray-500 mt-2">
-                                Jakarta, Indonesia<br />
-                                support@masjidevent.com
-                            </p>
+                            <div className="text-sm text-gray-500 mt-2 whitespace-pre-line">
+                                {config.footer?.address || 'Jakarta, Indonesia'}<br />
+                                {config.footer?.contactEmail || 'support@masjidevent.com'}
+                            </div>
                         </div>
                     </div>
                     <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-sm text-gray-500 text-center md:text-left">
-                            © 2026 MasjidEvent Platform. All rights reserved.
+                            {config.footer?.copyrightText || '© 2026 MasjidEvent Platform. All rights reserved.'}
                         </p>
                         <span className="text-xs text-gray-400">Made with <span className="text-red-500">♥</span> for Ummah</span>
                     </div>
