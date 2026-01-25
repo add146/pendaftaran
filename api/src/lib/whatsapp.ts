@@ -14,19 +14,41 @@ interface WAHAConfig {
 async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WAHAConfig | null> {
     console.log('[WAHA] Fetching config for organization:', organizationId)
 
-    // 1. Check if organization has enabled WAHA
-    // Wrap in try-catch in case column doesn't exist yet (migration pending)
+    // 1. Check if organization has enabled WAHA via Notification Preferences
+    let orgEnabled = false
     try {
-        const org = await db.prepare(
-            'SELECT waha_enabled FROM organizations WHERE id = ?'
-        ).bind(organizationId).first() as { waha_enabled: number } | null
+        const result = await db.prepare(
+            'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
+        ).bind('notification_preferences', organizationId).first()
 
-        if (org && org.waha_enabled !== 1 && org.waha_enabled !== undefined) {
-            console.log('[WAHA] WAHA disabled for organization:', organizationId)
-            return null
+        if (result && result.value) {
+            try {
+                const prefs = JSON.parse(result.value as string)
+                if (prefs.whatsapp === true) {
+                    orgEnabled = true
+                }
+            } catch (e) {
+                console.warn('[WAHA] Failed to parse notification preferences:', e)
+            }
+        }
+
+        // Legacy check: waha_enabled column in organizations table
+        if (!orgEnabled) {
+            const org = await db.prepare(
+                'SELECT waha_enabled FROM organizations WHERE id = ?'
+            ).bind(organizationId).first() as { waha_enabled: number } | null
+
+            if (org && org.waha_enabled === 1) {
+                orgEnabled = true
+            }
         }
     } catch (e) {
-        console.warn('[WAHA] Warning: Could not check waha_enabled status (column might be missing). Defaulting to enabled.', e)
+        console.warn('[WAHA] Warning: Error checking enabled status:', e)
+    }
+
+    if (!orgEnabled) {
+        console.log('[WAHA] WAHA disabled for organization:', organizationId)
+        return null
     }
 
     // 2. Fetch System Configuration
