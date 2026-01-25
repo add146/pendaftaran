@@ -666,6 +666,7 @@ export interface LandingPageConfig {
             popular?: boolean
             features: Array<{ text: string; included: boolean }>
         }>
+        buttonLink?: string
     }
     cta?: {
         title?: string

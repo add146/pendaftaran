@@ -256,6 +256,16 @@ export default function LandingPageEditor() {
                                 placeholder="Mulai dari gratis..."
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Pricing Button Link (All Plans)</label>
+                            <input
+                                type="text"
+                                value={config.pricing?.buttonLink || ''}
+                                onChange={e => setConfig(prev => ({ ...prev, pricing: { ...prev.pricing, buttonLink: e.target.value } }))}
+                                className="w-full px-4 py-2 border rounded-lg"
+                                placeholder="/register"
+                            />
+                        </div>
                     </div>
                 </div>
 

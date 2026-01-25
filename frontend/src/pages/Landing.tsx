@@ -22,7 +22,8 @@ function PricingCard({
     price,
     period,
     features,
-    popular = false
+    popular = false,
+    link
 }: {
     name: string
     description: string
@@ -30,6 +31,7 @@ function PricingCard({
     period: string
     features: { text: string; included: boolean }[]
     popular?: boolean
+    link?: string
 }) {
     return (
         <div className={`relative flex flex-col p-6 rounded-2xl ${popular
@@ -49,12 +51,12 @@ function PricingCard({
                 <span className="text-4xl font-black text-gray-900">{price}</span>
                 <span className="text-gray-500 font-medium">{period}</span>
             </div>
-            <button className={`w-full py-3 px-4 rounded-lg font-bold transition-colors ${popular
+            <Link to={link || '/login'} className={`w-full py-3 px-4 rounded-lg font-bold transition-colors flex items-center justify-center ${popular
                 ? 'bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/25'
                 : 'bg-white border border-gray-300 text-gray-900 hover:bg-gray-50'
                 }`}>
-                {popular ? 'Pilih Basic' : 'Mulai Sekarang'}
-            </button>
+                {popular ? 'Pilih Paket' : 'Mulai Sekarang'}
+            </Link>
             <ul className="flex flex-col gap-3 mt-8 text-sm text-gray-700 flex-1">
                 {features.map((feature, idx) => (
                     <li key={idx} className={`flex items-center gap-3 ${!feature.included ? 'opacity-50' : ''}`}>
@@ -278,7 +280,7 @@ export default function Landing() {
                     </div>
                     <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {pricingPlans.map((plan, idx) => (
-                            <PricingCard key={idx} {...plan} />
+                            <PricingCard key={idx} {...plan} link={config.pricing?.buttonLink} />
                         ))}
                     </div>
                 </div>
