@@ -148,7 +148,7 @@ export default function Landing() {
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-3">
-                        <Link to={config.header?.authButtons?.loginLink || "/login"} className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                        <Link to={config.header?.authButtons?.loginLink || "/login"} className="hidden sm:flex h-10 px-5 items-center justify-center rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors">
                             {config.header?.authButtons?.loginLabel || "Masuk"}
                         </Link>
                         <Link to={config.header?.authButtons?.ctaLink || "/login"} className="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all hover:shadow-md">
