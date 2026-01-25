@@ -91,10 +91,11 @@ export default function Landing() {
             description: 'Untuk Masjid, Majelis Taklim & Komunitas Sosial',
             price: 'Rp 0',
             period: '/selamanya',
+            popular: true,
             features: [
                 { text: 'Unlimited Peserta & Event', included: true },
                 { text: 'QR Code Check-in & ID Card', included: true },
-                { text: 'Integrasi Midtrans & WAHA', included: true },
+                { text: 'Integrasi Midtrans & WhatsApp Gateway', included: true },
                 { text: 'Export Data & Laporan', included: true },
             ],
         },
@@ -103,11 +104,10 @@ export default function Landing() {
             description: 'Untuk Event Organizer, Seminar & Bisnis',
             price: 'Rp 500rb',
             period: '/tahun',
-            popular: true,
             features: [
                 { text: 'Unlimited Peserta & Event', included: true },
                 { text: 'QR Code Check-in & ID Card', included: true },
-                { text: 'Integrasi Midtrans & WAHA', included: true },
+                { text: 'Integrasi Midtrans & WhatsApp Gateway', included: true },
                 { text: 'Export Data & Laporan', included: true },
             ],
         },
@@ -276,7 +276,7 @@ export default function Landing() {
                             {config.pricing?.description || 'Mulai dari gratis untuk komunitas kecil hingga fitur lengkap untuk organisasi besar.'}
                         </p>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                    <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                         {pricingPlans.map((plan, idx) => (
                             <PricingCard key={idx} {...plan} />
                         ))}
