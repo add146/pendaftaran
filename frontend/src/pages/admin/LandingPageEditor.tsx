@@ -41,7 +41,7 @@ export default function LandingPageEditor() {
         }
     }
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, section: 'hero', field: string) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, section: 'hero' | 'header', field: string) => {
         const file = e.target.files?.[0]
         if (!file) return
 
