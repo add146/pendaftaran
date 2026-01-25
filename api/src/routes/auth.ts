@@ -26,7 +26,9 @@ auth.post('/login', async (c) => {
     } | null
 
     if (!user) {
-        return c.json({ error: 'Invalid credentials' }, 401)
+        console.log(`[AUTH] Login failed: User not found for email ${email}`)
+        // DEBUG: Return specific error
+        return c.json({ error: 'User not found' }, 401)
     }
 
     // Verify password
@@ -34,9 +36,13 @@ auth.post('/login', async (c) => {
     if (!isValid) {
         // For backward compatibility with old unhashed passwords
         if (user.password_hash !== password) {
-            return c.json({ error: 'Invalid credentials' }, 401)
+            console.log(`[AUTH] Login failed: Password mismatch for ${email}`)
+            // DEBUG: Return specific error
+            return c.json({ error: 'Invalid password' }, 401)
         }
     }
+
+    console.log(`[AUTH] Login successful for ${email}`)
 
     // Generate JWT token
     const token = await signJWT({
