@@ -225,14 +225,14 @@ export default function Landing() {
                                 {config.hero?.description || 'Kelola pendaftaran, pembayaran otomatis, dan absensi QR code dalam satu platform terintegrasi. Modernkan pengelolaan acara Anda sekarang.'}
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                                <Link to="/dashboard" className="h-12 px-8 rounded-lg bg-primary text-white font-bold text-base hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                                <Link to={config.hero?.ctaPrimaryLink || '/login'} className="h-12 px-8 rounded-lg bg-primary text-white font-bold text-base hover:bg-primary-hover shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
                                     <span>{config.hero?.ctaPrimary || 'Mulai Gratis'}</span>
                                     <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                                 </Link>
-                                <button className="h-12 px-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
+                                <a href={config.hero?.ctaSecondaryLink || '#'} className="h-12 px-8 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold text-base hover:bg-gray-50 transition-all flex items-center justify-center gap-2">
                                     <span className="material-symbols-outlined text-[20px] text-primary">play_circle</span>
                                     <span>{config.hero?.ctaSecondary || 'Lihat Demo'}</span>
-                                </button>
+                                </a>
                             </div>
                             <div className="pt-4 flex items-center gap-4 text-sm text-gray-500">
                                 <div className="flex -space-x-2">
@@ -305,7 +305,7 @@ export default function Landing() {
                             <p className="text-green-50 text-lg max-w-2xl">
                                 {config.cta?.description || 'Bergabunglah dengan ratusan pengurus masjid lainnya yang telah beralih ke sistem digital yang lebih efisien dan transparan.'}
                             </p>
-                            <Link to="/dashboard" className="h-12 px-8 mt-4 rounded-lg bg-white text-primary font-bold text-base hover:bg-gray-100 shadow-xl transition-all">
+                            <Link to={config.cta?.buttonLink || '/dashboard'} className="h-12 px-8 mt-4 rounded-lg bg-white text-primary font-bold text-base hover:bg-gray-100 shadow-xl transition-all">
                                 {config.cta?.buttonText || 'Buat Akun Gratis Sekarang'}
                             </Link>
                             <p className="text-sm text-green-100 mt-2 opacity-80">{config.cta?.note || 'Tidak perlu kartu kredit. Batal kapan saja.'}</p>

@@ -129,7 +129,7 @@ export default function LandingPageEditor() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Primary CTA</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Primary CTA Text</label>
                                 <input
                                     type="text"
                                     value={config.hero?.ctaPrimary || ''}
@@ -139,13 +139,33 @@ export default function LandingPageEditor() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary CTA</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Primary CTA Link</label>
+                                <input
+                                    type="text"
+                                    value={config.hero?.ctaPrimaryLink || ''}
+                                    onChange={e => updateHero('ctaPrimaryLink', e.target.value)}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="/login"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary CTA Text</label>
                                 <input
                                     type="text"
                                     value={config.hero?.ctaSecondary || ''}
                                     onChange={e => updateHero('ctaSecondary', e.target.value)}
                                     className="w-full px-4 py-2 border rounded-lg"
                                     placeholder="Lihat Demo"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Secondary CTA Link</label>
+                                <input
+                                    type="text"
+                                    value={config.hero?.ctaSecondaryLink || ''}
+                                    onChange={e => updateHero('ctaSecondaryLink', e.target.value)}
+                                    className="w-full px-4 py-2 border rounded-lg"
+                                    placeholder="#"
                                 />
                             </div>
                         </div>
@@ -270,6 +290,16 @@ export default function LandingPageEditor() {
                                 onChange={e => setConfig(prev => ({ ...prev, cta: { ...prev.cta, buttonText: e.target.value } }))}
                                 className="w-full px-4 py-2 border rounded-lg"
                                 placeholder="Buat Akun Gratis Sekarang"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Button Link</label>
+                            <input
+                                type="text"
+                                value={config.cta?.buttonLink || ''}
+                                onChange={e => setConfig(prev => ({ ...prev, cta: { ...prev.cta, buttonLink: e.target.value } }))}
+                                className="w-full px-4 py-2 border rounded-lg"
+                                placeholder="/login"
                             />
                         </div>
                         <div>

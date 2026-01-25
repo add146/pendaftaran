@@ -638,7 +638,9 @@ export interface LandingPageConfig {
         titleHighlight?: string
         description?: string
         ctaPrimary?: string
+        ctaPrimaryLink?: string
         ctaSecondary?: string
+        ctaSecondaryLink?: string
         trustedBy?: string
         image?: string
     }
@@ -669,6 +671,7 @@ export interface LandingPageConfig {
         title?: string
         description?: string
         buttonText?: string
+        buttonLink?: string
         note?: string
     }
 }
