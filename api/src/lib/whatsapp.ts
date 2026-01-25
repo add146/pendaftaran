@@ -11,7 +11,12 @@ interface WAHAConfig {
 // Fetch WAHA configuration
 // 1. Checks if organization has enabled WAHA (waha_enabled column)
 // 2. Fetches credentials from SYSTEM settings (org_system)
-async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WAHAConfig | null> {
+interface WAHAConfigResult {
+    config: WAHAConfig | null
+    error?: string
+}
+
+async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WAHAConfigResult> {
     console.log('[WAHA] Fetching config for organization:', organizationId)
 
     // 1. Check if organization has enabled WAHA via Notification Preferences
@@ -51,7 +56,7 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
 
     if (!orgEnabled) {
         console.log('[WAHA] WAHA disabled for organization:', organizationId)
-        return null
+        return { config: null, error: 'Organization has not enabled WhatsApp notifications in Settings' }
     }
 
     // 2. Fetch System Configuration
@@ -70,22 +75,28 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
     const globalEnabledStr = config.get('waha_enabled')
     if (globalEnabledStr === 'false') {
         console.log('[WAHA] WAHA globally disabled (explicitly set to false)')
-        return null
+        return { config: null, error: 'WAHA is globally disabled by Super Admin' }
     }
 
     let apiUrl = config.get('waha_api_url') || ''
-    const apiKey = config.get('waha_api_key')
+    const apiKey = config.get('waha_api_key') || ''
 
     // Remove trailing slash
     apiUrl = apiUrl.replace(/\/+$/, '')
 
     console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET')
+    console.log('[WAHA] API Key:', apiKey ? 'SET (hidden)' : 'NOT SET')
 
     // Robustness: If API URL is set and enabled is not explicitly false, assume true
     // This allows it to work even if waha_enabled is null/undefined in the settings
     if (!apiUrl) {
         console.log('[WAHA] Missing API URL')
-        return null
+        return { config: null, error: 'WAHA API URL is not configured by Super Admin' }
+    }
+
+    if (!apiKey) {
+        console.log('[WAHA] Missing API Key')
+        return { config: null, error: 'WAHA API Key is not configured by Super Admin' }
     }
 
     // Default session is 'default' unless specified in system config
@@ -93,10 +104,12 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
     const session = config.get('waha_session') || 'default'
 
     return {
-        apiUrl,
-        apiKey,
-        session,
-        enabled: true
+        config: {
+            apiUrl,
+            apiKey,
+            session,
+            enabled: true
+        }
     }
 }
 
@@ -127,12 +140,14 @@ export async function sendWhatsAppMessage(
     try {
         console.log('[WAHA] Starting sendWhatsAppMessage for phone:', phone, 'org:', organizationId)
 
-        const config = await getWAHAConfig(db, organizationId)
+        const result = await getWAHAConfig(db, organizationId)
 
-        if (!config) {
-            console.log('[WAHA] WAHA not configured or disabled for organization:', organizationId)
-            return { success: false, error: 'WAHA not configured' }
+        if (!result.config) {
+            console.log('[WAHA] WAHA not configured or disabled for organization:', organizationId, 'Error:', result.error)
+            return { success: false, error: result.error || 'WAHA not configured' }
         }
+
+        const config = result.config
 
         console.log('[WAHA] Config loaded:', {
             apiUrl: config.apiUrl,
