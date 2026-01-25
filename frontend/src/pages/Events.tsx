@@ -194,16 +194,17 @@ export default function Events() {
                                                 Participants
                                             </Link>
 
-                                            {/* Edit (Right) */}
+                                            {/* Edit (Right) - Admin Only */}
                                             {isAdmin ? (
                                                 <Link
                                                     to={`/events/${event.id}/edit`}
-                                                    className="flex items-center justify-center py-2 px-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center"
+                                                    className="flex items-center justify-center py-2 px-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
                                                 >
+                                                    <span className="material-symbols-outlined text-[16px]">edit</span>
                                                     Edit
                                                 </Link>
                                             ) : (
-                                                <div className="bg-gray-50 rounded-lg hidden"></div>
+                                                <div className="hidden"></div>
                                             )}
                                         </div>
                                     </div>
