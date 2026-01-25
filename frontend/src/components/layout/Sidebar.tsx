@@ -4,6 +4,10 @@ interface SidebarProps {
     currentPage?: string
     isOpen?: boolean
     onClose?: () => void
+    organization?: {
+        name: string
+        logo_url?: string
+    } | null
 }
 
 // Get user role from localStorage
@@ -23,7 +27,7 @@ interface NavItem {
     href: string
 }
 
-export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onClose }: SidebarProps) {
+export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onClose, organization }: SidebarProps) {
     const userRole = getUserRole()
     const isSuperAdmin = userRole === 'super_admin'
     const isAdmin = userRole === 'admin' || userRole === 'super_admin'
@@ -67,11 +71,21 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
             `}>
                 <div className="p-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 rounded-lg size-10 shrink-0 flex items-center justify-center text-primary">
-                            <span className="material-symbols-outlined icon-filled">mosque</span>
-                        </div>
+                        {organization?.logo_url ? (
+                            <img
+                                src={organization.logo_url}
+                                alt={organization.name}
+                                className="size-10 shrink-0 rounded-lg object-cover bg-white border border-gray-100"
+                            />
+                        ) : (
+                            <div className="bg-primary/10 rounded-lg size-10 shrink-0 flex items-center justify-center text-primary">
+                                <span className="material-symbols-outlined icon-filled">mosque</span>
+                            </div>
+                        )}
                         <div className="flex flex-col">
-                            <h1 className="text-text-main text-base font-bold leading-tight">MasjidEvent</h1>
+                            <h1 className="text-text-main text-base font-bold leading-tight line-clamp-2">
+                                {organization?.name || 'MasjidEvent'}
+                            </h1>
                             <p className="text-text-sub text-xs font-normal">Event Manager</p>
                         </div>
                     </div>
