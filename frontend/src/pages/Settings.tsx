@@ -554,7 +554,7 @@ export default function Settings() {
                                             </p>
                                             <div className="bg-white border border-amber-300 rounded-lg p-3 mb-3">
                                                 <code className="text-xs sm:text-sm font-mono text-gray-800 break-all">
-                                                    https://pendaftaran-qr-api.khibrohstudio.workers.dev/api/payments/notification
+                                                    https://pendaftaran-qr-api.khibroh.workers.dev/api/payments/notification
                                                 </code>
                                             </div>
                                             <p className="text-xs text-amber-600 mb-3">

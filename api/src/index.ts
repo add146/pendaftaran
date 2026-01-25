@@ -1,4 +1,4 @@
-process.env.TZ = 'Asia/Jakarta'
+// Note: Cloudflare Workers use UTC. Timezone conversion should be done in application code.
 
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
