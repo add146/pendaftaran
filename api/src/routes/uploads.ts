@@ -37,9 +37,19 @@ uploads.post('/image', async (c) => {
                 return c.json({ error: 'No file uploaded' }, 400)
             }
 
-            // Convert to base64
+            // Convert to base64 using a robust method for large files
             const arrayBuffer = await file.arrayBuffer()
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+            const bytes = new Uint8Array(arrayBuffer)
+
+            // Chunking to avoid "Maximum call stack size exceeded"
+            let binary = ''
+            const chunkSize = 8192 // Process in 8KB chunks
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.subarray(i, i + chunkSize)
+                binary += String.fromCharCode.apply(null, Array.from(chunk))
+            }
+
+            const base64 = btoa(binary)
             const mimeType = file.type || 'image/jpeg'
             const dataUrl = `data:${mimeType};base64,${base64}`
 
