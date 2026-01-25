@@ -244,16 +244,27 @@ export default function EventRegistration() {
         })
     }
 
-    // Parse event image
-    const getEventImage = () => {
-        if (!event?.image_url) return null
+    // Parse event images
+    const images = (() => {
+        if (!event?.image_url) return []
         try {
             const imgs = JSON.parse(event.image_url)
-            return Array.isArray(imgs) && imgs.length > 0 ? imgs[0] : event.image_url
+            return Array.isArray(imgs) ? imgs : [event.image_url]
         } catch {
-            return event.image_url
+            return [event.image_url]
         }
-    }
+    })()
+
+    const [currentIndex, setCurrentIndex] = useState(0)
+
+    // Auto-slide effect
+    useEffect(() => {
+        if (images.length <= 1) return
+        const interval = setInterval(() => {
+            setCurrentIndex((prev) => (prev + 1) % images.length)
+        }, 5000)
+        return () => clearInterval(interval)
+    }, [images.length])
 
     if (loading) {
         return (
@@ -395,8 +406,6 @@ ${bankSection}`
         )
     }
 
-    const eventImage = getEventImage()
-
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col">
             {/* Header */}
@@ -414,37 +423,74 @@ ${bankSection}`
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         {/* Event Details */}
                         <div className="lg:col-span-3 space-y-6">
-                            {/* Hero Image */}
-                            <div
-                                className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/30 to-primary/10 cursor-pointer group"
-                                onClick={() => eventImage && setShowImagePopup(true)}
-                            >
-                                {eventImage ? (
+                            {/* Hero Image Slider */}
+                            {/* Hero Image Slider */}
+                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
+                                {images.length === 0 ? (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/30 to-primary/10">
+                                        <span className="material-symbols-outlined text-[80px] text-primary/30">event</span>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
+                                        <div className="absolute bottom-0 left-0 p-6 pointer-events-none">
+                                            <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'}`}>
+                                                {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
+                                            </span>
+                                            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                                                {event?.title}
+                                            </h1>
+                                        </div>
+                                    </div>
+                                ) : (
                                     <>
-                                        <img src={eventImage} alt={event?.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-[48px] text-white opacity-0 group-hover:opacity-80 transition-opacity drop-shadow-lg">zoom_in</span>
+                                        {images.map((img: string, idx: number) => (
+                                            <div
+                                                key={idx}
+                                                className={`absolute inset-0 transition-opacity duration-700 ease-in-out cursor-pointer ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                                                    }`}
+                                                onClick={() => setShowImagePopup(true)} // Opens current image in popup
+                                            >
+                                                <img src={img} alt={`${event?.title} ${idx + 1}`} className="w-full h-full object-cover" />
+                                                {/* Text & Gradient Overlay (only on top layer) */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10 pointer-events-none"></div>
+                                            </div>
+                                        ))}
+
+                                        {/* Navigation Dots */}
+                                        {images.length > 1 && (
+                                            <div className="absolute bottom-24 left-0 right-0 z-20 flex justify-center gap-2 pointer-events-none">
+                                                {images.map((_: any, idx: number) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setCurrentIndex(idx)
+                                                        }}
+                                                        className={`w-2 h-2 rounded-full transition-all pointer-events-auto ${idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white'
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Text Content Overlay (Fixed on top of all slides) */}
+                                        <div className="absolute bottom-0 left-0 p-6 z-20 pointer-events-none">
+                                            <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'}`}>
+                                                {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
+                                            </span>
+                                            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                                                {event?.title}
+                                            </h1>
+                                        </div>
+
+                                        {/* Expand Icon */}
+                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                            <span className="material-symbols-outlined text-[48px] text-white drop-shadow-lg bg-black/30 rounded-full p-2">zoom_in</span>
                                         </div>
                                     </>
-                                ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-[80px] text-primary/30">event</span>
-                                    </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
-                                <div className="absolute bottom-0 left-0 p-6 pointer-events-none">
-                                    <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'
-                                        }`}>
-                                        {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
-                                    </span>
-                                    <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-                                        {event?.title}
-                                    </h1>
-                                </div>
                             </div>
 
                             {/* Image Popup Modal */}
-                            {showImagePopup && eventImage && (
+                            {showImagePopup && images[currentIndex] && (
                                 <div
                                     className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
                                     onClick={() => setShowImagePopup(false)}
@@ -456,7 +502,7 @@ ${bankSection}`
                                         <span className="material-symbols-outlined text-[36px]">close</span>
                                     </button>
                                     <img
-                                        src={eventImage}
+                                        src={images[currentIndex]}
                                         alt={event?.title}
                                         className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
                                         onClick={(e) => e.stopPropagation()}
