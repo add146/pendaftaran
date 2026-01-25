@@ -81,6 +81,8 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
 
     console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET')
 
+    // Robustness: If API URL is set and enabled is not explicitly false, assume true
+    // This allows it to work even if waha_enabled is null/undefined in the settings
     if (!apiUrl) {
         console.log('[WAHA] Missing API URL')
         return null
