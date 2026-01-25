@@ -283,11 +283,11 @@ export const participantsAPI = {
 // Upload API
 
 export const uploadAPI = {
-    uploadImage: async (file: File) => {
+    uploadImage: async (file: File, compressionOptions?: { maxSizeMB?: number; maxWidthOrHeight?: number }) => {
         // Compress image before upload
         const options = {
-            maxSizeMB: 0.5, // Reduced to 0.5MB to prevent SQLITE_TOOBIG D1 error
-            maxWidthOrHeight: 1920,
+            maxSizeMB: compressionOptions?.maxSizeMB || 0.5, // Default 0.5MB, allow override
+            maxWidthOrHeight: compressionOptions?.maxWidthOrHeight || 1920,
             useWebWorker: true
         }
 
