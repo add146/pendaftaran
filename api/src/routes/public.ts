@@ -49,14 +49,21 @@ publicRoutes.get('/events/:slug', async (c) => {
   const isAvailable = event.status === 'open' &&
     (!event.capacity || (event.registered_count as number) < (event.capacity as number))
 
-  // Get Midtrans config
+  // Get Midtrans config for the EVENT'S Organization
   const midtransSettings = await c.env.DB.prepare(`
-    SELECT key, value FROM settings WHERE key IN ('midtrans_client_key', 'midtrans_environment')
-  `).all()
+    SELECT key, value FROM settings 
+    WHERE organization_id = ? 
+    AND key IN ('midtrans_client_key', 'midtrans_environment')
+  `).bind(event.organization_id).all()
+
   const settingsMap = new Map(midtransSettings.results.map((s: any) => [s.key, s.value]))
 
-  const midtransClientKey = settingsMap.get('midtrans_client_key') || c.env.MIDTRANS_CLIENT_KEY
-  const midtransEnvironment = settingsMap.get('midtrans_environment') || (c.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'production' : 'sandbox')
+  // Strict isolation: Only use Organization's configured keys.
+  const midtransClientKey = settingsMap.get('midtrans_client_key')
+  // For environment, default to 'sandbox' if not set, or maybe undefined? 
+  // Better to use org's preference or default to production/sandbox based on a safe default, 
+  // but if Client Key is missing, environment doesn't matter much.
+  const midtransEnvironment = settingsMap.get('midtrans_environment') || 'sandbox'
 
   return c.json({
     ...event,

@@ -45,17 +45,37 @@ payments.post('/create', async (c) => {
         return c.json({ error: 'Participant ID and amount required' }, 400)
     }
 
-    // Fetch Midtrans settings from database
+    // 1. Get Organization ID from Participant
+    const participantData = await c.env.DB.prepare(`
+        SELECT e.organization_id 
+        FROM participants p 
+        JOIN events e ON p.event_id = e.id 
+        WHERE p.id = ?
+    `).bind(participantId).first()
+
+    if (!participantData) {
+        return c.json({ error: 'Participant/Event not found' }, 404)
+    }
+
+    const orgId = participantData.organization_id as string
+
+    // 2. Fetch Midtrans settings SPECIFICALLY for this organization
     const midtransSettings = await c.env.DB.prepare(`
-        SELECT key, value FROM settings WHERE key IN ('midtrans_server_key', 'midtrans_client_key', 'midtrans_environment')
-    `).all()
+        SELECT key, value FROM settings 
+        WHERE organization_id = ? 
+        AND key IN ('midtrans_server_key', 'midtrans_client_key', 'midtrans_environment')
+    `).bind(orgId).all()
 
     const settingsMap = new Map(midtransSettings.results.map((s: any) => [s.key, s.value]))
-    const serverKey = settingsMap.get('midtrans_server_key') || c.env.MIDTRANS_SERVER_KEY
+
+    // Organization-level keys take precedence. 
+    // If not found, NO fallback to system env vars to ensure strict isolation as requested.
+    const serverKey = settingsMap.get('midtrans_server_key')
     const isProduction = settingsMap.get('midtrans_environment') === 'production'
 
     if (!serverKey) {
-        return c.json({ error: 'Midtrans not configured. Please configure in Settings.' }, 400)
+        console.error(`[Midtrans] Missing configuration for org: ${orgId}`)
+        return c.json({ error: 'Payment gateway not configured for this organizer. Please contact the event organizer.' }, 400)
     }
 
     const orderId = `ORDER-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
