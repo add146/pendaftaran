@@ -179,21 +179,17 @@ export default function Events() {
                                         {/* Bottom Actions */}
                                         <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 mt-auto">
                                             {/* ID Cards (Blue) - Left */}
-                                            {isAdmin ? (
-                                                <Link
-                                                    to={`/events/${event.id}/id-cards`}
-                                                    className="flex items-center justify-center py-2 px-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center"
-                                                >
-                                                    ID Cards
-                                                </Link>
-                                            ) : (
-                                                <div className="bg-gray-50 rounded-lg"></div>
-                                            )}
+                                            <Link
+                                                to={`/events/${event.id}/id-cards`}
+                                                className="flex items-center justify-center py-2 px-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center"
+                                            >
+                                                ID Cards
+                                            </Link>
 
                                             {/* Participants (Orange) - Center */}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className={`flex items-center justify-center py-2 px-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center ${!isAdmin ? 'col-span-3' : ''}`}
+                                                className={`flex items-center justify-center py-2 px-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center ${!isAdmin ? 'col-span-2' : ''}`}
                                             >
                                                 Participants
                                             </Link>
