@@ -43,10 +43,9 @@ uploads.post('/image', async (c) => {
 
             // Chunking to avoid "Maximum call stack size exceeded"
             let binary = ''
-            const chunkSize = 8192 // Process in 8KB chunks
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-                const chunk = bytes.subarray(i, i + chunkSize)
-                binary += String.fromCharCode.apply(null, Array.from(chunk))
+            const len = bytes.byteLength
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i])
             }
 
             const base64 = btoa(binary)
