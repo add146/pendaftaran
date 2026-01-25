@@ -20,7 +20,10 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
     console.log('[WAHA] Fetching config for organization:', organizationId)
 
     // 1. Check if organization has enabled WAHA via Notification Preferences
-    let orgEnabled = false
+    // Default to ENABLED unless explicitly disabled
+    let orgEnabled = true // Changed from false to true (default enabled)
+    let orgExplicitlyDisabled = false
+
     try {
         const result = await db.prepare(
             'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
@@ -32,31 +35,54 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
             try {
                 const prefs = JSON.parse(result.value as string)
                 console.log('[WAHA] Parsed Prefs:', JSON.stringify(prefs))
-                if (prefs.whatsapp === true) {
-                    orgEnabled = true
+
+                // Check if whatsapp field exists in preferences
+                if ('whatsapp' in prefs) {
+                    // Organization has explicitly set the preference
+                    if (prefs.whatsapp === false) {
+                        orgEnabled = false
+                        orgExplicitlyDisabled = true
+                        console.log('[WAHA] Organization explicitly disabled WhatsApp')
+                    } else if (prefs.whatsapp === true) {
+                        orgEnabled = true
+                        console.log('[WAHA] Organization explicitly enabled WhatsApp')
+                    }
+                } else {
+                    // Preference exists but whatsapp field not set - default to enabled
+                    console.log('[WAHA] Notification preferences exist but whatsapp not set - defaulting to enabled')
                 }
             } catch (e) {
                 console.warn('[WAHA] Failed to parse notification preferences:', e)
+                // On parse error, default to enabled
             }
+        } else {
+            // No notification preferences found - default to enabled for backward compatibility
+            console.log('[WAHA] No notification preferences found - defaulting to enabled')
         }
 
-        // Legacy check: waha_enabled column in organizations table
-        if (!orgEnabled) {
+        // Legacy check: waha_enabled column in organizations table (only if not explicitly set via prefs)
+        if (result === null || result.value === null) {
             const org = await db.prepare(
                 'SELECT waha_enabled FROM organizations WHERE id = ?'
             ).bind(organizationId).first() as { waha_enabled: number } | null
 
-            if (org && org.waha_enabled === 1) {
+            if (org && org.waha_enabled === 0) {
+                orgEnabled = false
+                orgExplicitlyDisabled = true
+                console.log('[WAHA] Legacy: Organization disabled WhatsApp via waha_enabled column')
+            } else if (org && org.waha_enabled === 1) {
                 orgEnabled = true
+                console.log('[WAHA] Legacy: Organization enabled WhatsApp via waha_enabled column')
             }
         }
     } catch (e) {
         console.warn('[WAHA] Warning: Error checking enabled status:', e)
+        // On error, default to enabled
     }
 
-    if (!orgEnabled) {
-        console.log('[WAHA] WAHA disabled for organization:', organizationId)
-        return { config: null, error: 'Organization has not enabled WhatsApp notifications in Settings' }
+    if (!orgEnabled && orgExplicitlyDisabled) {
+        console.log('[WAHA] WAHA explicitly disabled for organization:', organizationId)
+        return { config: null, error: 'Organization has disabled WhatsApp notifications in Settings' }
     }
 
     // 2. Fetch System Configuration
