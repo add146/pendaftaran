@@ -60,10 +60,11 @@ publicRoutes.get('/events/:slug', async (c) => {
 
   // Strict isolation: Only use Organization's configured keys.
   const midtransClientKey = settingsMap.get('midtrans_client_key')
-  // For environment, default to 'sandbox' if not set, or maybe undefined? 
-  // Better to use org's preference or default to production/sandbox based on a safe default, 
-  // but if Client Key is missing, environment doesn't matter much.
-  const midtransEnvironment = settingsMap.get('midtrans_environment') || 'sandbox'
+  // Clean the environment string to avoid quote/whitespace issues
+  let rawEnv = settingsMap.get('midtrans_environment')
+  if (rawEnv) rawEnv = rawEnv.replace(/['"]/g, '').trim()
+
+  const midtransEnvironment = rawEnv || 'sandbox'
 
   return c.json({
     ...event,

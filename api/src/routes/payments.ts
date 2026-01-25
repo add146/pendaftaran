@@ -71,7 +71,10 @@ payments.post('/create', async (c) => {
     // Organization-level keys take precedence. 
     // If not found, NO fallback to system env vars to ensure strict isolation as requested.
     const serverKey = settingsMap.get('midtrans_server_key')
-    const isProduction = settingsMap.get('midtrans_environment') === 'production'
+
+    let rawEnv = settingsMap.get('midtrans_environment')
+    if (rawEnv) rawEnv = rawEnv.replace(/['"]/g, '').trim()
+    const isProduction = rawEnv === 'production'
 
     if (!serverKey) {
         console.error(`[Midtrans] Missing configuration for org: ${orgId}`)
