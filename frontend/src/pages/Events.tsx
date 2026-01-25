@@ -142,12 +142,13 @@ export default function Events() {
 
                                         {isAdmin && (
                                             <div className="absolute top-4 right-4 z-10">
-                                                <Link
-                                                    to={`/events/${event.id}/edit`}
-                                                    className="bg-white text-primary px-4 py-1.5 rounded-lg shadow-sm hover:shadow-md text-sm font-bold block transition-all active:scale-95"
+                                                <button
+                                                    onClick={() => handleDelete(event.id, event.title)}
+                                                    className="bg-white text-red-600 w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-red-50"
+                                                    title="Delete Event"
                                                 >
-                                                    Edit
-                                                </Link>
+                                                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                                                </button>
                                             </div>
                                         )}
                                     </div>
@@ -176,32 +177,37 @@ export default function Events() {
                                         </div>
 
                                         {/* Bottom Actions */}
-                                        <div className="flex items-center justify-between gap-3 pt-4 border-t border-gray-100 mt-auto">
+                                        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 mt-auto">
+                                            {/* ID Cards (Blue) - Left */}
+                                            {isAdmin ? (
+                                                <Link
+                                                    to={`/events/${event.id}/id-cards`}
+                                                    className="flex items-center justify-center py-2 px-1 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center"
+                                                >
+                                                    ID Cards
+                                                </Link>
+                                            ) : (
+                                                <div className="bg-gray-50 rounded-lg"></div>
+                                            )}
+
+                                            {/* Participants (Orange) - Center */}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className="flex-1 text-center py-2 px-2 text-primary text-sm font-bold bg-white border border-primary/30 hover:bg-primary/5 hover:border-primary rounded-lg transition-all"
+                                                className={`flex items-center justify-center py-2 px-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center ${!isAdmin ? 'col-span-3' : ''}`}
                                             >
                                                 Participants
                                             </Link>
 
-                                            {isAdmin && (
+                                            {/* Edit (Right) */}
+                                            {isAdmin ? (
                                                 <Link
-                                                    to={`/events/${event.id}/id-cards`}
-                                                    className="flex-1 text-center py-2 px-2 text-primary text-sm font-bold bg-white border border-primary/30 hover:bg-primary/5 hover:border-primary rounded-lg transition-all whitespace-nowrap"
+                                                    to={`/events/${event.id}/edit`}
+                                                    className="flex items-center justify-center py-2 px-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center"
                                                 >
-                                                    ID Cards
+                                                    Edit
                                                 </Link>
-                                            )}
-
-                                            {isAdmin && (
-                                                <button
-                                                    onClick={() => handleDelete(event.id, event.title)}
-                                                    className="flex-none py-2 px-3 text-red-600 text-sm font-bold bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 rounded-lg transition-all flex items-center justify-center gap-1"
-                                                    title="Delete Event"
-                                                >
-                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                    <span className="hidden sm:inline">Delete</span>
-                                                </button>
+                                            ) : (
+                                                <div className="bg-gray-50 rounded-lg hidden"></div>
                                             )}
                                         </div>
                                     </div>
