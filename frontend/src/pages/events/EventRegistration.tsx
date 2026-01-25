@@ -454,9 +454,33 @@ ${bankSection}`
                                             </div>
                                         ))}
 
-                                        {/* Navigation Dots */}
+                                        {/* Navigation Arrows */}
                                         {images.length > 1 && (
-                                            <div className="absolute bottom-24 left-0 right-0 z-20 flex justify-center gap-2 pointer-events-none">
+                                            <>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
+                                                    }}
+                                                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors pointer-events-auto backdrop-blur-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-[24px]">chevron_left</span>
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setCurrentIndex((prev) => (prev + 1) % images.length)
+                                                    }}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors pointer-events-auto backdrop-blur-sm"
+                                                >
+                                                    <span className="material-symbols-outlined text-[24px]">chevron_right</span>
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Navigation Dots (Moved to Top) */}
+                                        {images.length > 1 && (
+                                            <div className="absolute top-4 left-0 right-0 z-20 flex justify-center gap-2 pointer-events-none">
                                                 {images.map((_: any, idx: number) => (
                                                     <button
                                                         key={idx}
@@ -464,7 +488,7 @@ ${bankSection}`
                                                             e.stopPropagation()
                                                             setCurrentIndex(idx)
                                                         }}
-                                                        className={`w-2 h-2 rounded-full transition-all pointer-events-auto ${idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white'
+                                                        className={`w-2 h-2 rounded-full transition-all pointer-events-auto drop-shadow-md ${idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white'
                                                             }`}
                                                     />
                                                 ))}
