@@ -578,7 +578,8 @@ export default function Participants() {
                     event_time: event?.event_time,
                     city: selectedParticipant.city,
                     ticket_name: selectedParticipant.ticket_name,
-                    phone: selectedParticipant.phone
+                    phone: selectedParticipant.phone,
+                    attendance_type: (selectedParticipant as any).attendance_type
                 } : null}
             />
         </AdminLayout>
