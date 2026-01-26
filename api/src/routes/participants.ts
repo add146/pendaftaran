@@ -317,10 +317,14 @@ participants.post('/:id/check-in', async (c) => {
         const eventDate = event.event_date as string
         const eventTime = (event.event_time as string) || '00:00'
 
-        // Create event datetime
+        // Create event datetime (Assume Event Time is WIB = UTC+7)
         const [year, month, day] = eventDate.split('-').map(Number)
         const [hours, minutes] = eventTime.split(':').map(Number)
-        const eventDateTime = new Date(year, month - 1, day, hours, minutes)
+
+        // Cloudflare Workers run in UTC. "new Date(y, m, d, h, m)" creates UTC date.
+        // If event is 08:00 WIB, we want 01:00 UTC.
+        // Current: 08:00 UTC. So we subtract 7 hours.
+        const eventDateTime = new Date(Date.UTC(year, month - 1, day, hours - 7, minutes))
 
         // Check-in allowed 1 hour before event
         const checkInOpenTime = new Date(eventDateTime.getTime() - 60 * 60 * 1000)

@@ -133,9 +133,8 @@ function ParticipantRow({
                                         if (isNaN(date.getTime())) throw new Error('Invalid date')
 
                                         // Check if it's a legacy string like "03:53 AM"
-                                        // These were stored as UTC strings but lack timezone info.
-                                        // We assume they are UTC and convert to local.
-                                        if (participant.check_in_time.match(/\d{1,2}:\d{2} [AP]M/)) {
+                                        const legacyMatch = participant.check_in_time.match(/(\d{1,2}):(\d{2})\s?([AP]M)/i)
+                                        if (legacyMatch) {
                                             const offset = date.getTimezoneOffset()
                                             date.setMinutes(date.getMinutes() - offset)
                                         }
