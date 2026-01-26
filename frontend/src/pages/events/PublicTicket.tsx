@@ -150,21 +150,24 @@ export default function PublicTicket() {
                         {ticket.event_title}
                     </h2>
                     {/* Simplified date - two formats */}
-                    {/* Simplified date - pill style */}
+                    {/* Simplified date & time - pill style */}
                     <div className="mt-4 flex justify-center">
                         <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-5 py-2 backdrop-blur-sm border border-white/20 shadow-sm">
                             <span className="material-symbols-outlined text-white text-[18px]">calendar_today</span>
                             <span className="text-white font-bold text-sm tracking-wide uppercase">
                                 {formatDate(ticket.event_date)}
                             </span>
+
+                            {ticket.event_time && (
+                                <>
+                                    <span className="text-white/50 mx-1 font-light text-lg">|</span>
+                                    <span className="text-white font-bold text-sm tracking-wide uppercase">
+                                        {ticket.event_time}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     </div>
-                    {ticket.event_time && (
-                        <div className="mt-2 text-white/80 text-sm">
-                            <span className="material-symbols-outlined text-[14px] align-middle mr-1">schedule</span>
-                            {ticket.event_time}
-                        </div>
-                    )}
                 </div>
 
                 {/* Card Body */}
