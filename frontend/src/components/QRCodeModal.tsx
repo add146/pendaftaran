@@ -22,6 +22,7 @@ interface QRCodeModalProps {
         city?: string
         ticket_name?: string
         phone?: string
+        attendance_type?: 'offline' | 'online'
     } | null
 }
 
@@ -313,12 +314,14 @@ Sampai jumpa di acara! 🙏`
 
                 {/* Card Body */}
                 <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
-                    {/* QR Code Container */}
-                    <div className="flex justify-center mb-5">
-                        <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
-                            <canvas ref={canvasRef}></canvas>
+                    {/* QR Code Container - Only for Offline */}
+                    {(participant as any).attendance_type !== 'online' && (
+                        <div className="flex justify-center mb-5">
+                            <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
+                                <canvas ref={canvasRef}></canvas>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Participant Name */}
                     <div className="text-center mb-4">
