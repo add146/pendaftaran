@@ -177,37 +177,36 @@ export default function Events() {
                                         </div>
 
                                         {/* Bottom Actions */}
-                                        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-gray-100 mt-auto">
-                                            {/* ID Cards (Blue) - Left */}
-                                            {/* ID Cards (Teal/Dark Green) - Left */}
+                                        <div className="flex gap-2 pt-4 border-t border-gray-100 mt-auto">
+                                            {/* ID Cards (Teal/Dark Green) */}
                                             <Link
                                                 to={`/events/${event.id}/id-cards`}
-                                                className="flex items-center justify-center py-2 px-1 bg-teal-800 hover:bg-teal-900 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
+                                                className="flex-none sm:flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-teal-800 hover:bg-teal-900 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 w-10 sm:w-auto"
+                                                title="ID Cards"
                                             >
-                                                <span className="material-symbols-outlined text-[16px]">badge</span>
-                                                ID Cards
+                                                <span className="material-symbols-outlined text-[18px] sm:text-[16px]">badge</span>
+                                                <span className="hidden sm:inline">ID Cards</span>
                                             </Link>
 
-                                            {/* Participants (Orange) - Center */}
+                                            {/* Participants (Orange) - Wider on mobile */}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className={`flex items-center justify-center py-2 px-1 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 ${!isAdmin ? 'col-span-2' : ''}`}
+                                                className="flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
                                             >
-                                                <span className="material-symbols-outlined text-[16px]">group</span>
-                                                Participants
+                                                <span className="material-symbols-outlined text-[18px] sm:text-[16px]">group</span>
+                                                <span>Participants</span>
                                             </Link>
 
-                                            {/* Edit (Right) - Admin Only */}
-                                            {isAdmin ? (
+                                            {/* Edit (Teal) - Admin Only */}
+                                            {isAdmin && (
                                                 <Link
                                                     to={`/events/${event.id}/edit`}
-                                                    className="flex items-center justify-center py-2 px-1 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
+                                                    className="flex-none sm:flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 w-10 sm:w-auto"
+                                                    title="Edit Event"
                                                 >
-                                                    <span className="material-symbols-outlined text-[16px]">edit</span>
-                                                    Edit
+                                                    <span className="material-symbols-outlined text-[18px] sm:text-[16px]">edit</span>
+                                                    <span className="hidden sm:inline">Edit</span>
                                                 </Link>
-                                            ) : (
-                                                <div className="hidden"></div>
                                             )}
                                         </div>
                                     </div>
