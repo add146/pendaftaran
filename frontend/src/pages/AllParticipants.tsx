@@ -165,6 +165,11 @@ export default function AllParticipants() {
                                                 <div>
                                                     <p className="font-medium text-text-main">{p.full_name}</p>
                                                     <p className="text-sm text-gray-500">{p.email}</p>
+                                                    {(p as any).attendance_type && (
+                                                        <div className={`text-[10px] font-bold uppercase mt-1 ${(p as any).attendance_type === 'online' ? 'text-purple-600' : 'text-blue-600'}`}>
+                                                            {(p as any).attendance_type}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
