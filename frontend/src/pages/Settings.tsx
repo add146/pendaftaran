@@ -465,15 +465,15 @@ export default function Settings() {
                                         </div>
 
                                         {/* Environment Toggle */}
-                                        <div className="bg-gray-50 p-4 rounded-lg mb-6 flex items-center justify-between">
+                                        <div className="bg-gray-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0">
                                             <div>
                                                 <h4 className="font-medium text-text-main">Environment</h4>
                                                 <p className="text-xs text-gray-500">Select Sandbox for testing, Production for real payments</p>
                                             </div>
-                                            <div className="flex bg-white rounded-lg p-1 border border-gray-200">
+                                            <div className="flex bg-white rounded-lg p-1 border border-gray-200 w-full md:w-auto">
                                                 <button
                                                     onClick={() => setMidtransConfig({ ...midtransConfig, environment: 'sandbox' })}
-                                                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${midtransConfig.environment === 'sandbox'
+                                                    className={`flex-1 md:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all ${midtransConfig.environment === 'sandbox'
                                                         ? 'bg-primary text-white shadow-sm'
                                                         : 'text-gray-500 hover:text-gray-700'
                                                         }`}
@@ -482,7 +482,7 @@ export default function Settings() {
                                                 </button>
                                                 <button
                                                     onClick={() => setMidtransConfig({ ...midtransConfig, environment: 'production' })}
-                                                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${midtransConfig.environment === 'production'
+                                                    className={`flex-1 md:flex-none px-4 py-1.5 rounded-md text-sm font-medium transition-all ${midtransConfig.environment === 'production'
                                                         ? 'bg-primary text-white shadow-sm'
                                                         : 'text-gray-500 hover:text-gray-700'
                                                         }`}
