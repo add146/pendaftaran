@@ -94,7 +94,7 @@ function ParticipantRow({
                     </div>
                     <div>
                         <div className="font-medium text-text-main">{participant.full_name}</div>
-                        <div className="text-xs text-gray-500">{participant.ticket_name || 'General'}</div>
+                        {participant.ticket_name && <div className="text-xs text-gray-500">{participant.ticket_name}</div>}
                         {participant.attendance_type && (
                             <div className={`text-[10px] font-bold uppercase mt-1 ${participant.attendance_type === 'online' ? 'text-purple-600' : 'text-blue-600'}`}>
                                 {participant.attendance_type}
