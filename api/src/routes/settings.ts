@@ -16,7 +16,8 @@ const SYSTEM_SETTINGS_KEYS = [
     'waha_api_url',
     'waha_api_key',
     'waha_session',
-    'waha_enabled'
+    'waha_enabled',
+    'public_registration_enabled'
 ]
 
 // Get all settings for current organization (and system settings if super_admin)

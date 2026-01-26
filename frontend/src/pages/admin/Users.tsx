@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../../components/layout/AdminLayout'
-import { superAdminAPI } from '../../lib/api'
+import { superAdminAPI, settingsAPI } from '../../lib/api'
 
 interface User {
     id: string
@@ -42,16 +42,35 @@ export default function Users() {
     const loadData = async () => {
         try {
             setLoading(true)
-            const [usersData, orgsData] = await Promise.all([
+            const [usersData, orgsData, settingsData] = await Promise.all([
                 superAdminAPI.getUsers(),
-                superAdminAPI.getOrganizations()
+                superAdminAPI.getOrganizations(),
+                settingsAPI.get('public_registration_enabled')
             ])
             setUsers(usersData.users)
             setOrganizations(orgsData.organizations)
+            setRegistrationEnabled(settingsData?.value === true || settingsData?.value === 'true')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load data')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const [registrationEnabled, setRegistrationEnabled] = useState(false)
+    const [toggling, setToggling] = useState(false)
+
+    const handleToggleRegistration = async () => {
+        try {
+            setToggling(true)
+            const newValue = !registrationEnabled
+            await settingsAPI.save('public_registration_enabled', newValue)
+            setRegistrationEnabled(newValue)
+            setSuccess(`Registrasi publik berhasil ${newValue ? 'diaktifkan' : 'dinonaktifkan'}`)
+        } catch (err) {
+            setError('Gagal mengubah status registrasi')
+        } finally {
+            setToggling(false)
         }
     }
 
@@ -151,6 +170,18 @@ export default function Users() {
                     <div>
                         <h1 className="text-2xl font-bold text-text-main">User Management</h1>
                         <p className="text-text-sub mt-1">Create and manage users across all organizations</p>
+                    </div>
+                    <div className="flex items-center gap-3 mr-4 border-r border-gray-200 pr-4">
+                        <span className="text-sm font-medium text-gray-600 hidden sm:inline">Public Registration</span>
+                        <button
+                            onClick={handleToggleRegistration}
+                            disabled={toggling}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${registrationEnabled ? 'bg-primary' : 'bg-gray-200'}`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${registrationEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+                            />
+                        </button>
                     </div>
                     <button
                         onClick={() => setShowCreateForm(true)}

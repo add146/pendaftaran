@@ -171,17 +171,24 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 })
 // Get landing page configuration
 publicRoutes.get('/landing-config', async (c) => {
-  const config = await c.env.DB.prepare(
-    "SELECT value FROM settings WHERE key = 'landing_page_config' AND organization_id = 'org_system'"
-  ).first()
+  const settings = await c.env.DB.prepare(
+    "SELECT key, value FROM settings WHERE key IN ('landing_page_config', 'public_registration_enabled') AND organization_id = 'org_system'"
+  ).all()
 
-  if (!config) {
-    return c.json({})
-  }
+  const configMap = new Map(settings.results.map((s: any) => [s.key, s.value]))
 
+  let landingConfig = {}
   try {
-    return c.json(JSON.parse(config.value as string))
-  } catch {
-    return c.json({})
-  }
+    const rawConfig = configMap.get('landing_page_config')
+    if (rawConfig) landingConfig = JSON.parse(rawConfig as string)
+  } catch { }
+
+  let registrationEnabled = false
+  const rawReg = configMap.get('public_registration_enabled')
+  if (rawReg === 'true' || rawReg === true) registrationEnabled = true
+
+  return c.json({
+    ...landingConfig,
+    publicRegistrationEnabled: registrationEnabled
+  })
 })
