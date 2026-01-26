@@ -99,6 +99,8 @@ settings.post('/', async (c) => {
         targetOrgId = 'org_system'
     }
 
+    console.log(`[Settings API] Saving key '${key}' for user role '${user.role}'. Target Org: '${targetOrgId}'. Value type: ${typeof value}`)
+
     // Check if setting exists
     const existing = await c.env.DB.prepare(
         'SELECT key FROM settings WHERE key = ? AND organization_id = ?'

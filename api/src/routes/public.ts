@@ -171,9 +171,12 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 })
 // Get landing page configuration
 publicRoutes.get('/landing-config', async (c) => {
+  console.log('[Public API] Fetching landing config & registration settings')
   const settings = await c.env.DB.prepare(
     "SELECT key, value FROM settings WHERE key IN ('landing_page_config', 'public_registration_enabled') AND organization_id = 'org_system'"
   ).all()
+
+  console.log('[Public API] Settings found:', settings.results)
 
   const configMap = new Map(settings.results.map((s: any) => [s.key, s.value]))
 
@@ -181,11 +184,24 @@ publicRoutes.get('/landing-config', async (c) => {
   try {
     const rawConfig = configMap.get('landing_page_config')
     if (rawConfig) landingConfig = JSON.parse(rawConfig as string)
-  } catch { }
+  } catch (e) { console.error('Config Parse Error', e) }
 
   let registrationEnabled = false
   const rawReg = configMap.get('public_registration_enabled')
-  if (rawReg === 'true' || rawReg === true) registrationEnabled = true
+  console.log('[Public API] Raw Registration Value:', rawReg, typeof rawReg)
+
+  if (rawReg) {
+    const val = String(rawReg).toLowerCase()
+    if (val === 'true' || val === '1' || val === 'yes') {
+      registrationEnabled = true
+    }
+    // Try JSON parse if it's a quoted string like "true"
+    try {
+      if (JSON.parse(val) === true) registrationEnabled = true
+    } catch { }
+  }
+
+  console.log('[Public API] Registration Enabled Resolved:', registrationEnabled)
 
   return c.json({
     ...landingConfig,
