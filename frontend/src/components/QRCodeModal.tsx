@@ -373,14 +373,16 @@ Sampai jumpa di acara! 🙏`
                     )}
 
                     <div className="flex gap-3">
-                        <button
-                            onClick={handleDownload}
-                            disabled={!cardDataUrl}
-                            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors disabled:opacity-50"
-                        >
-                            <span className="material-symbols-outlined text-[20px]">download</span>
-                            Download
-                        </button>
+                        {(participant as any).attendance_type !== 'online' && (
+                            <button
+                                onClick={handleDownload}
+                                disabled={!cardDataUrl}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">download</span>
+                                Download
+                            </button>
+                        )}
                         <button
                             onClick={handleSendWhatsApp}
                             disabled={!participant?.phone}
