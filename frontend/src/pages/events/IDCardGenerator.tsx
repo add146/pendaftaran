@@ -152,7 +152,7 @@ export default function IDCardGenerator() {
                                         <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 backdrop-blur-sm border border-white/20 shadow-sm">
                                             <span className="material-symbols-outlined text-white text-[14px]">calendar_today</span>
                                             <span className="text-white font-bold text-[10px] tracking-wide uppercase">
-                                                SENIN, 23 JANUARI 2026
+                                                SENIN, 23 JAN 2026
                                             </span>
                                             <span className="text-white/50 mx-0.5 font-light text-sm">|</span>
                                             <span className="text-white font-bold text-[10px] tracking-wide uppercase">
