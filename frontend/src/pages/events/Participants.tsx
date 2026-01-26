@@ -131,9 +131,18 @@ function ParticipantRow({
                                         // Try to parse as date (ISO string)
                                         const date = new Date(participant.check_in_time)
                                         if (isNaN(date.getTime())) throw new Error('Invalid date')
+
+                                        // Check if it's a legacy string like "03:53 AM"
+                                        // These were stored as UTC strings but lack timezone info.
+                                        // We assume they are UTC and convert to local.
+                                        if (participant.check_in_time.match(/\d{1,2}:\d{2} [AP]M/)) {
+                                            const offset = date.getTimezoneOffset()
+                                            date.setMinutes(date.getMinutes() - offset)
+                                        }
+
                                         return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                                     } catch {
-                                        // Fallback for legacy time strings (e.g. "03:45 PM")
+                                        // Fallback
                                         return participant.check_in_time
                                     }
                                 })()}
