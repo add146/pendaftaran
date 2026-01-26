@@ -77,7 +77,11 @@ export default function EditEvent() {
 
         eventsAPI.get(id)
             .then((data: Event & { ticket_types?: { name: string; price: number; quota?: number }[]; payment_mode?: string; whatsapp_cs?: string; bank_name?: string; account_holder_name?: string; account_number?: string }) => {
-                setFormData({
+                console.log('[DEBUG] EditEvent loaded data:', data)
+                console.log('[DEBUG] Raw API Data:', data)
+                console.log('[DEBUG] event_type from API:', data.event_type)
+
+                const newFormData = {
                     title: data.title || '',
                     description: data.description || '',
                     event_date: data.event_date || '',
@@ -98,7 +102,9 @@ export default function EditEvent() {
                     online_url: data.online_url || '',
                     online_password: data.online_password || '',
                     online_instructions: data.online_instructions || ''
-                })
+                }
+                console.log('[DEBUG] Setting FormData:', newFormData)
+                setFormData(newFormData)
                 if (data.ticket_types) {
                     setTickets(data.ticket_types.map(t => ({
                         name: t.name,

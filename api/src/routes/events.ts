@@ -48,6 +48,7 @@ events.get('/:id', authMiddleware, async (c) => {
   const event = await c.env.DB.prepare(
     'SELECT * FROM events WHERE id = ? AND organization_id = ?'
   ).bind(id, user.orgId).first()
+  console.log('[DEBUG] Fetched event:', event)
 
   if (!event) {
     return c.json({ error: 'Event not found' }, 404)
@@ -107,6 +108,7 @@ events.put('/:id', authMiddleware, async (c) => {
   const { id } = c.req.param()
   const body = await c.req.json()
   const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions } = body
+  console.log('[DEBUG] Update event payload:', { id, event_type, online_platform })
 
   const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
   if (!existing) {
@@ -133,7 +135,7 @@ events.put('/:id', authMiddleware, async (c) => {
       visibility = COALESCE(?, visibility),
       status = COALESCE(?, status),
       image_url = COALESCE(?, image_url),
-      event_type = COALESCE(?, event_type),
+      event_type = ?,
       online_platform = COALESCE(?, online_platform),
       online_url = COALESCE(?, online_url),
       online_password = COALESCE(?, online_password),
@@ -155,7 +157,7 @@ events.put('/:id', authMiddleware, async (c) => {
     visibility ?? null,
     status ?? null,
     imageUrl,
-    event_type ?? null,
+    event_type || 'offline',
     online_platform ?? null,
     online_url ?? null,
     online_password ?? null,
