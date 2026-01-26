@@ -336,11 +336,11 @@ export default function EditEvent() {
                                                         onChange={() => updateField('payment_mode', 'manual')}
                                                         className="hidden"
                                                     />
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="material-symbols-outlined text-primary">chat</span>
+                                                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
+                                                        <span className="material-symbols-outlined text-primary text-[28px] md:text-[24px]">chat</span>
                                                         <div>
-                                                            <p className="font-medium">Manual (WhatsApp)</p>
-                                                            <p className="text-xs text-gray-500">Kirim nota ke WhatsApp CS</p>
+                                                            <p className="font-medium text-sm md:text-base">Manual (WhatsApp)</p>
+                                                            <p className="text-[10px] md:text-xs text-gray-500">Kirim nota ke WhatsApp CS</p>
                                                         </div>
                                                     </div>
                                                 </label>
@@ -354,11 +354,11 @@ export default function EditEvent() {
                                                         onChange={() => updateField('payment_mode', 'auto')}
                                                         className="hidden"
                                                     />
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="material-symbols-outlined text-primary">credit_card</span>
+                                                    <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
+                                                        <span className="material-symbols-outlined text-primary text-[28px] md:text-[24px]">credit_card</span>
                                                         <div>
-                                                            <p className="font-medium">Otomatis (Midtrans)</p>
-                                                            <p className="text-xs text-gray-500">Pembayaran online langsung</p>
+                                                            <p className="font-medium text-sm md:text-base">Otomatis (Midtrans)</p>
+                                                            <p className="text-[10px] md:text-xs text-gray-500">Pembayaran online langsung</p>
                                                         </div>
                                                     </div>
                                                 </label>
