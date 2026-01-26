@@ -216,7 +216,7 @@ export async function sendWhatsAppMessage(
     message: string
 ): Promise<{ success: boolean; error?: string; messageId?: string }> {
     try {
-        console.log('[WAHA] Starting sendWhatsAppMessage for phone:', phone, 'org:', organizationId)
+        console.log('[WAHA] Starting sendWhatsAppMessage (Human-Like Logic) for phone:', phone, 'org:', organizationId)
 
         const result = await getWAHAConfig(db, organizationId)
 
