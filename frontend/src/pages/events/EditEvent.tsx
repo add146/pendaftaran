@@ -29,8 +29,14 @@ export default function EditEvent() {
         bank_name: '',
         account_holder_name: '',
         account_number: '',
+
         visibility: 'public' as 'public' | 'private',
-        status: 'draft' as 'draft' | 'open' | 'closed'
+        status: 'draft' as 'draft' | 'open' | 'closed',
+        event_type: 'offline' as 'offline' | 'online' | 'hybrid',
+        online_platform: 'google_meet' as 'google_meet' | 'zoom' | 'youtube' | 'custom',
+        online_url: '',
+        online_password: '',
+        online_instructions: ''
     })
 
     const [tickets, setTickets] = useState<TicketType[]>([])
@@ -84,8 +90,14 @@ export default function EditEvent() {
                     bank_name: data.bank_name || '',
                     account_holder_name: data.account_holder_name || '',
                     account_number: data.account_number || '',
+
                     visibility: data.visibility || 'public',
-                    status: data.status || 'draft'
+                    status: data.status || 'draft',
+                    event_type: data.event_type || 'offline',
+                    online_platform: (data.online_platform as any) || 'google_meet',
+                    online_url: data.online_url || '',
+                    online_password: data.online_password || '',
+                    online_instructions: data.online_instructions || ''
                 })
                 if (data.ticket_types) {
                     setTickets(data.ticket_types.map(t => ({
@@ -156,7 +168,12 @@ export default function EditEvent() {
                 visibility: formData.visibility,
                 status: formData.status,
                 images: images,
-                ticket_types: tickets
+                ticket_types: tickets,
+                event_type: formData.event_type,
+                online_platform: formData.event_type !== 'offline' ? formData.online_platform : undefined,
+                online_url: formData.event_type !== 'offline' ? formData.online_url : undefined,
+                online_password: formData.event_type !== 'offline' ? formData.online_password : undefined,
+                online_instructions: formData.event_type !== 'offline' ? formData.online_instructions : undefined
             } as Record<string, unknown>)
 
             navigate('/events')
@@ -266,6 +283,65 @@ export default function EditEvent() {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Online Details */}
+                            {formData.event_type !== 'offline' && (
+                                <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100 space-y-4">
+                                    <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                                        <span className="material-symbols-outlined">videocam</span>
+                                        Online Event Details
+                                    </h3>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-blue-900">Platform</label>
+                                        <select
+                                            value={formData.online_platform}
+                                            onChange={(e) => updateField('online_platform', e.target.value)}
+                                            className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                                        >
+                                            <option value="google_meet">Google Meet</option>
+                                            <option value="zoom">Zoom</option>
+                                            <option value="youtube">YouTube Live</option>
+                                            <option value="custom">Other / Custom</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-blue-900">Meeting URL (Optional)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.online_url || ''}
+                                            onChange={(e) => updateField('online_url', e.target.value)}
+                                            placeholder="https://meet.google.com/..."
+                                            className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2 text-blue-900">Password (Optional)</label>
+                                            <input
+                                                type="text"
+                                                value={formData.online_password || ''}
+                                                onChange={(e) => updateField('online_password', e.target.value)}
+                                                placeholder="Meeting passcode"
+                                                className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2 text-blue-900">Joining Instructions</label>
+                                        <textarea
+                                            value={formData.online_instructions || ''}
+                                            onChange={(e) => updateField('online_instructions', e.target.value)}
+                                            placeholder="e.g. Please join 10 minutes early..."
+                                            rows={2}
+                                            className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Event Images Slider */}
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -525,7 +601,20 @@ export default function EditEvent() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Event Type</label>
+                                        <label className="block text-sm font-medium mb-2">Event Format</label>
+                                        <select
+                                            value={formData.event_type}
+                                            onChange={(e) => updateField('event_type', e.target.value)}
+                                            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary mb-3"
+                                        >
+                                            <option value="offline">Offline</option>
+                                            <option value="online">Online</option>
+                                            <option value="hybrid">Hybrid</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Pricing Model</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 type="button"
@@ -598,7 +687,7 @@ export default function EditEvent() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     )
 }

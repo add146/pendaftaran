@@ -16,6 +16,11 @@ interface EventFormData {
     account_holder_name: string
     account_number: string
     visibility: 'public' | 'private'
+    event_type: 'offline' | 'online' | 'hybrid'
+    online_platform?: 'google_meet' | 'zoom' | 'youtube' | 'custom'
+    online_url?: string
+    online_password?: string
+    online_instructions?: string
 }
 
 export default function CreateEvent() {
@@ -39,7 +44,12 @@ export default function CreateEvent() {
         bank_name: '',
         account_holder_name: '',
         account_number: '',
-        visibility: 'public'
+        visibility: 'public',
+        event_type: 'offline',
+        online_platform: 'google_meet',
+        online_url: '',
+        online_password: '',
+        online_instructions: ''
     })
 
     const updateField = (field: keyof EventFormData, value: string) => {
@@ -100,7 +110,12 @@ export default function CreateEvent() {
                 account_number: formData.account_number,
                 visibility: formData.visibility,
                 status: asDraft ? 'draft' : 'open',
-                images: images
+                images: images,
+                event_type: formData.event_type,
+                online_platform: formData.event_type !== 'offline' ? formData.online_platform : undefined,
+                online_url: formData.event_type !== 'offline' ? formData.online_url : undefined,
+                online_password: formData.event_type !== 'offline' ? formData.online_password : undefined,
+                online_instructions: formData.event_type !== 'offline' ? formData.online_instructions : undefined
             } as Record<string, unknown>)
 
             navigate(`/events/${result.id}/participants`)
@@ -240,8 +255,111 @@ export default function CreateEvent() {
                                 <h3 className="text-lg font-bold mb-4">Event Settings</h3>
 
                                 <div className="space-y-6">
+                                    {/* Event Format */}
                                     <div>
-                                        <label className="block text-sm font-medium mb-3">Event Type</label>
+                                        <label className="block text-sm font-medium mb-3">Event Format</label>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('event_type', 'offline')}
+                                                className={`p-4 rounded-lg border-2 text-left transition-colors ${formData.event_type === 'offline'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                <span className="material-symbols-outlined text-primary mb-2">location_on</span>
+                                                <p className="font-bold">Offline</p>
+                                                <p className="text-xs text-gray-500">In-person at a venue</p>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('event_type', 'online')}
+                                                className={`p-4 rounded-lg border-2 text-left transition-colors ${formData.event_type === 'online'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                <span className="material-symbols-outlined text-primary mb-2">videocam</span>
+                                                <p className="font-bold">Online</p>
+                                                <p className="text-xs text-gray-500">Virtual meeting</p>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('event_type', 'hybrid')}
+                                                className={`p-4 rounded-lg border-2 text-left transition-colors ${formData.event_type === 'hybrid'
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                            >
+                                                <span className="material-symbols-outlined text-primary mb-2">hub</span>
+                                                <p className="font-bold">Hybrid</p>
+                                                <p className="text-xs text-gray-500">Both in-person & virtual</p>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Online Details */}
+                                    {formData.event_type !== 'offline' && (
+                                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-4">
+                                            <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                                                <span className="material-symbols-outlined">videocam</span>
+                                                Online Event Details
+                                            </h4>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">Platform</label>
+                                                <select
+                                                    value={formData.online_platform}
+                                                    onChange={(e) => updateField('online_platform', e.target.value)}
+                                                    className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
+                                                >
+                                                    <option value="google_meet">Google Meet</option>
+                                                    <option value="zoom">Zoom</option>
+                                                    <option value="youtube">YouTube Live</option>
+                                                    <option value="custom">Other / Custom</option>
+                                                </select>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">Meeting URL (Optional)</label>
+                                                <input
+                                                    type="url"
+                                                    value={formData.online_url || ''}
+                                                    onChange={(e) => updateField('online_url', e.target.value)}
+                                                    placeholder="https://meet.google.com/..."
+                                                    className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                />
+                                                <p className="text-xs text-blue-700 mt-1">You can add this later if not available yet.</p>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2 text-blue-900">Password (Optional)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={formData.online_password || ''}
+                                                        onChange={(e) => updateField('online_password', e.target.value)}
+                                                        placeholder="Meeting passcode"
+                                                        className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">Joining Instructions</label>
+                                                <textarea
+                                                    value={formData.online_instructions || ''}
+                                                    onChange={(e) => updateField('online_instructions', e.target.value)}
+                                                    placeholder="e.g. Please join 10 minutes early..."
+                                                    rows={2}
+                                                    className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-3">Pricing Model</label>
                                         <div className="grid grid-cols-2 gap-4">
                                             <button
                                                 type="button"
@@ -481,7 +599,16 @@ export default function CreateEvent() {
                                         <span className="font-medium">{formData.capacity || 'Unlimited'}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Type</span>
+                                        <span className="text-gray-500">Format</span>
+                                        <div className="text-right">
+                                            <span className="font-medium capitalize block">{formData.event_type}</span>
+                                            {formData.event_type !== 'offline' && (
+                                                <span className="text-xs text-blue-600 block">{formData.online_platform}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between py-3 border-b border-gray-100">
+                                        <span className="text-gray-500">Pricing Model</span>
                                         <span className="font-medium capitalize">{formData.event_mode}</span>
                                     </div>
                                     <div className="flex justify-between py-3">

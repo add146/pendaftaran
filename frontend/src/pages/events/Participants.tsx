@@ -245,11 +245,21 @@ export default function Participants() {
     const [selectedParticipant, setSelectedParticipant] = useState<ParticipantType | null>(null)
     const [participants, setParticipants] = useState<ParticipantType[]>([])
     const [event, setEvent] = useState<Event | null>(null)
-    const [stats, setStats] = useState({ total: 0, checked_in: 0, pending: 0, revenue: 0 })
+    const [stats, setStats] = useState<{
+        total: number
+        checked_in: number
+        pending: number
+        revenue: number
+        attendance_offline_total?: number
+        attendance_online_total?: number
+        attendance_offline_checked_in?: number
+        attendance_online_checked_in?: number
+    }>({ total: 0, checked_in: 0, pending: 0, revenue: 0 })
     const [search, setSearch] = useState('')
     const [filter, setFilter] = useState('all')
     const [loading, setLoading] = useState(true)
     const [exportLoading, setExportLoading] = useState(false)
+    const [broadcasting, setBroadcasting] = useState(false)
 
     const fetchData = async () => {
         if (!id) return
@@ -273,7 +283,11 @@ export default function Participants() {
                 total: statsData.total_registered,
                 checked_in: statsData.checked_in,
                 pending: statsData.pending_checkin,
-                revenue: statsData.revenue
+                revenue: statsData.revenue,
+                attendance_offline_total: statsData.attendance_offline_total,
+                attendance_online_total: statsData.attendance_online_total,
+                attendance_offline_checked_in: statsData.attendance_offline_checked_in,
+                attendance_online_checked_in: statsData.attendance_online_checked_in
             })
         } catch (err) {
             console.error('Failed to fetch data:', err)
@@ -294,6 +308,30 @@ export default function Participants() {
             alert(`Failed to export CSV: ${err.message}`)
         } finally {
             setExportLoading(false)
+        }
+    }
+
+    const handleBroadcastLink = async () => {
+        if (!event || !id) return
+
+        if (!event.online_url) {
+            alert('Link meeting belum diatur. Silakan edit event terlebih dahulu.')
+            return
+        }
+
+        if (!confirm(`Kirim link meeting WhatsApp ke semua peserta PAID?\n\nLink: ${event.online_url}\nPlatform: ${event.online_platform}\n\nPastikan WAHA sudah aktif.`)) {
+            return
+        }
+
+        setBroadcasting(true)
+        try {
+            const result = await eventsAPI.broadcastLink(id)
+            alert(`Broadcast Selesai!\nTotal: ${result.total}\nSukses: ${result.success}\nGagal: ${result.failed}`)
+            fetchData()
+        } catch (err: any) {
+            alert(`Gagal broadcast: ${err.message}`)
+        } finally {
+            setBroadcasting(false)
         }
     }
 
@@ -381,6 +419,21 @@ export default function Participants() {
                                 </span>
                                 <span>{exportLoading ? 'Exporting...' : 'Export to CSV'}</span>
                             </button>
+
+                            {/* Broadcast Button (Online/Hybrid only) */}
+                            {event && (event.event_type === 'online' || event.event_type === 'hybrid') && (
+                                <button
+                                    onClick={handleBroadcastLink}
+                                    disabled={broadcasting}
+                                    className="group flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">
+                                        {broadcasting ? 'hourglass_empty' : 'broadcast_on_personal'}
+                                    </span>
+                                    <span>{broadcasting ? 'Sending...' : 'Broadcast Link'}</span>
+                                </button>
+                            )}
+
                             <button
                                 onClick={() => setIsScannerOpen(true)}
                                 className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
@@ -398,6 +451,26 @@ export default function Participants() {
                         <StatCard icon="pending" label="Pending Check-in" value={String(stats.pending)} iconColor="text-yellow-600" />
                         <StatCard icon="payments" label="Revenue" value={formatCurrency(stats.revenue)} iconColor="text-emerald-600" />
                     </div>
+
+                    {/* Hybrid Event Stats */}
+                    {event?.event_type === 'hybrid' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                            <StatCard
+                                icon="accessibility"
+                                label="Offline Attendance"
+                                value={String(stats.attendance_offline_checked_in || 0)}
+                                subValue={`/ ${stats.attendance_offline_total || 0}`}
+                                iconColor="text-blue-600"
+                            />
+                            <StatCard
+                                icon="videocam"
+                                label="Online Attendance"
+                                value={String(stats.attendance_online_checked_in || 0)}
+                                subValue={`/ ${stats.attendance_online_total || 0}`}
+                                iconColor="text-purple-600"
+                            />
+                        </div>
+                    )}
 
                     {/* Filters & Search */}
                     <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl border border-gray-100 shadow-sm">

@@ -40,6 +40,12 @@ CREATE TABLE IF NOT EXISTS events (
     status TEXT DEFAULT 'draft',
     image_url TEXT,
     slug TEXT UNIQUE,
+    event_type TEXT DEFAULT 'offline', -- 'offline', 'online', 'hybrid'
+    online_platform TEXT, -- 'google_meet', 'zoom', 'youtube', 'custom'
+    online_url TEXT,
+    online_password TEXT,
+    online_instructions TEXT,
+    meeting_link_sent INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -70,6 +76,7 @@ CREATE TABLE IF NOT EXISTS participants (
     qr_code TEXT,
     whatsapp_status TEXT DEFAULT 'pending', -- 'pending', 'sent', 'failed'
     whatsapp_sent_at TEXT,
+    attendance_type TEXT DEFAULT 'offline', -- 'offline', 'online'
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 

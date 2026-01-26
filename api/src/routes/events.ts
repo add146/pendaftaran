@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
 import { authMiddleware } from '../middleware/auth'
+import { sendWhatsAppMessage } from '../lib/whatsapp'
 
 export const events = new Hono<{ Bindings: Bindings }>()
 
@@ -62,6 +63,10 @@ events.get('/:id', authMiddleware, async (c) => {
     SELECT 
       COUNT(*) as total_registered,
       SUM(CASE WHEN check_in_status = 'checked_in' THEN 1 ELSE 0 END) as checked_in,
+      SUM(CASE WHEN attendance_type = 'offline' THEN 1 ELSE 0 END) as attendance_offline_total,
+      SUM(CASE WHEN attendance_type = 'online' THEN 1 ELSE 0 END) as attendance_online_total,
+      SUM(CASE WHEN attendance_type = 'offline' AND check_in_status = 'checked_in' THEN 1 ELSE 0 END) as attendance_offline_checked_in,
+      SUM(CASE WHEN attendance_type = 'online' AND check_in_status = 'checked_in' THEN 1 ELSE 0 END) as attendance_online_checked_in,
       SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid
     FROM participants WHERE event_id = ?
   `).bind(id).first()
@@ -77,7 +82,7 @@ events.get('/:id', authMiddleware, async (c) => {
 events.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions } = body
 
   if (!title || !event_date) {
     return c.json({ error: 'Title and event date required' }, 400)
@@ -89,9 +94,9 @@ events.post('/', authMiddleware, async (c) => {
   const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
   await c.env.DB.prepare(`
-    INSERT INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
-  `).bind(eventId, user.orgId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl).run()
+    INSERT INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url, event_type, online_platform, online_url, online_password, online_instructions)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?)
+  `).bind(eventId, user.orgId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl, event_type || 'offline', online_platform || null, online_url || null, online_password || null, online_instructions || null).run()
 
   return c.json({ id: eventId, slug }, 201)
 })
@@ -101,7 +106,7 @@ events.put('/:id', authMiddleware, async (c) => {
   const user = c.get('user')
   const { id } = c.req.param()
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions } = body
 
   const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
   if (!existing) {
@@ -127,7 +132,12 @@ events.put('/:id', authMiddleware, async (c) => {
       account_number = COALESCE(?, account_number),
       visibility = COALESCE(?, visibility),
       status = COALESCE(?, status),
-      image_url = COALESCE(?, image_url)
+      image_url = COALESCE(?, image_url),
+      event_type = COALESCE(?, event_type),
+      online_platform = COALESCE(?, online_platform),
+      online_url = COALESCE(?, online_url),
+      online_password = COALESCE(?, online_password),
+      online_instructions = COALESCE(?, online_instructions)
     WHERE id = ?
   `).bind(
     title ?? null,
@@ -145,6 +155,11 @@ events.put('/:id', authMiddleware, async (c) => {
     visibility ?? null,
     status ?? null,
     imageUrl,
+    event_type ?? null,
+    online_platform ?? null,
+    online_url ?? null,
+    online_password ?? null,
+    online_instructions ?? null,
     id
   ).run()
 
@@ -279,4 +294,88 @@ events.get('/:id/id-card-design', authMiddleware, async (c) => {
   }
 
   return c.json(defaultDesign)
+})
+
+// Broadcast meeting link to paid participants
+events.post('/:id/broadcast-link', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const { id } = c.req.param()
+
+  // 1. Fetch Event & Verify Ownership
+  const event = await c.env.DB.prepare('SELECT * FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+  if (!event) {
+    return c.json({ error: 'Event not found' }, 404)
+  }
+
+  // 2. Validate Event Type
+  if (event.event_type === 'offline') {
+    return c.json({ error: 'Cannot broadcast link for offline events' }, 400)
+  }
+
+  if (!event.online_url) {
+    return c.json({ error: 'Online URL is not set. Please update the event first.' }, 400)
+  }
+
+  // 3. Get Paid Participants
+  const participants = await c.env.DB.prepare(`
+    SELECT * FROM participants 
+    WHERE event_id = ? AND payment_status = 'paid' AND phone IS NOT NULL
+  `).bind(id).all()
+
+  if (participants.results.length === 0) {
+    return c.json({ message: 'No paid participants found to broadcast to.' })
+  }
+
+  // 4. Send Messages (Sequentially to avoid rate limits)
+  let successCount = 0
+  let failCount = 0
+  const total = participants.results.length
+
+  // Construct Message
+  const platformName = (event.online_platform as string || 'Online').replace('_', ' ')
+  let message = `🔔 *UPDATE: Link Meeting Tersedia!*
+
+📌 *Event:* ${event.title}
+📅 *Waktu:* ${event.event_date} ${event.event_time || ''}
+
+💻 *Join via:* ${platformName.charAt(0).toUpperCase() + platformName.slice(1)}
+🔗 *Link:* ${event.online_url}`
+
+  if (event.online_password) {
+    message += `\n🔑 *Password:* ${event.online_password}`
+  }
+
+  if (event.online_instructions) {
+    message += `\n\n📋 *Instruksi:*\n${event.online_instructions}`
+  }
+
+  message += `\n\nSampai jumpa di acara! 👋`
+
+  // Process sending
+  for (const p of participants.results) {
+    try {
+      const result = await sendWhatsAppMessage(c.env.DB, user.orgId, p.phone as string, message)
+      if (result.success) {
+        successCount++
+      } else {
+        failCount++
+        console.error(`Failed to broadcast to ${p.phone}:`, result.error)
+      }
+    } catch (e) {
+      failCount++
+      console.error(`Exception broadcasting to ${p.phone}:`, e)
+    }
+    // Small delay between messages (optional, e.g. 500ms)
+    // await new Promise(r => setTimeout(r, 500)) 
+  }
+
+  // 5. Update Flag
+  await c.env.DB.prepare('UPDATE events SET meeting_link_sent = 1 WHERE id = ?').bind(id).run()
+
+  return c.json({
+    message: 'Broadcast completed',
+    total,
+    success: successCount,
+    failed: failCount
+  })
 })

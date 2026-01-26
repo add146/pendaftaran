@@ -107,7 +107,7 @@ participants.get('/:id', authMiddleware, async (c) => {
 // Register for event (public)
 participants.post('/register', async (c) => {
     const body = await c.req.json()
-    const { event_id, ticket_type_id, full_name, email, phone, city, gender, custom_fields } = body as {
+    const { event_id, ticket_type_id, full_name, email, phone, city, gender, attendance_type, custom_fields } = body as {
         event_id: string
         ticket_type_id?: string
         full_name: string
@@ -115,6 +115,7 @@ participants.post('/register', async (c) => {
         phone?: string
         city?: string
         gender?: string
+        attendance_type?: string
         custom_fields?: Array<{ field_id: string; response: string | string[] }>
     }
 
@@ -194,9 +195,9 @@ participants.post('/register', async (c) => {
     }
 
     await c.env.DB.prepare(`
-    INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, city, gender, payment_status, qr_code)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode).run()
+    INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, city, gender, payment_status, qr_code, attendance_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode, attendance_type || 'offline').run()
 
     // Store custom field responses
     if (custom_fields && custom_fields.length > 0) {

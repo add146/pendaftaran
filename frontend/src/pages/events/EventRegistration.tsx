@@ -29,7 +29,8 @@ export default function EventRegistration() {
         email: '',
         phone: '',
         city: '',
-        ticket_type_id: ''
+        ticket_type_id: '',
+        attendance_type: 'offline' // Default
     })
 
     // Custom fields state
@@ -195,6 +196,7 @@ export default function EventRegistration() {
                 email: formData.email,
                 phone: formData.phone || undefined,
                 city: formData.city || undefined,
+                attendance_type: event.event_type === 'hybrid' ? (formData.attendance_type as 'offline' | 'online') : undefined,
                 custom_fields: customFieldsData.filter(cf => cf.response)
             })
             setRegistrationId(result.registration_id)
@@ -314,6 +316,7 @@ Mohon konfirmasi pembayaran sebesar *Rp ${paymentInfo.ticket_price.toLocaleStrin
 ━━━━━━━━━━━━━━━━━━━━
 
 📌 *Event:* ${paymentInfo.event_title}
+📍 *Format:* ${event?.event_type ? event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1) : '-'}
 👤 *Nama:* ${formData.full_name}
 📧 *Email:* ${formData.email}
 📱 *Phone:* ${formData.phone || '-'}
@@ -548,11 +551,24 @@ ${bankSection}`
                                 </div>
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                                     <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                        <span className="material-symbols-outlined">location_on</span>
+                                        <span className="material-symbols-outlined">
+                                            {event?.event_type === 'online' ? 'videocam' : 'location_on'}
+                                        </span>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-gray-500 uppercase">Location</p>
-                                        <p className="font-semibold">{event?.location || 'Location TBA'}</p>
+                                        <p className="text-xs font-medium text-gray-500 uppercase">
+                                            {event?.event_type === 'online' ? 'Platform' : 'Location'}
+                                        </p>
+                                        <p className="font-semibold">
+                                            {event?.event_type === 'online'
+                                                ? (event?.online_platform ? event.online_platform.replace('_', ' ') : 'Online Event')
+                                                : (event?.location || 'Location TBA')}
+                                        </p>
+                                        {event?.event_type === 'hybrid' && (
+                                            <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                                                Hybrid Event
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -630,6 +646,47 @@ ${bankSection}`
                                                 placeholder="Masukkan kota tinggal"
                                             />
                                         </div>
+
+
+
+                                        {/* Attendance Type for Hybrid Events */}
+                                        {event?.event_type === 'hybrid' && (
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Attendance Preference</label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'offline'
+                                                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="attendance_type"
+                                                            value="offline"
+                                                            checked={formData.attendance_type === 'offline'}
+                                                            onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'offline' }))}
+                                                            className="hidden"
+                                                        />
+                                                        <span className="material-symbols-outlined">accessibility</span>
+                                                        <span className="font-medium">Attend Offline</span>
+                                                    </label>
+                                                    <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'online'
+                                                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                        }`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="attendance_type"
+                                                            value="online"
+                                                            checked={formData.attendance_type === 'online'}
+                                                            onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'online' }))}
+                                                            className="hidden"
+                                                        />
+                                                        <span className="material-symbols-outlined">videocam</span>
+                                                        <span className="font-medium">Attend Online</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Ticket Types for paid events */}
                                         {event?.event_mode === 'paid' && event.ticket_types && event.ticket_types.length > 0 && (
@@ -774,14 +831,14 @@ ${bankSection}`
                         </div>
                     </div>
                 </div>
-            </main>
+            </main >
 
             {/* Footer */}
-            <footer className="border-t border-gray-200 bg-white py-6">
+            < footer className="border-t border-gray-200 bg-white py-6" >
                 <div className="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500">
                     Powered by <span className="font-semibold text-primary">Pendaftaran QR</span>
                 </div>
-            </footer>
-        </div>
+            </footer >
+        </div >
     )
 }

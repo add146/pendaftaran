@@ -23,6 +23,11 @@ interface TicketData {
     event_time?: string
     location?: string
     id_card_design?: IdCardDesign
+    event_type?: 'offline' | 'online' | 'hybrid'
+    online_platform?: 'google_meet' | 'zoom' | 'youtube' | 'custom'
+    online_url?: string
+    online_password?: string
+    online_instructions?: string
 }
 
 export default function PublicTicket() {
@@ -217,6 +222,53 @@ export default function PublicTicket() {
                         <div className="text-center text-sm text-gray-500">
                             <span className="material-symbols-outlined text-[16px] align-middle mr-1">place</span>
                             {ticket.location}
+                        </div>
+                    )}
+
+                    {/* Online Event Details */}
+                    {ticket.event_type !== 'offline' && (
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                            <h4 className="font-bold text-gray-800 text-center mb-3 flex items-center justify-center gap-1">
+                                <span className="material-symbols-outlined text-[20px]">videocam</span>
+                                Detail Event Online
+                            </h4>
+
+                            <div className="space-y-3 text-center">
+                                {ticket.online_platform && (
+                                    <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium capitalize mb-1">
+                                        Platform: {ticket.online_platform.replace('_', ' ')}
+                                    </div>
+                                )}
+
+                                {ticket.online_url ? (
+                                    <a
+                                        href={ticket.online_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                        style={{ backgroundColor: design.primaryColor }}
+                                    >
+                                        <span className="material-symbols-outlined">link</span>
+                                        Join Meeting
+                                    </a>
+                                ) : (
+                                    <div className="text-gray-500 italic text-sm">Link belum tersedia</div>
+                                )}
+
+                                {ticket.online_password && (
+                                    <div className="text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                        <span className="text-gray-500 block text-xs">Password / Passcode</span>
+                                        <span className="font-mono font-bold select-all">{ticket.online_password}</span>
+                                    </div>
+                                )}
+
+                                {ticket.online_instructions && (
+                                    <div className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg text-left">
+                                        <p className="font-bold text-xs text-yellow-800 mb-1">Instruksi:</p>
+                                        <p className="whitespace-pre-wrap">{ticket.online_instructions}</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
 

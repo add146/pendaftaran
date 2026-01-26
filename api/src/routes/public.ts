@@ -8,7 +8,7 @@ publicRoutes.get('/events', async (c) => {
   const { limit = '10', offset = '0' } = c.req.query()
 
   const result = await c.env.DB.prepare(`
-    SELECT id, title, description, event_date, event_time, location, capacity, event_mode, image_url, slug,
+    SELECT id, title, description, event_date, event_time, location, capacity, event_mode, image_url, slug, event_type,
       (SELECT COUNT(*) FROM participants WHERE event_id = events.id AND payment_status = 'paid') as registered_count
     FROM events 
     WHERE visibility = 'public' AND status = 'open'
@@ -127,7 +127,8 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 
   const participant = await c.env.DB.prepare(`
     SELECT p.*, t.name as ticket_name, t.price as ticket_price,
-           e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design
+           e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design,
+           e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions
     FROM participants p
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     JOIN events e ON p.event_id = e.id
@@ -166,7 +167,12 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     event_date: participant.event_date,
     event_time: participant.event_time,
     location: participant.location,
-    id_card_design: idCardDesign
+    id_card_design: idCardDesign,
+    event_type: participant.event_type,
+    online_platform: participant.online_platform,
+    online_url: participant.online_url,
+    online_password: participant.online_password,
+    online_instructions: participant.online_instructions
   })
 })
 // Get landing page configuration

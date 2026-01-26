@@ -184,6 +184,11 @@ export const eventsAPI = {
             method: 'PATCH',
             body: JSON.stringify(design),
         }),
+
+    broadcastLink: (id: string) =>
+        fetchAPI<{ message: string; total: number; success: number; failed: number }>(`/api/events/${id}/broadcast-link`, {
+            method: 'POST',
+        }),
 }
 
 // Participants API
@@ -208,6 +213,7 @@ export const participantsAPI = {
         phone?: string
         city?: string
         gender?: string
+        attendance_type?: 'offline' | 'online'
         custom_fields?: Array<{ field_id: string; response: string | string[] }>
     }) =>
         fetchAPI<{ id: string; registration_id: string; qr_code: string; payment_status: string; message: string }>(
@@ -441,6 +447,12 @@ export interface Event {
     created_at: string
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ticket_types?: any[]
+    event_type?: 'offline' | 'online' | 'hybrid'
+    online_platform?: 'google_meet' | 'zoom' | 'youtube' | 'custom'
+    online_url?: string
+    online_password?: string
+    online_instructions?: string
+    meeting_link_sent?: number
 }
 
 export interface PublicEvent extends Event {
@@ -467,6 +479,10 @@ export interface EventStats {
     pending_payment: number
     failed_payment: number
     revenue: number
+    attendance_offline_total?: number
+    attendance_online_total?: number
+    attendance_offline_checked_in?: number
+    attendance_online_checked_in?: number
 }
 
 export interface Participant {
@@ -489,6 +505,7 @@ export interface Participant {
     whatsapp_status?: 'pending' | 'sent' | 'failed'
     whatsapp_sent_at?: string
     created_at: string
+    attendance_type?: 'offline' | 'online'
 }
 
 export interface CustomField {
