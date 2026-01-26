@@ -353,7 +353,7 @@ participants.post('/:id/check-in', async (c) => {
         return c.json({ error: 'Pembayaran belum dikonfirmasi' }, 400)
     }
 
-    const checkInTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    const checkInTime = new Date().toISOString()
 
     await c.env.DB.prepare(`
     UPDATE participants SET check_in_status = 'checked_in', check_in_time = ? WHERE id = ?

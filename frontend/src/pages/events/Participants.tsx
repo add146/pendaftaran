@@ -124,7 +124,21 @@ function ParticipantRow({
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
                             Checked In
                         </span>
-                        {participant.check_in_time && <div className="text-[10px] text-gray-400 mt-1">{participant.check_in_time}</div>}
+                        {participant.check_in_time && (
+                            <div className="text-[10px] text-gray-400 mt-1">
+                                {(() => {
+                                    try {
+                                        // Try to parse as date (ISO string)
+                                        const date = new Date(participant.check_in_time)
+                                        if (isNaN(date.getTime())) throw new Error('Invalid date')
+                                        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                                    } catch {
+                                        // Fallback for legacy time strings (e.g. "03:45 PM")
+                                        return participant.check_in_time
+                                    }
+                                })()}
+                            </div>
+                        )}
                     </>
                 ) : (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
