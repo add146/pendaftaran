@@ -88,21 +88,7 @@ export default function PublicTicket() {
     }
 
     // Format Hijri date (approximate - simplified calculation)
-    const formatHijriDate = (dateStr?: string) => {
-        if (!dateStr) return ''
-        try {
-            const date = new Date(dateStr)
-            // Use Intl for Hijri calendar if available
-            const hijriFormatter = new Intl.DateTimeFormat('id-ID-u-ca-islamic', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            })
-            return hijriFormatter.format(date)
-        } catch {
-            return ''
-        }
-    }
+    // formatHijriDate removed
 
     if (loading) {
         return (
@@ -164,12 +150,15 @@ export default function PublicTicket() {
                         {ticket.event_title}
                     </h2>
                     {/* Simplified date - two formats */}
-                    <p className="text-white/90 text-sm mt-3">
-                        {formatDate(ticket.event_date)}
-                        {formatHijriDate(ticket.event_date) && (
-                            <span className="text-white/70"> / {formatHijriDate(ticket.event_date)}</span>
-                        )}
-                    </p>
+                    {/* Simplified date - pill style */}
+                    <div className="mt-4 flex justify-center">
+                        <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-5 py-2 backdrop-blur-sm border border-white/20 shadow-sm">
+                            <span className="material-symbols-outlined text-white text-[18px]">calendar_today</span>
+                            <span className="text-white font-bold text-sm tracking-wide uppercase">
+                                {formatDate(ticket.event_date)}
+                            </span>
+                        </div>
+                    </div>
                     {ticket.event_time && (
                         <div className="mt-2 text-white/80 text-sm">
                             <span className="material-symbols-outlined text-[14px] align-middle mr-1">schedule</span>
