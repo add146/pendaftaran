@@ -18,6 +18,7 @@ interface QRCodeModalProps {
         qr_code: string
         event_title?: string
         event_date?: string
+        event_time?: string
         city?: string
         ticket_name?: string
         phone?: string
@@ -120,16 +121,23 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
 
         // Date badge
         if (participant.event_date) {
-            const dateStr = formatDate(participant.event_date)
+            let dateStr = formatDate(participant.event_date)
+            if (participant.event_time) {
+                dateStr += ` | ${participant.event_time}`
+            }
+            const dateText = dateStr.toUpperCase()
+
+            ctx.font = 'bold 12px Arial, sans-serif'
+            const textWidth = ctx.measureText(dateText).width
+
             ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'
-            const badgeWidth = 180
+            const badgeWidth = Math.max(textWidth + 40, 180) // Dynamic width, min 180
             const badgeHeight = 28
             roundRect(ctx, (width - badgeWidth) / 2, 60, badgeWidth, badgeHeight, 14)
             ctx.fill()
 
             ctx.fillStyle = '#ffffff'
-            ctx.font = 'bold 12px Arial, sans-serif'
-            ctx.fillText(dateStr.toUpperCase(), width / 2, 78)
+            ctx.fillText(dateText, width / 2, 78)
         }
 
         // Load and draw QR code
@@ -244,7 +252,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
 
         // Create message matching WAHA gateway format
         let message = `🎉 *PENDAFTARAN BERHASIL!*
-
+    
 Terima kasih telah mendaftar untuk:
 📌 *Event:* ${participant.event_title || 'Event'}
 
@@ -291,6 +299,14 @@ Sampai jumpa di acara! 🙏`
                             <span className="text-white text-sm font-bold uppercase tracking-wide">
                                 {formatDate(participant.event_date)}
                             </span>
+                            {participant.event_time && (
+                                <>
+                                    <span className="text-white/50 mx-1 font-light text-lg">|</span>
+                                    <span className="text-white text-sm font-bold uppercase tracking-wide">
+                                        {participant.event_time}
+                                    </span>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

@@ -497,6 +497,7 @@ export default function Participants() {
                     qr_code: selectedParticipant.qr_code || selectedParticipant.registration_id,
                     event_title: event?.title,
                     event_date: event?.event_date,
+                    event_time: event?.event_time,
                     city: selectedParticipant.city,
                     ticket_name: selectedParticipant.ticket_name,
                     phone: selectedParticipant.phone
