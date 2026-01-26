@@ -194,8 +194,8 @@ function ParticipantRow({
                             onClick={() => onShowQR(participant)}
                             className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover flex items-center gap-1"
                         >
-                            <span className="material-symbols-outlined text-[16px]">qr_code</span>
-                            Show QR
+                            <span className="material-symbols-outlined text-[16px]">badge</span>
+                            Show ID
                         </button>
                     )}
 
