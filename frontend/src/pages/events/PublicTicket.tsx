@@ -226,7 +226,7 @@ export default function PublicTicket() {
                     )}
 
                     {/* Online Event Details */}
-                    {ticket.event_type !== 'offline' && (
+                    {ticket.event_type !== 'offline' && (ticket as any).attendance_type !== 'offline' && (
                         <div className="mt-6 pt-6 border-t border-gray-100">
                             <h4 className="font-bold text-gray-800 text-center mb-3 flex items-center justify-center gap-1">
                                 <span className="material-symbols-outlined text-[20px]">videocam</span>

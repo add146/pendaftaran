@@ -172,7 +172,8 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     online_platform: participant.online_platform,
     online_url: participant.online_url,
     online_password: participant.online_password,
-    online_instructions: participant.online_instructions
+    online_instructions: participant.online_instructions,
+    attendance_type: participant.attendance_type
   })
 })
 // Get landing page configuration
