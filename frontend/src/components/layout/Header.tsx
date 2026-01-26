@@ -37,28 +37,28 @@ export default function Header({
             <div className="flex items-center gap-2">
                 {status.loading ? (
                     <>
-                        <div className="px-3 py-1.5 rounded-md bg-gray-200 animate-pulse">
-                            <span className="text-xs font-bold text-transparent">CONNECTED</span>
+                        <div className="w-4 h-4 md:w-auto md:h-auto md:px-3 md:py-1.5 rounded-md bg-gray-200 animate-pulse">
+                            <span className="hidden md:inline text-xs font-bold text-transparent">CONNECTED</span>
                         </div>
-                        <div className="px-3 py-1.5 rounded-md bg-gray-200 animate-pulse">
-                            <span className="text-xs font-bold text-transparent">WORKING</span>
+                        <div className="w-4 h-4 md:w-auto md:h-auto md:px-3 md:py-1.5 rounded-md bg-gray-200 animate-pulse">
+                            <span className="hidden md:inline text-xs font-bold text-transparent">WORKING</span>
                         </div>
                     </>
                 ) : (
                     <>
                         <div
-                            className={`px-3 py-1.5 rounded-md ${status.connected ? 'bg-emerald-500' : 'bg-gray-600'}`}
+                            className={`w-4 h-4 md:w-auto md:h-auto md:px-3 md:py-1.5 rounded-md flex items-center justify-center transition-all ${status.connected ? 'bg-emerald-500' : 'bg-gray-600'}`}
                             title={status.connected ? 'WhatsApp session is connected' : 'WhatsApp session not connected'}
                         >
-                            <span className={`text-xs font-bold ${status.connected ? 'text-white' : 'text-gray-300'}`}>
+                            <span className={`hidden md:inline text-xs font-bold ${status.connected ? 'text-white' : 'text-gray-300'}`}>
                                 {status.connected ? 'CONNECTED' : 'DISCONNECTED'}
                             </span>
                         </div>
                         <div
-                            className={`px-3 py-1.5 rounded-md ${status.working ? 'bg-emerald-500' : 'bg-gray-600'}`}
+                            className={`w-4 h-4 md:w-auto md:h-auto md:px-3 md:py-1.5 rounded-md flex items-center justify-center transition-all ${status.working ? 'bg-emerald-500' : 'bg-gray-600'}`}
                             title={status.working ? 'WAHA is working' : `WAHA status: ${status.sessionStatus || 'Not working'}`}
                         >
-                            <span className={`text-xs font-bold ${status.working ? 'text-white' : 'text-gray-300'}`}>
+                            <span className={`hidden md:inline text-xs font-bold ${status.working ? 'text-white' : 'text-gray-300'}`}>
                                 {status.working ? 'WORKING' : 'STOPPED'}
                             </span>
                         </div>
