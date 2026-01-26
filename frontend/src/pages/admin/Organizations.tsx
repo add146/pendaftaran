@@ -124,7 +124,7 @@ export default function Organizations() {
                         className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium"
                     >
                         <span className="material-symbols-outlined">add_business</span>
-                        Create Organization
+                        <span className="hidden sm:inline">Create Organization</span>
                     </button>
                 </div>
 

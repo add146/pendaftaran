@@ -157,7 +157,7 @@ export default function Users() {
                         className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium"
                     >
                         <span className="material-symbols-outlined">person_add</span>
-                        Create User
+                        <span className="hidden sm:inline">Create User</span>
                     </button>
                 </div>
 
