@@ -147,9 +147,19 @@ export default function IDCardGenerator() {
                                         PENGAJIAN AKBAR
                                     </h3>
                                     {/* Simplified date - two dates, smaller, not bold */}
-                                    <p className="text-[11px] text-white/90 tracking-wide">
-                                        23 Januari 2026 / 12 Muharram 1446 H
-                                    </p>
+                                    {/* Simplified date - pill style */}
+                                    <div className="mt-2 flex justify-center">
+                                        <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 backdrop-blur-sm border border-white/20 shadow-sm">
+                                            <span className="material-symbols-outlined text-white text-[14px]">calendar_today</span>
+                                            <span className="text-white font-bold text-[10px] tracking-wide uppercase">
+                                                SENIN, 23 JANUARI 2026
+                                            </span>
+                                            <span className="text-white/50 mx-0.5 font-light text-sm">|</span>
+                                            <span className="text-white font-bold text-[10px] tracking-wide uppercase">
+                                                09:00
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* QR Code Section - Always shown */}
