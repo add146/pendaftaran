@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS events (
     status TEXT DEFAULT 'draft',
     image_url TEXT,
     slug TEXT UNIQUE,
+    note TEXT,
+    icon_type TEXT DEFAULT 'info',
     event_type TEXT DEFAULT 'offline', -- 'offline', 'online', 'hybrid'
     online_platform TEXT, -- 'google_meet', 'zoom', 'youtube', 'custom'
     online_url TEXT,

@@ -453,6 +453,8 @@ export interface Event {
     online_password?: string
     online_instructions?: string
     meeting_link_sent?: number
+    note?: string
+    icon_type?: 'info' | 'warning' | 'danger'
 }
 
 export interface PublicEvent extends Event {

@@ -36,7 +36,9 @@ export default function EditEvent() {
         online_platform: 'google_meet' as 'google_meet' | 'zoom' | 'youtube' | 'custom',
         online_url: '',
         online_password: '',
-        online_instructions: ''
+        online_instructions: '',
+        note: '',
+        icon_type: 'info' as 'info' | 'warning' | 'danger'
     })
 
     const [tickets, setTickets] = useState<TicketType[]>([])
@@ -101,7 +103,9 @@ export default function EditEvent() {
                     online_platform: (data.online_platform as any) || 'google_meet',
                     online_url: data.online_url || '',
                     online_password: data.online_password || '',
-                    online_instructions: data.online_instructions || ''
+                    online_instructions: data.online_instructions || '',
+                    note: data.note || '',
+                    icon_type: data.icon_type || 'info'
                 }
                 console.log('[DEBUG] Setting FormData:', newFormData)
                 setFormData(newFormData)
@@ -179,7 +183,9 @@ export default function EditEvent() {
                 online_platform: formData.event_type !== 'offline' ? formData.online_platform : undefined,
                 online_url: formData.event_type !== 'offline' ? formData.online_url : undefined,
                 online_password: formData.event_type !== 'offline' ? formData.online_password : undefined,
-                online_instructions: formData.event_type !== 'offline' ? formData.online_instructions : undefined
+                online_instructions: formData.event_type !== 'offline' ? formData.online_instructions : undefined,
+                note: formData.note,
+                icon_type: formData.icon_type
             } as Record<string, unknown>)
 
             navigate('/events')
@@ -394,6 +400,51 @@ export default function EditEvent() {
                                 </div>
 
                                 <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
+                                <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
+                            </div>
+
+                            {/* Additional Info (Note & Icon) */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <h3 className="text-lg font-bold mb-4">Additional Information</h3>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Note (Optional)</label>
+                                        <textarea
+                                            value={formData.note || ''}
+                                            onChange={(e) => updateField('note', e.target.value)}
+                                            placeholder="Add a note to be displayed on the ID Card..."
+                                            rows={2}
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-white text-gray-900"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Icon Type</label>
+                                        <div className="flex gap-4">
+                                            {['info', 'warning', 'danger'].map((type) => (
+                                                <label key={type} className={`flex-1 p-3 rounded-lg border-2 cursor-pointer transition-colors ${formData.icon_type === type
+                                                    ? 'border-primary bg-primary/5'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    }`}>
+                                                    <input
+                                                        type="radio"
+                                                        name="icon_type"
+                                                        value={type}
+                                                        checked={formData.icon_type === type}
+                                                        onChange={() => updateField('icon_type', type)}
+                                                        className="hidden"
+                                                    />
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <span className={`material-symbols-outlined ${type === 'info' ? 'text-blue-500' : type === 'warning' ? 'text-orange-500' : 'text-red-500'
+                                                            }`}>
+                                                            {type === 'info' ? 'info' : type === 'warning' ? 'warning' : 'error'}
+                                                        </span>
+                                                        <span className="capitalize font-medium text-sm">{type}</span>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Custom Form Fields */}

@@ -28,6 +28,8 @@ interface TicketData {
     online_url?: string
     online_password?: string
     online_instructions?: string
+    note?: string
+    icon_type?: 'info' | 'warning' | 'danger'
 }
 
 export default function PublicTicket() {
@@ -218,6 +220,25 @@ export default function PublicTicket() {
                             {ticket.registration_id}
                         </p>
                     </div>
+
+                    {/* Note with Icon (if present) */}
+                    {ticket.note && (
+                        <div className={`mx-6 mb-4 p-3 rounded-lg text-center ${(ticket.icon_type || 'info') === 'info' ? 'bg-blue-50 text-blue-800' :
+                            (ticket.icon_type || 'info') === 'warning' ? 'bg-orange-50 text-orange-800' :
+                                'bg-red-50 text-red-800'
+                            }`}>
+                            <div className="flex flex-col items-center gap-1">
+                                <span className="text-2xl">
+                                    {(ticket.icon_type || 'info') === 'info' ? 'ℹ️' :
+                                        (ticket.icon_type || 'info') === 'warning' ? '⚠️' :
+                                            '🛑'}
+                                </span>
+                                <span className="font-bold text-sm uppercase tracking-wide">
+                                    {ticket.note}
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Event Location */}
                     {ticket.location && (

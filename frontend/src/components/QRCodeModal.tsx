@@ -23,6 +23,8 @@ interface QRCodeModalProps {
         ticket_name?: string
         phone?: string
         attendance_type?: 'offline' | 'online'
+        note?: string
+        icon_type?: 'info' | 'warning' | 'danger'
     } | null
 }
 
@@ -195,6 +197,49 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px, Courier, monospace'
             ctx.fillText(participant.registration_id, width / 2, 485)
+
+            // Note with Icon (if present)
+            if (participant.note) {
+                const iconMap = {
+                    info: 'ℹ️',
+                    warning: '⚠️',
+                    danger: '🛑'
+                }
+                const icon = iconMap[participant.icon_type || 'info']
+                const noteText = `${icon} ${participant.note}`.toUpperCase()
+
+                // Background for note
+                const noteColorMap = {
+                    info: '#e0f2fe',    // blue-100
+                    warning: '#ffedd5', // orange-100
+                    danger: '#fee2e2'   // red-100
+                }
+                const noteTextColorMap = {
+                    info: '#0369a1',    // blue-700
+                    warning: '#c2410c', // orange-700
+                    danger: '#b91c1c'   // red-700
+                }
+
+                ctx.fillStyle = noteColorMap[participant.icon_type || 'info'] || '#f3f4f6'
+                roundRect(ctx, 40, 495, width - 80, 40, 8)
+                ctx.fill()
+
+                ctx.fillStyle = noteTextColorMap[participant.icon_type || 'info'] || '#374151'
+                ctx.font = 'bold 12px Arial, sans-serif'
+                ctx.fillText(noteText, width / 2, 520)
+            } else if (design.sponsorLogo) {
+                // If no note, show sponsor logo at bottom
+                const logoImg = new Image()
+                logoImg.onload = () => {
+                    const aspect = logoImg.width / logoImg.height
+                    const logoHeight = 40
+                    const logoWidth = logoHeight * aspect
+                    ctx.drawImage(logoImg, (width - logoWidth) / 2, 500, logoWidth, logoHeight)
+                    setCardDataUrl(canvas.toDataURL('image/png'))
+                }
+                logoImg.src = design.sponsorLogo
+                return // Exit here because onload will handle setCardDataUrl
+            }
 
             // Generate data URL
             setCardDataUrl(canvas.toDataURL('image/png'))
