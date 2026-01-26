@@ -395,7 +395,7 @@ export default function Users() {
                                         </select>
                                     </td>
                                     <td className="px-6 py-4 text-gray-500 text-sm">
-                                        {new Date(user.created_at).toLocaleDateString()}
+                                        {new Date(user.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                     </td>
                                     <td className="px-6 py-4 text-right space-x-2">
                                         <button

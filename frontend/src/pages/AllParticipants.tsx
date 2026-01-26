@@ -53,8 +53,7 @@ export default function AllParticipants() {
             month: 'short',
             year: 'numeric',
             hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Asia/Jakarta'
+            minute: '2-digit'
         })
     }
 

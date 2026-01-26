@@ -42,8 +42,7 @@ export default function Events() {
         return new Date(dateStr).toLocaleDateString('id-ID', {
             day: 'numeric',
             month: 'long',
-            year: 'numeric',
-            timeZone: 'Asia/Jakarta'
+            year: 'numeric'
         })
     }
 

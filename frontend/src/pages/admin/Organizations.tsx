@@ -336,7 +336,7 @@ export default function Organizations() {
                             </div>
                             <div className="mt-3 flex items-center justify-between">
                                 <div className="text-xs text-gray-400">
-                                    Created: {new Date(org.created_at).toLocaleDateString()}
+                                    Created: {new Date(org.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                 </div>
                                 <button
                                     onClick={() => handleEdit(org)}
