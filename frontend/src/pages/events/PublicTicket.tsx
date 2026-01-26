@@ -176,12 +176,14 @@ export default function PublicTicket() {
 
                 {/* Card Body */}
                 <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
-                    {/* QR Code Container */}
-                    <div className="flex justify-center mb-5">
-                        <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
-                            <canvas ref={canvasRef}></canvas>
+                    {/* QR Code Container - Only for Offline */}
+                    {(ticket as any).attendance_type !== 'online' && (
+                        <div className="flex justify-center mb-5">
+                            <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
+                                <canvas ref={canvasRef}></canvas>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Participant Name */}
                     <div className="text-center mb-4">
@@ -293,7 +295,9 @@ export default function PublicTicket() {
                 {/* Footer */}
                 <div className="px-6 pb-6 pt-4 text-center" style={{ backgroundColor: design.backgroundColor }}>
                     <p className="text-xs text-gray-400">
-                        Tunjukkan QR Code ini saat check-in di lokasi event
+                        {(ticket as any).attendance_type === 'online'
+                            ? 'Simpan halaman ini untuk akses link meeting'
+                            : 'Tunjukkan QR Code ini saat check-in di lokasi event'}
                     </p>
                 </div>
             </div>
