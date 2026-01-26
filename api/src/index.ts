@@ -63,6 +63,9 @@ app.route('/api/settings', settings)
 app.route('/api/organizations', organizations)
 app.route('/api/subscriptions', subscriptions)
 app.route('/api/admin', admin)
+import { debug } from './routes/debug'
+app.route('/api/debug', debug)
+
 
 // 404 handler
 app.notFound((c) => {
