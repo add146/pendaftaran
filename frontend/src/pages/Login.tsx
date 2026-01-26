@@ -9,10 +9,7 @@ export default function Login() {
     const [config, setConfig] = useState<LandingPageConfig>({})
 
     useEffect(() => {
-        publicAPI.getLandingConfig().then(data => {
-            console.log('Landing Config Loaded:', data)
-            setConfig(data)
-        }).catch(console.error)
+        publicAPI.getLandingConfig().then(setConfig).catch(console.error)
     }, [])
 
     // Login form
@@ -133,10 +130,6 @@ export default function Login() {
                 <p className="text-center text-sm text-gray-500 mt-6">
                     By signing in, you agree to our Terms of Service and Privacy Policy
                 </p>
-            </div>
-            {/* Debug Banner - Temporary */}
-            <div className="fixed bottom-0 left-0 right-0 bg-black/80 text-white text-xs p-2 text-center font-mono">
-                Debug: Config Loaded = {Object.keys(config).length > 0 ? 'Yes' : 'No'} | Registration = {String(config.publicRegistrationEnabled)}
             </div>
         </div>
     )
