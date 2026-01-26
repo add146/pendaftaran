@@ -164,18 +164,18 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
                 nameFontSize -= 1
                 ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
             }
-            ctx.fillText(name, width / 2, 380)
+            ctx.fillText(name, width / 2, 360)
 
             // Ticket type with primary color
             ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px Arial, sans-serif'
-            ctx.fillText((participant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 380)
+            ctx.fillText((participant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 390)
 
             // City
             if (participant.city) {
                 ctx.fillStyle = '#6b7280'
                 ctx.font = '13px Arial, sans-serif'
-                ctx.fillText(`📍 ${participant.city}`, width / 2, 410)
+                ctx.fillText(`📍 ${participant.city}`, width / 2, 420)
             }
 
             // Registration ID badge
@@ -189,12 +189,12 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             ctx.fillStyle = hexToRgba(design.primaryColor, 0.1)
             const regBadgeWidth = 200
             const regBadgeHeight = 40
-            roundRect(ctx, (width - regBadgeWidth) / 2, 445, regBadgeWidth, regBadgeHeight, 10)
+            roundRect(ctx, (width - regBadgeWidth) / 2, 460, regBadgeWidth, regBadgeHeight, 10)
             ctx.fill()
 
             ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px, Courier, monospace'
-            ctx.fillText(participant.registration_id, width / 2, 470)
+            ctx.fillText(participant.registration_id, width / 2, 485)
 
             // Generate data URL
             setCardDataUrl(canvas.toDataURL('image/png'))
