@@ -667,7 +667,7 @@ ${bankSection}`
                                                             className="hidden"
                                                         />
                                                         <span className="material-symbols-outlined">accessibility</span>
-                                                        <span className="font-medium">Attend Offline</span>
+                                                        <span className="font-medium">Offline</span>
                                                     </label>
                                                     <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'online'
                                                         ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
@@ -682,7 +682,7 @@ ${bankSection}`
                                                             className="hidden"
                                                         />
                                                         <span className="material-symbols-outlined">videocam</span>
-                                                        <span className="font-medium">Attend Online</span>
+                                                        <span className="font-medium">Online</span>
                                                     </label>
                                                 </div>
                                             </div>
