@@ -217,7 +217,7 @@ export default function AllParticipants() {
                                             <td className="px-6 py-4">
                                                 <Link
                                                     to={`/events/${p.event_id}/participants`}
-                                                    className="text-primary hover:text-primary-hover text-sm font-medium"
+                                                    className="inline-flex items-center justify-center px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                                                 >
                                                     View Event
                                                 </Link>
