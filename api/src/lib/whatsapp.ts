@@ -156,6 +156,58 @@ function formatWhatsAppNumber(phone: string): string {
     return cleaned + '@c.us'
 }
 
+// Helper to sleep for ms
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+// Helper to get random delay between min and max (inclusive)
+const getRandomDelay = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min)
+
+// Check if there are incoming messages from this user (Placeholder)
+// In a real implementation, this would query the database or WAHA for chat history
+async function checkIncomingMessage(config: WAHAConfig, chatId: string): Promise<boolean> {
+    // TODO: Implement actual check
+    // For now, return false to be safe and avoid aggressive "seen" marking
+    return false
+}
+
+// Send "seen" status
+async function sendSeen(config: WAHAConfig, chatId: string) {
+    try {
+        await fetch(`${config.apiUrl}/api/sendSeen`, {
+            method: 'POST',
+            headers: {
+                'X-Api-Key': config.apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session: config.session,
+                chatId
+            })
+        })
+    } catch (e) {
+        console.warn('[WAHA] Failed to send seen status:', e)
+    }
+}
+
+// Start typing simulation
+async function startTyping(config: WAHAConfig, chatId: string) {
+    try {
+        await fetch(`${config.apiUrl}/api/startTyping`, {
+            method: 'POST',
+            headers: {
+                'X-Api-Key': config.apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session: config.session,
+                chatId
+            })
+        })
+    } catch (e) {
+        console.warn('[WAHA] Failed to start typing:', e)
+    }
+}
+
 // Send WhatsApp message via WAHA API
 export async function sendWhatsAppMessage(
     db: D1Database,
@@ -183,6 +235,32 @@ export async function sendWhatsAppMessage(
 
         const chatId = formatWhatsAppNumber(phone)
         console.log('[WAHA] Formatted chatId:', chatId)
+
+        // --- HUMAN LIKE BEHAVIOR START ---
+
+        // 1. Random Delay (3-8 seconds)
+        const initialDelay = getRandomDelay(3000, 8000)
+        console.log(`[WAHA] Waiting for ${initialDelay}ms before processing...`)
+        await sleep(initialDelay)
+
+        // 2. Mark as Seen (Optional - only if we think they messaged us)
+        const hasIncoming = await checkIncomingMessage(config, chatId)
+        if (hasIncoming) {
+            console.log('[WAHA] Marking chat as seen...')
+            await sendSeen(config, chatId)
+            await sleep(500)
+        }
+
+        // 3. Simulate Typing
+        console.log('[WAHA] sending startTyping...')
+        await startTyping(config, chatId)
+
+        // Typing duration based on message length, but kept simple 2-4s for now
+        const typingDuration = getRandomDelay(2000, 4000)
+        console.log(`[WAHA] Typing for ${typingDuration}ms...`)
+        await sleep(typingDuration)
+
+        // --- HUMAN LIKE BEHAVIOR END ---
 
         const requestBody = {
             session: config.session,
