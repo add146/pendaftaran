@@ -185,9 +185,17 @@ export const eventsAPI = {
             body: JSON.stringify(design),
         }),
 
-    broadcastLink: (id: string) =>
-        fetchAPI<{ message: string; total: number; success: number; failed: number }>(`/api/events/${id}/broadcast-link`, {
+    // broadcastLink: removed in favor of client-side bot
+    getBroadcastTargets: (id: string) =>
+        fetchAPI<{
+            event: { title: string; date: string; time?: string; online_platform?: string; online_url?: string; meeting_link_sent?: number }
+            targets: { id: string; registration_id: string; full_name: string; phone: string; whatsapp_status?: string }[]
+        }>(`/api/events/${id}/broadcast-targets`),
+
+    broadcastSingle: (id: string, registrationId: string) =>
+        fetchAPI<{ success: boolean; error?: string }>(`/api/events/${id}/broadcast-single`, {
             method: 'POST',
+            body: JSON.stringify({ registrationId }),
         }),
 }
 

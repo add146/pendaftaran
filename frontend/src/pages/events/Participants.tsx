@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { participantsAPI, eventsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
 import QRScanner from '../../components/QRScanner'
@@ -272,8 +272,28 @@ export default function Participants() {
     const [filter, setFilter] = useState('all')
     const [loading, setLoading] = useState(true)
     const [exportLoading, setExportLoading] = useState(false)
-    const [broadcasting, setBroadcasting] = useState(false)
     const [resendingIds, setResendingIds] = useState<Set<string>>(new Set())
+
+    // Client-Side Broadcast State
+    const [broadcastModalOpen, setBroadcastModalOpen] = useState(false)
+    const [broadcastTargets, setBroadcastTargets] = useState<any[]>([])
+    const [broadcastProgress, setBroadcastProgress] = useState({ current: 0, total: 0, success: 0, failed: 0 })
+    const [broadcastLogs, setBroadcastLogs] = useState<string[]>([])
+    const [broadcastStatus, setBroadcastStatus] = useState<'idle' | 'running' | 'paused' | 'completed' | 'resting'>('idle')
+    const [broadcastTimeRemaining, setBroadcastTimeRemaining] = useState(0)
+    const shouldStopBroadcast = useRef(false)
+
+    // Prevent window close during broadcast
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (broadcastStatus === 'running' || broadcastStatus === 'resting') {
+                e.preventDefault()
+                e.returnValue = ''
+            }
+        }
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }, [broadcastStatus])
 
     const fetchData = async () => {
         if (!id) return
@@ -327,25 +347,104 @@ export default function Participants() {
 
     const handleBroadcastLink = async () => {
         if (!event || !id) return
+        if (!event.online_url) return alert('Link meeting belum diatur.')
 
-        if (!event.online_url) {
-            alert('Link meeting belum diatur. Silakan edit event terlebih dahulu.')
+        if (!confirm(`Kirim link meeting ke peserta PAID?\n\nMetode: Safe Mode (Client-Side)\n- Jeda acak 1-3 menit.\n- Istirahat 5 menit tiap 20 pesan.\n- JANGAN TUTUP TAB INI selama proses.`)) {
             return
         }
 
-        if (!confirm(`Kirim link meeting WhatsApp ke semua peserta PAID?\n\nLink: ${event.online_url}\nPlatform: ${event.online_platform}\n\nPastikan WAHA sudah aktif.\nProses ini akan berjalan di background dengan jeda acak untuk keamanan.`)) {
-            return
-        }
-
-        setBroadcasting(true)
         try {
-            const result = await eventsAPI.broadcastLink(id)
-            alert(result.message)
-            fetchData()
+            setLoading(true)
+            const result = await eventsAPI.getBroadcastTargets(id)
+            setBroadcastTargets(result.targets)
+            setBroadcastProgress({ current: 0, total: result.targets.length, success: 0, failed: 0 })
+            setBroadcastLogs(['Siap memulai broadcast safe mode...'])
+            setBroadcastModalOpen(true)
+            setBroadcastStatus('idle')
         } catch (err: any) {
-            alert(`Gagal broadcast: ${err.message}`)
-            setBroadcasting(false) // Only reset if failed immediately
+            alert(err.message)
+        } finally {
+            setLoading(false)
         }
+    }
+
+    const runBroadcast = async () => {
+        setBroadcastStatus('running')
+        shouldStopBroadcast.current = false
+        const targets = broadcastTargets
+        const total = targets.length
+
+        let success = broadcastProgress.success
+        let failed = broadcastProgress.failed
+        let current = broadcastProgress.current // Continue where left off
+
+        const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+        const addLog = (msg: string) => setBroadcastLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev].slice(0, 50))
+
+        const BATCH_SIZE = 20
+
+        for (let i = current; i < total; i++) {
+            if (shouldStopBroadcast.current) {
+                setBroadcastStatus('paused')
+                addLog('Proses di-pause oleh user.')
+                return
+            }
+
+            const target = targets[i]
+            setBroadcastProgress(prev => ({ ...prev, current: i + 1 }))
+
+            // Checking if already sent? (Optional, skipping for now to allow force resend)
+            // if (target.whatsapp_status === 'sent') { ... } 
+
+            addLog(`Mengirim ke ${target.full_name} (${i + 1}/${total})...`)
+
+            try {
+                // Initial small delay (simulating user clicking send)
+                await sleep(Math.random() * 2000 + 2000)
+
+                const res = await eventsAPI.broadcastSingle(id!, target.registration_id)
+                if (res.success) {
+                    success++
+                    addLog(`✅ Sukses: ${target.full_name}`)
+                } else {
+                    failed++
+                    addLog(`❌ Gagal: ${target.full_name} - ${res.error}`)
+                }
+            } catch (e: any) {
+                failed++
+                addLog(`❌ Error: ${target.full_name} - ${e.message}`)
+            }
+
+            setBroadcastProgress(prev => ({ ...prev, success, failed }))
+
+            // BATCH REST
+            if ((i + 1) % BATCH_SIZE === 0 && i < total - 1) {
+                setBroadcastStatus('resting')
+                const restTime = 300 // 5 minutes (seconds)
+                addLog(`💤 Resting batch (5 menit)...`)
+                for (let r = restTime; r > 0; r--) {
+                    if (shouldStopBroadcast.current) { setBroadcastStatus('paused'); return; }
+                    setBroadcastTimeRemaining(r)
+                    await sleep(1000)
+                }
+                setBroadcastStatus('running')
+            }
+            // INTER-MESSAGE DELAY (60-180s)
+            else if (i < total - 1) {
+                const delay = Math.floor(Math.random() * (180 - 60 + 1) + 60)
+                addLog(`⏳ Menunggu ${delay} detik...`)
+                for (let d = delay; d > 0; d--) {
+                    if (shouldStopBroadcast.current) { setBroadcastStatus('paused'); return; }
+                    setBroadcastTimeRemaining(d)
+                    await sleep(1000)
+                }
+            }
+        }
+
+        setBroadcastStatus('completed')
+        addLog('🎉 Broadcast Selesai!')
+        alert(`Laporan Broadcast:\n\nTotal: ${total}\nSukses: ${success}\nGagal: ${failed}`)
+        fetchData()
     }
 
     const handleCheckIn = async (registrationId: string) => {
@@ -446,15 +545,13 @@ export default function Participants() {
                             {event && (event.event_type === 'online' || event.event_type === 'hybrid') && (
                                 <button
                                     onClick={handleBroadcastLink}
-                                    disabled={broadcasting || (event as any).meeting_link_sent === 2}
-                                    className={`group flex items-center justify-center gap-2 text-white rounded-lg h-12 px-6 font-bold shadow-lg transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed ${(event as any).meeting_link_sent === 2 ? 'bg-orange-500 shadow-orange-500/20' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
-                                        }`}
+                                    className="group flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02]"
                                 >
-                                    <span className={`material-symbols-outlined text-[20px] ${(event as any).meeting_link_sent === 2 ? 'animate-spin' : ''}`}>
-                                        {(event as any).meeting_link_sent === 2 || broadcasting ? 'hourglass_top' : 'broadcast_on_personal'}
+                                    <span className="material-symbols-outlined text-[20px]">
+                                        broadcast_on_personal
                                     </span>
                                     <span>
-                                        {(event as any).meeting_link_sent === 2 ? 'Broadcasting in Background...' : broadcasting ? 'Starting...' : 'Broadcast Link'}
+                                        Safe Broadcast
                                     </span>
                                 </button>
                             )}
@@ -602,6 +699,118 @@ export default function Participants() {
                     attendance_type: (selectedParticipant as any).attendance_type
                 } : null}
             />
+            {/* Broadcast Modal */}
+            {broadcastModalOpen && (
+                <div className="fixed inset-0 z-[60] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={() => {
+                            if (broadcastStatus === 'completed' || broadcastStatus === 'idle') setBroadcastModalOpen(false)
+                        }}></div>
+
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                <div className="sm:flex sm:items-start">
+                                    <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10 ${broadcastStatus === 'completed' ? 'bg-green-100' : 'bg-blue-100'
+                                        }`}>
+                                        <span className={`material-symbols-outlined ${broadcastStatus === 'completed' ? 'text-green-600' : 'text-blue-600'
+                                            }`}>
+                                            {broadcastStatus === 'completed' ? 'check' : 'campaign'}
+                                        </span>
+                                    </div>
+                                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                        <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                            Broadcast Progress
+                                        </h3>
+
+                                        {/* Status Bar */}
+                                        <div className="mt-4">
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span>Progress ({broadcastProgress.current}/{broadcastProgress.total})</span>
+                                                <span className="font-bold">{Math.round((broadcastProgress.current / broadcastProgress.total || 0) * 100)}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                                <div
+                                                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                                    style={{ width: `${(broadcastProgress.current / broadcastProgress.total || 0) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        {/* Timer & State */}
+                                        {(broadcastStatus === 'running' || broadcastStatus === 'resting') && broadcastTimeRemaining > 0 && (
+                                            <div className="mt-4 p-3 bg-yellow-50 text-yellow-800 rounded-lg text-sm text-center font-mono">
+                                                {broadcastStatus === 'resting' ? '💤 Resting (Safe Mode)...' : '⏳ Waiting next message...'} {broadcastTimeRemaining}s
+                                            </div>
+                                        )}
+
+                                        {/* Stats */}
+                                        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                                            <div className="p-2 bg-green-50 rounded-lg">
+                                                <div className="text-green-800 font-bold">{broadcastProgress.success}</div>
+                                                <div className="text-xs text-green-600">Success</div>
+                                            </div>
+                                            <div className="p-2 bg-red-50 rounded-lg">
+                                                <div className="text-red-800 font-bold">{broadcastProgress.failed}</div>
+                                                <div className="text-xs text-red-600">Failed</div>
+                                            </div>
+                                        </div>
+
+                                        {/* Terminal Log */}
+                                        <div className="mt-4 bg-gray-900 text-green-400 p-3 rounded-lg h-40 overflow-y-auto text-xs font-mono">
+                                            {broadcastLogs.map((log, i) => (
+                                                <div key={i}>{log}</div>
+                                            ))}
+                                            {broadcastLogs.length === 0 && <div className="text-gray-500">Ready to start...</div>}
+                                        </div>
+
+                                        <div className="mt-2 text-xs text-red-500 font-bold text-center">
+                                            ⚠️ JANGAN TUTUP TAB INI SAMPAI SELESAI
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                {broadcastStatus === 'idle' || broadcastStatus === 'paused' ? (
+                                    <button
+                                        type="button"
+                                        onClick={runBroadcast}
+                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        {broadcastStatus === 'paused' ? 'Resume' : 'Start Broadcast'}
+                                    </button>
+                                ) : broadcastStatus === 'running' || broadcastStatus === 'resting' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => { shouldStopBroadcast.current = true }}
+                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        Pause
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setBroadcastModalOpen(false)}
+                                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                                    >
+                                        Close & Finish
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => setBroadcastModalOpen(false)}
+                                    disabled={broadcastStatus === 'running' || broadcastStatus === 'resting'}
+                                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AdminLayout>
     )
 }

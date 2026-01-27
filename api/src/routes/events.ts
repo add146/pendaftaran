@@ -302,134 +302,86 @@ events.get('/:id/id-card-design', authMiddleware, async (c) => {
   return c.json(defaultDesign)
 })
 
-// Broadcast meeting link to paid participants (Advanced Async Human-Like)
-events.post('/:id/broadcast-link', authMiddleware, async (c) => {
+// Get broadcast targets (paid participants) for Client-Side Bot
+events.get('/:id/broadcast-targets', authMiddleware, async (c) => {
   const user = c.get('user')
   const { id } = c.req.param()
 
-  // 1. Fetch Event & Verify Ownership
+  // 1. Fetch Event
   const event = await c.env.DB.prepare('SELECT * FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
   if (!event) {
     return c.json({ error: 'Event not found' }, 404)
   }
 
-  // 2. Validate Event Type
+  // 2. Validate
   if (event.event_type === 'offline') {
     return c.json({ error: 'Cannot broadcast link for offline events' }, 400)
   }
-
   if (!event.online_url) {
-    return c.json({ error: 'Online URL is not set. Please update the event first.' }, 400)
-  }
-
-  if (event.meeting_link_sent === 2) {
-    return c.json({ error: 'Broadcast is already running in background' }, 409)
+    return c.json({ error: 'Online URL is not set.' }, 400)
   }
 
   // 3. Get Paid Participants
   const participants = await c.env.DB.prepare(`
-    SELECT * FROM participants 
+    SELECT id, registration_id, full_name, phone, whatsapp_status 
+    FROM participants 
     WHERE event_id = ? AND payment_status = 'paid' AND phone IS NOT NULL
   `).bind(id).all()
 
-  if (participants.results.length === 0) {
-    return c.json({ message: 'No paid participants found to broadcast to.' })
+  return c.json({
+    event: {
+      title: event.title,
+      date: event.event_date,
+      time: event.event_time,
+      online_platform: event.online_platform,
+      online_url: event.online_url,
+      meeting_link_sent: event.meeting_link_sent
+    },
+    targets: participants.results
+  })
+})
+
+// Send single broadcast message (Client-Side Bot Step)
+events.post('/:id/broadcast-single', authMiddleware, async (c) => {
+  const user = c.get('user')
+  const { id } = c.req.param()
+  const { registrationId } = await c.req.json()
+
+  // 1. Fetch Event & Participant
+  const event = await c.env.DB.prepare('SELECT * FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+  const participant = await c.env.DB.prepare('SELECT * FROM participants WHERE registration_id = ?').bind(registrationId).first()
+
+  if (!event || !participant) {
+    return c.json({ error: 'Event or Participant not found' }, 404)
   }
 
-  // 4. Set Status to Processing (2)
-  await c.env.DB.prepare('UPDATE events SET meeting_link_sent = 2 WHERE id = ?').bind(id).run()
+  // 2. Construct Personalized Message
+  const platformName = (event.online_platform as string || 'Online').replace('_', ' ')
+  let message = `Halo Kak ${participant.full_name}, 👋\n\n🔔 *UPDATE: Link Meeting Tersedia!*
 
-  // 5. Start Background Job
-  c.executionCtx.waitUntil((async () => {
-    let successCount = 0
-    let failCount = 0
-    const total = participants.results.length
-    const BATCH_SIZE = 20
-    const BATCH_REST_MS_MIN = 5 * 60 * 1000 // 5 minutes
-    const BATCH_REST_MS_MAX = 10 * 60 * 1000 // 10 minutes
-
-    const platformName = (event.online_platform as string || 'Online').replace('_', ' ')
-
-    // Helpers
-    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
-    const getRandomDelay = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1) + min)
-
-    console.log(`[BROADCAST] Starting broadcast for event ${id}. Target: ${total} users.`)
-
-    for (let i = 0; i < total; i++) {
-      const p = participants.results[i]
-      const phone = p.phone as string
-      const fullName = p.full_name as string
-
-      // A. Batch Rest
-      if (i > 0 && i % BATCH_SIZE === 0) {
-        const restTime = getRandomDelay(BATCH_REST_MS_MIN, BATCH_REST_MS_MAX)
-        console.log(`[BROADCAST] Resting for ${restTime / 1000}s (Batch ${i / BATCH_SIZE})`)
-        await sleep(restTime)
-      }
-
-      try {
-        // B. Initial Delay (2-5s)
-        const initDelay = getRandomDelay(2000, 5000)
-        await sleep(initDelay)
-
-        // Construct Personalized Message
-        let message = `Hello Kak ${fullName}, 👋\n\n🔔 *UPDATE: Link Meeting Tersedia!*
-            
 📌 *Event:* ${event.title}
 📅 *Waktu:* ${event.event_date} ${event.event_time || ''}
 
 💻 *Join via:* ${platformName.charAt(0).toUpperCase() + platformName.slice(1)}
 🔗 *Link:* ${event.online_url}`
 
-        if (event.online_password) {
-          message += `\n🔑 *Password:* ${event.online_password}`
-        }
+  if (event.online_password) {
+    message += `\n🔑 *Password:* ${event.online_password}`
+  }
 
-        if (event.online_instructions) {
-          message += `\n\n📋 *Instruksi:*\n${event.online_instructions}`
-        }
+  if (event.online_instructions) {
+    message += `\n\n📋 *Instruksi:*\n${event.online_instructions}`
+  }
 
-        message += `\n\nSampai jumpa di acara! 👋`
+  message += `\n\nSampai jumpa di acara! 👋`
 
-        // C. Send Message (Built-in delay + typing in sendWhatsAppMessage)
-        // But user requested specific typing logic. 
-        // Our sendWhatsAppMessage already has 3-8s delay + typing.
-        // We can rely on it OR reimplement stricter logic here.
-        // Relying on it is safer unless we want to rewrite the helper.
-        // Let's rely on the helper but add the Inter-Message Delay explicitly.
+  // 3. Send Message
+  const result = await sendWhatsAppMessage(c.env.DB, user.orgId, participant.phone as string, message)
 
-        const result = await sendWhatsAppMessage(c.env.DB, user.orgId, phone, message)
-
-        if (result.success) {
-          successCount++
-        } else {
-          failCount++
-          console.error(`[BROADCAST] Failed to send to ${phone}:`, result.error)
-        }
-
-      } catch (e) {
-        failCount++
-        console.error(`[BROADCAST] Exception sending to ${phone}:`, e)
-      }
-
-      // D. Inter-Message Delay (60 - 180s)
-      if (i < total - 1) { // Don't wait after the last one
-        const interDelay = getRandomDelay(60000, 180000)
-        console.log(`[BROADCAST] Waiting ${interDelay / 1000}s before next user...`)
-        await sleep(interDelay)
-      }
-    }
-
-    console.log(`[BROADCAST] Completed. Success: ${successCount}, Failed: ${failCount}`)
-
-    // 6. Update Status to Sent (1)
+  if (result.success) {
+    // Mark event as "sent" (1) implicitly so button state updates on refresh
     await c.env.DB.prepare('UPDATE events SET meeting_link_sent = 1 WHERE id = ?').bind(id).run()
-  })())
+  }
 
-  return c.json({
-    message: 'Broadcast started in background. Please check back later.',
-    status: 'processing',
-    total_targets: participants.results.length
-  })
+  return c.json(result)
 })
