@@ -224,7 +224,7 @@ export default function EditEvent() {
             </header>
 
             <main className="px-4 py-8 md:px-10 lg:px-20">
-                <div className="mx-auto max-w-4xl">
+                <div className={`mx-auto ${activeTab === 'certificate' ? 'max-w-[1600px]' : 'max-w-4xl'} transition-all duration-300`}>
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2">
                             <span className="material-symbols-outlined">error</span>

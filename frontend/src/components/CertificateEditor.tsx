@@ -246,8 +246,60 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Preview Area */}
+                <div className="lg:col-span-9">
+                    <div className="flex items-center justify-between mb-2 px-2">
+                        <h3 className="font-semibold text-gray-700">Live Preview</h3>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                            <span className="material-symbols-outlined text-[16px]">aspect_ratio</span>
+                            <span>A4 Landscape (297mm x 210mm)</span>
+                        </div>
+                    </div>
+
+                    <div className="w-full bg-gray-200/80 rounded-2xl border-2 border-dashed border-gray-300 p-4 md:p-10 flex justify-center items-center shadow-inner overflow-auto">
+                        <div
+                            className="relative bg-white shadow-2xl transition-all duration-300"
+                            style={{
+                                width: '800px',
+                                height: '565px',
+                                minWidth: '800px', // Prevent shrinking
+                            }}
+                        >
+                            {/* Paper Content */}
+                            <div
+                                ref={containerRef}
+                                className="w-full h-full relative overflow-hidden"
+                                style={{
+                                    backgroundImage: localConfig.backgroundUrl ? `url(${localConfig.backgroundUrl})` : 'none',
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    backgroundColor: localConfig.backgroundUrl ? 'transparent' : '#fff9f0' // Slight cream if no bg
+                                }}
+                            >
+                                {/* Default Pattern if no BG */}
+                                {!localConfig.backgroundUrl && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50">
+                                        <div className="w-full h-full border-[12px] border-primary/20 absolute top-0 left-0"></div>
+                                        <div className="w-[calc(100%-16px)] h-[calc(100%-16px)] border-[2px] border-yellow-500/30 absolute top-2 left-2"></div>
+                                        <span className="material-symbols-outlined text-9xl text-gray-200">workspace_premium</span>
+                                        <p className="text-gray-400 font-serif mt-4">Upload your certificate background designed in Canva/Figma</p>
+                                    </div>
+                                )}
+
+                                {(localConfig.elements || []).map(el => (
+                                    <DraggableItem
+                                        key={el.id}
+                                        el={el}
+                                        handleDragStop={handleDragStop}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Sidebar Controls */}
-                <div className="lg:col-span-3 flex flex-col gap-6 order-2 lg:order-1">
+                <div className="lg:col-span-3 flex flex-col gap-6">
 
                     {/* Status & General */}
                     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
@@ -409,58 +461,6 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
                                 )}
                             </div>
                         ))}
-                    </div>
-                </div>
-
-                {/* Main Preview Area */}
-                <div className="lg:col-span-9 order-1 lg:order-2">
-                    <div className="flex items-center justify-between mb-2 px-2">
-                        <h3 className="font-semibold text-gray-700">Live Preview</h3>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                            <span className="material-symbols-outlined text-[16px]">aspect_ratio</span>
-                            <span>A4 Landscape (297mm x 210mm)</span>
-                        </div>
-                    </div>
-
-                    <div className="w-full bg-gray-200/80 rounded-2xl border-2 border-dashed border-gray-300 p-4 md:p-10 flex justify-center items-center shadow-inner overflow-auto">
-                        <div
-                            className="relative bg-white shadow-2xl transition-all duration-300"
-                            style={{
-                                width: '800px',
-                                height: '565px',
-                                minWidth: '800px', // Prevent shrinking
-                            }}
-                        >
-                            {/* Paper Content */}
-                            <div
-                                ref={containerRef}
-                                className="w-full h-full relative overflow-hidden"
-                                style={{
-                                    backgroundImage: localConfig.backgroundUrl ? `url(${localConfig.backgroundUrl})` : 'none',
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                    backgroundColor: localConfig.backgroundUrl ? 'transparent' : '#fff9f0' // Slight cream if no bg
-                                }}
-                            >
-                                {/* Default Pattern if no BG */}
-                                {!localConfig.backgroundUrl && (
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50">
-                                        <div className="w-full h-full border-[12px] border-primary/20 absolute top-0 left-0"></div>
-                                        <div className="w-[calc(100%-16px)] h-[calc(100%-16px)] border-[2px] border-yellow-500/30 absolute top-2 left-2"></div>
-                                        <span className="material-symbols-outlined text-9xl text-gray-200">workspace_premium</span>
-                                        <p className="text-gray-400 font-serif mt-4">Upload your certificate background designed in Canva/Figma</p>
-                                    </div>
-                                )}
-
-                                {(localConfig.elements || []).map(el => (
-                                    <DraggableItem
-                                        key={el.id}
-                                        el={el}
-                                        handleDragStop={handleDragStop}
-                                    />
-                                ))}
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
