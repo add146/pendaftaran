@@ -63,13 +63,26 @@ const FONTS = [
 ]
 
 export default function CertificateEditor({ config, onChange }: CertificateEditorProps) {
-    const [localConfig, setLocalConfig] = useState<CertificateConfig>(config || DEFAULT_CONFIG)
+    const [localConfig, setLocalConfig] = useState<CertificateConfig>(() => {
+        if (config) {
+            return {
+                ...DEFAULT_CONFIG,
+                ...config,
+                elements: config.elements || []
+            }
+        }
+        return DEFAULT_CONFIG
+    })
     const [uploading, setUploading] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (config) {
-            setLocalConfig(config)
+            setLocalConfig({
+                ...DEFAULT_CONFIG,
+                ...config,
+                elements: config.elements || []
+            })
         }
     }, [config])
 
@@ -106,14 +119,14 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
         const xPercent = (data.x / 800) * 100
         const yPercent = (data.y / 565) * 100
 
-        const newElements = localConfig.elements.map(el =>
+        const newElements = (localConfig.elements || []).map(el =>
             el.id === id ? { ...el, x: xPercent, y: yPercent } : el
         )
         updateConfig({ ...localConfig, elements: newElements })
     }
 
     const updateElementStyle = (id: string, field: keyof CertificateElement, value: any) => {
-        const newElements = localConfig.elements.map(el =>
+        const newElements = (localConfig.elements || []).map(el =>
             el.id === id ? { ...el, [field]: value } : el
         )
         updateConfig({ ...localConfig, elements: newElements })
@@ -233,7 +246,7 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
                     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4 max-h-[600px] overflow-y-auto">
                         <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Elements</h3>
 
-                        {localConfig.elements.map(el => (
+                        {(localConfig.elements || []).map(el => (
                             <div key={el.id} className="p-3 bg-gray-50 rounded-lg space-y-3 border border-transparent hover:border-primary/20">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-[16px] text-gray-400 cursor-move">drag_indicator</span>
@@ -390,7 +403,7 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
                                     </div>
                                 )}
 
-                                {localConfig.elements.map(el => (
+                                {(localConfig.elements || []).map(el => (
                                     <Draggable
                                         key={el.id}
                                         bounds="parent"
