@@ -462,7 +462,8 @@ export interface Event {
     online_instructions?: string
     meeting_link_sent?: number
     note?: string
-    icon_type?: 'info' | 'warning' | 'danger'
+    icon_type?: string
+    certificate_config?: string // JSON string
 }
 
 export interface PublicEvent extends Event {

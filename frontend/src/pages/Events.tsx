@@ -140,7 +140,14 @@ export default function Events() {
                                         </div>
 
                                         {isAdmin && (
-                                            <div className="absolute top-4 right-4 z-10">
+                                            <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                                <Link
+                                                    to={`/events/${event.id}/edit`}
+                                                    className="bg-white text-teal-700 w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-gray-50"
+                                                    title="Edit Event"
+                                                >
+                                                    <span className="material-symbols-outlined text-[20px]">edit</span>
+                                                </Link>
                                                 <button
                                                     onClick={() => handleDelete(event.id, event.title)}
                                                     className="bg-red-600 text-white w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-red-700"
@@ -199,12 +206,12 @@ export default function Events() {
                                             {/* Edit (Teal) - Admin Only */}
                                             {isAdmin && (
                                                 <Link
-                                                    to={`/events/${event.id}/edit`}
-                                                    className="flex-none sm:flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-teal-50 hover:bg-teal-100 text-teal-700 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 w-10 sm:w-auto"
-                                                    title="Edit Event"
+                                                    to={`/events/${event.id}/edit?tab=certificate`}
+                                                    className="flex-none sm:flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 w-10 sm:w-auto"
+                                                    title="Certificate"
                                                 >
-                                                    <span className="material-symbols-outlined text-[18px] sm:text-[16px]">edit</span>
-                                                    <span className="hidden sm:inline">Edit</span>
+                                                    <span className="material-symbols-outlined text-[18px] sm:text-[16px]">workspace_premium</span>
+                                                    <span className="hidden sm:inline">Cert</span>
                                                 </Link>
                                             )}
                                         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { publicAPI } from '../../lib/api'
 import QRCode from 'qrcode'
+import { jsPDF } from 'jspdf'
 
 interface IdCardDesign {
     primaryColor: string
@@ -30,6 +31,7 @@ interface TicketData {
     online_instructions?: string
     note?: string
     icon_type?: 'info' | 'warning' | 'danger'
+    certificate_config?: string
 }
 
 export default function PublicTicket() {
@@ -37,6 +39,7 @@ export default function PublicTicket() {
     const [ticket, setTicket] = useState<TicketData | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [downloadingCertificate, setDownloadingCertificate] = useState(false)
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
     // Default design
@@ -75,6 +78,121 @@ export default function PublicTicket() {
             setError(err.message || 'Tiket tidak ditemukan')
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleDownloadCertificate = async () => {
+        if (!ticket || !ticket.certificate_config) return
+
+        try {
+            const config = JSON.parse(ticket.certificate_config)
+            if (!config.enabled) return
+
+            setDownloadingCertificate(true)
+
+            // Create PDF with A4 landscape
+            // A4 in mm: 297 x 210
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            })
+
+            const width = doc.internal.pageSize.getWidth()
+            const height = doc.internal.pageSize.getHeight()
+
+            // Load background if exists
+            if (config.backgroundUrl) {
+                const img = new Image()
+                img.crossOrigin = "Anonymous"
+                img.src = config.backgroundUrl
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve
+                    img.onerror = reject
+                })
+                doc.addImage(img, 'JPEG', 0, 0, width, height)
+            }
+
+            // Add elements
+            // Add elements
+            // We need async for QR code generation
+            for (const el of config.elements) {
+                if (el.type === 'text') {
+                    let text = el.label
+                    // Placeholders
+                    if (text === '{Nama Peserta}') text = ticket.full_name
+                    if (text === '{ID Registrasi}') text = ticket.registration_id
+
+                    // Font conversion
+                    doc.setFontSize(el.fontSize)
+                    doc.setTextColor(el.color)
+
+                    // Font mapping
+                    let fontName = 'helvetica'
+
+                    if (el.fontFamily.includes('Playfair Display') || el.fontFamily.includes('Merriweather')) {
+                        fontName = 'times'
+                    }
+                    if (el.fontFamily.includes('Work Sans') || el.fontFamily.includes('Helvetica')) {
+                        fontName = 'helvetica'
+                    }
+
+                    doc.setFont(fontName, 'bold')
+
+                    // Align logic
+                    const x = (el.x / 100) * width
+                    const y = (el.y / 100) * height
+
+                    doc.text(text, x, y, { align: el.align })
+                } else if (el.type === 'qr') {
+                    // Generate QR
+                    try {
+                        const qrDataUrl = await QRCode.toDataURL(ticket.qr_code, {
+                            width: 500,
+                            margin: 1,
+                            color: {
+                                dark: '#000000',
+                                light: '#ffffff'
+                            }
+                        })
+
+                        // Parse position and size
+                        // In editor: fontSize handles "size" of QR box. 
+                        // We interpret el.fontSize as width/height in pixels relative to editor width (800)
+                        // Then scale to PDF dimensions.
+                        // Actually, el.fontSize in editor is used as px width/height.
+
+                        // Editor width 800px. PDF width 'width' mm.
+                        // Scale ratio
+                        // const scale = width / 800; -- this is rough.
+
+                        // Better: Use percentage for width/height? 
+                        // In editor we treated 'fontSize' as direct px size.
+                        // Let's assume el.fontSize corresponds to pixel size in 800px width container.
+                        // So percentage width = el.fontSize / 800
+
+                        const sizePercent = el.fontSize / 800
+                        const sizeMm = sizePercent * width
+
+                        const x = (el.x / 100) * width
+                        const y = (el.y / 100) * height
+
+                        // x,y is center in editor
+                        doc.addImage(qrDataUrl, 'PNG', x - (sizeMm / 2), y - (sizeMm / 2), sizeMm, sizeMm)
+
+                    } catch (e) {
+                        console.error("Failed to generate QR for certificate", e)
+                    }
+                }
+            }
+
+            doc.save(`${ticket.event_title.replace(/\s+/g, '_')}_Certificate.pdf`)
+
+        } catch (err) {
+            console.error('Certificate generation failed:', err)
+            alert('Gagal mengunduh sertifikat. Silakan coba lagi.')
+        } finally {
+            setDownloadingCertificate(false)
         }
     }
 
@@ -142,184 +260,210 @@ export default function PublicTicket() {
             className="min-h-screen flex items-center justify-center p-4"
             style={{ background: `linear-gradient(to bottom, ${design.primaryColor}20, #f3f4f6)` }}
         >
-            {/* ID Card */}
-            <div
-                className="rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
-                style={{ backgroundColor: design.backgroundColor }}
-            >
-                {/* Header with primary color */}
-                <div
-                    className="px-6 py-6 text-center"
-                    style={{ backgroundColor: design.primaryColor }}
-                >
-                    <h2 className="text-white font-black text-xl tracking-wider uppercase">
-                        {ticket.event_title}
-                    </h2>
-                    {/* Simplified date - two formats */}
-                    {/* Simplified date & time - pill style */}
-                    <div className="mt-4 flex justify-center">
-                        <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-5 py-2 backdrop-blur-sm border border-white/20 shadow-sm">
-                            <span className="material-symbols-outlined text-white text-[18px]">calendar_today</span>
-                            <span className="text-white font-bold text-sm tracking-wide uppercase">
-                                {formatDate(ticket.event_date)}
-                            </span>
+            <div className="flex flex-col items-center gap-6 w-full max-w-sm">
 
-                            {ticket.event_time && (
-                                <>
-                                    <span className="text-white/50 mx-1 font-light text-lg">|</span>
-                                    <span className="text-white font-bold text-sm tracking-wide uppercase">
-                                        {ticket.event_time}
-                                    </span>
-                                </>
+                {/* Certificate Download Button */}
+                {ticket.certificate_config && (() => {
+                    try {
+                        const config = JSON.parse(ticket.certificate_config)
+                        return config.enabled
+                    } catch { return false }
+                })() && (
+                        <button
+                            onClick={handleDownloadCertificate}
+                            disabled={downloadingCertificate}
+                            className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3"
+                        >
+                            {downloadingCertificate ? (
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                            ) : (
+                                <span className="material-symbols-outlined text-[28px]">workspace_premium</span>
                             )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Card Body */}
-                <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
-                    {/* QR Code Container - Only for Offline */}
-                    {(ticket as any).attendance_type !== 'online' && (
-                        <div className="flex justify-center mb-5">
-                            <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
-                                <canvas ref={canvasRef}></canvas>
-                            </div>
-                        </div>
+                            <span className="text-lg uppercase tracking-wider">
+                                {downloadingCertificate ? 'Generating...' : 'Download Sertifikat'}
+                            </span>
+                        </button>
                     )}
 
-                    {/* Participant Name */}
-                    <div className="text-center mb-4">
-                        <h3 className="text-2xl font-black text-gray-800 uppercase tracking-wide">
-                            {ticket.full_name}
-                        </h3>
-                        <p
-                            className="font-bold text-sm uppercase tracking-wider mt-1"
-                            style={{ color: design.primaryColor }}
-                        >
-                            {ticket.ticket_name || 'PARTICIPANT'}
-                        </p>
-                    </div>
-
-                    {/* City/Location */}
-                    {ticket.city && (
-                        <div className="flex items-center justify-center gap-2 text-gray-500 mb-4">
-                            <span className="material-symbols-outlined text-[18px]">location_on</span>
-                            <span className="text-sm">{ticket.city}</span>
-                        </div>
-                    )}
-
-                    {/* Registration ID Badge */}
-                    <div
-                        className="rounded-xl py-3 px-4 text-center mb-4"
-                        style={{ backgroundColor: `${design.primaryColor}15` }}
-                    >
-                        <p
-                            className="font-mono font-bold text-sm tracking-wider"
-                            style={{ color: design.primaryColor }}
-                        >
-                            {ticket.registration_id}
-                        </p>
-                    </div>
-
-                    {/* Note with Icon (if present) */}
-                    {ticket.note && (
-                        <div className={`mx-6 mb-4 p-3 rounded-lg text-center ${(ticket.icon_type || 'info') === 'info' ? 'bg-blue-50 text-blue-800' :
-                            (ticket.icon_type || 'info') === 'warning' ? 'bg-orange-50 text-orange-800' :
-                                'bg-red-50 text-red-800'
-                            }`}>
-                            <div className="flex flex-col items-center gap-1">
-                                <span className="text-2xl">
-                                    {(ticket.icon_type || 'info') === 'info' ? 'ℹ️' :
-                                        (ticket.icon_type || 'info') === 'warning' ? '⚠️' :
-                                            '🛑'}
-                                </span>
-                                <span className="font-bold text-sm uppercase tracking-wide">
-                                    {ticket.note}
-                                </span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Event Location */}
-                    {ticket.location && (
-                        <div className="text-center text-sm text-gray-500">
-                            <span className="material-symbols-outlined text-[16px] align-middle mr-1">place</span>
-                            {ticket.location}
-                        </div>
-                    )}
-
-                    {/* Online Event Details */}
-                    {ticket.event_type !== 'offline' && (ticket as any).attendance_type !== 'offline' && (
-                        <div className="mt-6 pt-6 border-t border-gray-100">
-                            <h4 className="font-bold text-gray-800 text-center mb-3 flex items-center justify-center gap-1">
-                                <span className="material-symbols-outlined text-[20px]">videocam</span>
-                                Detail Event Online
-                            </h4>
-
-                            <div className="space-y-3 text-center">
-                                {ticket.online_platform && (
-                                    <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium capitalize mb-1">
-                                        Platform: {ticket.online_platform.replace('_', ' ')}
-                                    </div>
-                                )}
-
-                                {ticket.online_url ? (
-                                    <a
-                                        href={ticket.online_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="block w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                        style={{ backgroundColor: design.primaryColor }}
-                                    >
-                                        <span className="material-symbols-outlined">link</span>
-                                        Join Meeting
-                                    </a>
-                                ) : (
-                                    <div className="text-gray-500 italic text-sm">Link belum tersedia</div>
-                                )}
-
-                                {ticket.online_password && (
-                                    <div className="text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                        <span className="text-gray-500 block text-xs">Password / Passcode</span>
-                                        <span className="font-mono font-bold select-all">{ticket.online_password}</span>
-                                    </div>
-                                )}
-
-                                {ticket.online_instructions && (
-                                    <div className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg text-left">
-                                        <p className="font-bold text-xs text-yellow-800 mb-1">Instruksi:</p>
-                                        <p className="whitespace-pre-wrap">{ticket.online_instructions}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Sponsor Logo */}
-                    {design.sponsorLogo && (
-                        <div className="mt-4 flex justify-center">
-                            <img
-                                src={design.sponsorLogo}
-                                alt="Sponsor"
-                                className="max-h-12 max-w-[150px] object-contain"
-                            />
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer accent with primary color */}
+                {/* ID Card */}
                 <div
-                    className="h-2 w-full"
-                    style={{ backgroundColor: design.primaryColor }}
-                ></div>
+                    className="rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+                    style={{ backgroundColor: design.backgroundColor }}
+                >
+                    {/* Header with primary color */}
+                    <div
+                        className="px-6 py-6 text-center"
+                        style={{ backgroundColor: design.primaryColor }}
+                    >
+                        <h2 className="text-white font-black text-xl tracking-wider uppercase">
+                            {ticket.event_title}
+                        </h2>
+                        {/* Simplified date - two formats */}
+                        {/* Simplified date & time - pill style */}
+                        <div className="mt-4 flex justify-center">
+                            <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-5 py-2 backdrop-blur-sm border border-white/20 shadow-sm">
+                                <span className="material-symbols-outlined text-white text-[18px]">calendar_today</span>
+                                <span className="text-white font-bold text-sm tracking-wide uppercase">
+                                    {formatDate(ticket.event_date)}
+                                </span>
 
-                {/* Footer */}
-                <div className="px-6 pb-6 pt-4 text-center" style={{ backgroundColor: design.backgroundColor }}>
-                    <p className="text-xs text-gray-400">
-                        {(ticket as any).attendance_type === 'online'
-                            ? 'Simpan halaman ini untuk akses link meeting'
-                            : 'Tunjukkan QR Code ini saat check-in di lokasi event'}
-                    </p>
+                                {ticket.event_time && (
+                                    <>
+                                        <span className="text-white/50 mx-1 font-light text-lg">|</span>
+                                        <span className="text-white font-bold text-sm tracking-wide uppercase">
+                                            {ticket.event_time}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
+                        {/* QR Code Container - Only for Offline */}
+                        {(ticket as any).attendance_type !== 'online' && (
+                            <div className="flex justify-center mb-5">
+                                <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
+                                    <canvas ref={canvasRef}></canvas>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Participant Name */}
+                        <div className="text-center mb-4">
+                            <h3 className="text-2xl font-black text-gray-800 uppercase tracking-wide">
+                                {ticket.full_name}
+                            </h3>
+                            <p
+                                className="font-bold text-sm uppercase tracking-wider mt-1"
+                                style={{ color: design.primaryColor }}
+                            >
+                                {ticket.ticket_name || 'PARTICIPANT'}
+                            </p>
+                        </div>
+
+                        {/* City/Location */}
+                        {ticket.city && (
+                            <div className="flex items-center justify-center gap-2 text-gray-500 mb-4">
+                                <span className="material-symbols-outlined text-[18px]">location_on</span>
+                                <span className="text-sm">{ticket.city}</span>
+                            </div>
+                        )}
+
+                        {/* Registration ID Badge */}
+                        <div
+                            className="rounded-xl py-3 px-4 text-center mb-4"
+                            style={{ backgroundColor: `${design.primaryColor}15` }}
+                        >
+                            <p
+                                className="font-mono font-bold text-sm tracking-wider"
+                                style={{ color: design.primaryColor }}
+                            >
+                                {ticket.registration_id}
+                            </p>
+                        </div>
+
+                        {/* Note with Icon (if present) */}
+                        {ticket.note && (
+                            <div className={`mx-6 mb-4 p-3 rounded-lg text-center ${(ticket.icon_type || 'info') === 'info' ? 'bg-blue-50 text-blue-800' :
+                                (ticket.icon_type || 'info') === 'warning' ? 'bg-orange-50 text-orange-800' :
+                                    'bg-red-50 text-red-800'
+                                }`}>
+                                <div className="flex flex-col items-center gap-1">
+                                    <span className="text-2xl">
+                                        {(ticket.icon_type || 'info') === 'info' ? 'ℹ️' :
+                                            (ticket.icon_type || 'info') === 'warning' ? '⚠️' :
+                                                '🛑'}
+                                    </span>
+                                    <span className="font-bold text-sm uppercase tracking-wide">
+                                        {ticket.note}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Event Location */}
+                        {ticket.location && (
+                            <div className="text-center text-sm text-gray-500">
+                                <span className="material-symbols-outlined text-[16px] align-middle mr-1">place</span>
+                                {ticket.location}
+                            </div>
+                        )}
+
+                        {/* Online Event Details */}
+                        {ticket.event_type !== 'offline' && (ticket as any).attendance_type !== 'offline' && (
+                            <div className="mt-6 pt-6 border-t border-gray-100">
+                                <h4 className="font-bold text-gray-800 text-center mb-3 flex items-center justify-center gap-1">
+                                    <span className="material-symbols-outlined text-[20px]">videocam</span>
+                                    Detail Event Online
+                                </h4>
+
+                                <div className="space-y-3 text-center">
+                                    {ticket.online_platform && (
+                                        <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium capitalize mb-1">
+                                            Platform: {ticket.online_platform.replace('_', ' ')}
+                                        </div>
+                                    )}
+
+                                    {ticket.online_url ? (
+                                        <a
+                                            href={ticket.online_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                            style={{ backgroundColor: design.primaryColor }}
+                                        >
+                                            <span className="material-symbols-outlined">link</span>
+                                            Join Meeting
+                                        </a>
+                                    ) : (
+                                        <div className="text-gray-500 italic text-sm">Link belum tersedia</div>
+                                    )}
+
+                                    {ticket.online_password && (
+                                        <div className="text-sm bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                            <span className="text-gray-500 block text-xs">Password / Passcode</span>
+                                            <span className="font-mono font-bold select-all">{ticket.online_password}</span>
+                                        </div>
+                                    )}
+
+                                    {ticket.online_instructions && (
+                                        <div className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg text-left">
+                                            <p className="font-bold text-xs text-yellow-800 mb-1">Instruksi:</p>
+                                            <p className="whitespace-pre-wrap">{ticket.online_instructions}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Sponsor Logo */}
+                        {design.sponsorLogo && (
+                            <div className="mt-4 flex justify-center">
+                                <img
+                                    src={design.sponsorLogo}
+                                    alt="Sponsor"
+                                    className="max-h-12 max-w-[150px] object-contain"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Footer accent with primary color */}
+                    <div
+                        className="h-2 w-full"
+                        style={{ backgroundColor: design.primaryColor }}
+                    ></div>
+
+                    {/* Footer */}
+                    <div className="px-6 pb-6 pt-4 text-center" style={{ backgroundColor: design.backgroundColor }}>
+                        <p className="text-xs text-gray-400">
+                            {(ticket as any).attendance_type === 'online'
+                                ? 'Simpan halaman ini untuk akses link meeting'
+                                : 'Tunjukkan QR Code ini saat check-in di lokasi event'}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

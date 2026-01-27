@@ -141,7 +141,8 @@ events.put('/:id', authMiddleware, async (c) => {
       online_password = COALESCE(?, online_password),
       online_instructions = COALESCE(?, online_instructions),
       note = COALESCE(?, note),
-      icon_type = COALESCE(?, icon_type)
+      icon_type = COALESCE(?, icon_type),
+      certificate_config = COALESCE(?, certificate_config)
     WHERE id = ?
   `).bind(
     title ?? null,
@@ -166,6 +167,7 @@ events.put('/:id', authMiddleware, async (c) => {
     online_instructions ?? null,
     note ?? null,
     icon_type ?? 'info',
+    body.certificate_config ?? null,
     id
   ).run()
 
@@ -231,7 +233,11 @@ events.get('/:id/stats', authMiddleware, async (c) => {
       SUM(CASE WHEN check_in_status = 'not_arrived' THEN 1 ELSE 0 END) as pending_checkin,
       SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) as paid,
       SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) as pending_payment,
-      SUM(CASE WHEN payment_status = 'failed' THEN 1 ELSE 0 END) as failed_payment
+      SUM(CASE WHEN payment_status = 'failed' THEN 1 ELSE 0 END) as failed_payment,
+      SUM(CASE WHEN attendance_type = 'offline' THEN 1 ELSE 0 END) as attendance_offline_total,
+      SUM(CASE WHEN attendance_type = 'online' THEN 1 ELSE 0 END) as attendance_online_total,
+      SUM(CASE WHEN attendance_type = 'offline' AND check_in_status = 'checked_in' THEN 1 ELSE 0 END) as attendance_offline_checked_in,
+      SUM(CASE WHEN attendance_type = 'online' AND check_in_status = 'checked_in' THEN 1 ELSE 0 END) as attendance_online_checked_in
     FROM participants WHERE event_id = ?
   `).bind(id).first()
 
