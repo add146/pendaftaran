@@ -28,16 +28,24 @@ const app = new Hono<{ Bindings: Bindings }>()
 // Middleware
 app.use('*', logger())
 app.use('*', cors({
-	origin: [
-		'http://localhost:5173',
-		'http://localhost:3000',
-		'https://pendaftaran-ccb.pages.dev',
-		'https://pendaftaran.pages.dev',
-		'https://etiket.my.id',
-		'https://www.etiket.my.id'
-	],
+	origin: (origin) => {
+		// Allow local development
+		if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+			return origin
+		}
+		// Allow any pages.dev subdomain (including previews)
+		if (origin.endsWith('.pages.dev')) {
+			return origin
+		}
+		// Allow custom domain and subdomains
+		if (origin.endsWith('etiket.my.id')) {
+			return origin
+		}
+		// Default fallback (block)
+		return 'https://etiket.my.id'
+	},
 	allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-	allowHeaders: ['Content-Type', 'Authorization'],
+	allowHeaders: ['Content-Type', 'Authorization', 'X-Api-Key'],
 	credentials: true,
 }))
 

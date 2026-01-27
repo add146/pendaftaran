@@ -35,6 +35,7 @@ function ParticipantRow({
     onShowQR,
     onDelete,
     onResendWhatsApp,
+    isResending,
     eventDate,
     eventTime
 }: {
@@ -44,6 +45,7 @@ function ParticipantRow({
     onShowQR: (participant: ParticipantType) => void
     onDelete: (id: string, name: string) => void
     onResendWhatsApp: (id: string) => void
+    isResending: boolean
     eventDate?: string
     eventTime?: string
 }) {
@@ -220,11 +222,17 @@ function ParticipantRow({
                             )}
                             <button
                                 onClick={() => onResendWhatsApp(participant.registration_id)}
-                                className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
-                                title="Resend WhatsApp notification with QR code link"
+                                disabled={isResending}
+                                className={`px-3 py-1 text-xs font-bold rounded-lg flex items-center gap-1 ${isResending
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-green-500 text-white hover:bg-green-600'
+                                    }`}
+                                title={isResending ? "Sedang mengirim..." : "Resend WhatsApp notification with QR code link"}
                             >
-                                <span className="material-symbols-outlined text-[16px]">send</span>
-                                Resend WA
+                                <span className={`material-symbols-outlined text-[16px] ${isResending ? 'animate-spin' : ''}`}>
+                                    {isResending ? 'progress_activity' : 'send'}
+                                </span>
+                                {isResending ? 'Sending...' : 'Resend WA'}
                             </button>
                         </div>
                     )}
@@ -265,6 +273,7 @@ export default function Participants() {
     const [loading, setLoading] = useState(true)
     const [exportLoading, setExportLoading] = useState(false)
     const [broadcasting, setBroadcasting] = useState(false)
+    const [resendingIds, setResendingIds] = useState<Set<string>>(new Set())
 
     const fetchData = async () => {
         if (!id) return
@@ -324,19 +333,18 @@ export default function Participants() {
             return
         }
 
-        if (!confirm(`Kirim link meeting WhatsApp ke semua peserta PAID?\n\nLink: ${event.online_url}\nPlatform: ${event.online_platform}\n\nPastikan WAHA sudah aktif.`)) {
+        if (!confirm(`Kirim link meeting WhatsApp ke semua peserta PAID?\n\nLink: ${event.online_url}\nPlatform: ${event.online_platform}\n\nPastikan WAHA sudah aktif.\nProses ini akan berjalan di background dengan jeda acak untuk keamanan.`)) {
             return
         }
 
         setBroadcasting(true)
         try {
             const result = await eventsAPI.broadcastLink(id)
-            alert(`Broadcast Selesai!\nTotal: ${result.total}\nSukses: ${result.success}\nGagal: ${result.failed}`)
+            alert(result.message)
             fetchData()
         } catch (err: any) {
             alert(`Gagal broadcast: ${err.message}`)
-        } finally {
-            setBroadcasting(false)
+            setBroadcasting(false) // Only reset if failed immediately
         }
     }
 
@@ -359,11 +367,20 @@ export default function Participants() {
     }
 
     const handleResendWhatsApp = async (registrationId: string) => {
+        if (resendingIds.has(registrationId)) return
+
+        setResendingIds(prev => new Set(prev).add(registrationId))
         try {
             await participantsAPI.resendWhatsApp(registrationId)
-            // Silent success - no notification needed
+            alert('WhatsApp berhasil dikirim ulang!')
         } catch (err: any) {
             alert(`Failed to send WhatsApp: ${err.message}`)
+        } finally {
+            setResendingIds(prev => {
+                const next = new Set(prev)
+                next.delete(registrationId)
+                return next
+            })
         }
     }
 
@@ -429,13 +446,16 @@ export default function Participants() {
                             {event && (event.event_type === 'online' || event.event_type === 'hybrid') && (
                                 <button
                                     onClick={handleBroadcastLink}
-                                    disabled={broadcasting}
-                                    className="group flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={broadcasting || (event as any).meeting_link_sent === 2}
+                                    className={`group flex items-center justify-center gap-2 text-white rounded-lg h-12 px-6 font-bold shadow-lg transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed ${(event as any).meeting_link_sent === 2 ? 'bg-orange-500 shadow-orange-500/20' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
+                                        }`}
                                 >
-                                    <span className="material-symbols-outlined text-[20px]">
-                                        {broadcasting ? 'hourglass_empty' : 'broadcast_on_personal'}
+                                    <span className={`material-symbols-outlined text-[20px] ${(event as any).meeting_link_sent === 2 ? 'animate-spin' : ''}`}>
+                                        {(event as any).meeting_link_sent === 2 || broadcasting ? 'hourglass_top' : 'broadcast_on_personal'}
                                     </span>
-                                    <span>{broadcasting ? 'Sending...' : 'Broadcast Link'}</span>
+                                    <span>
+                                        {(event as any).meeting_link_sent === 2 ? 'Broadcasting in Background...' : broadcasting ? 'Starting...' : 'Broadcast Link'}
+                                    </span>
                                 </button>
                             )}
 
@@ -528,7 +548,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onDelete={handleDelete} onResendWhatsApp={handleResendWhatsApp} eventDate={event?.event_date} eventTime={event?.event_time} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onDelete={handleDelete} onResendWhatsApp={handleResendWhatsApp} isResending={resendingIds.has(p.registration_id)} eventDate={event?.event_date} eventTime={event?.event_time} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>

@@ -219,50 +219,33 @@ participants.post('/register', async (c) => {
     // Send WhatsApp notification ONLY for FREE events (paid status)
     // For PAID events, WhatsApp will be sent after payment confirmation via webhook or manual approve
     if (phone && paymentStatus === 'paid') {
-        try {
-            console.log('[REGISTRATION] Sending WhatsApp for free event to:', phone)
-            const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+        c.executionCtx.waitUntil((async () => {
+            try {
+                console.log('[REGISTRATION] Sending WhatsApp for free event to:', phone)
+                const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
 
-            const frontendUrl = 'https://etiket.my.id'
-            const ticketLink = `${frontendUrl}/ticket/${registrationId}`
+                const frontendUrl = 'https://etiket.my.id'
+                const ticketLink = `${frontendUrl}/ticket/${registrationId}`
 
-            // Fetch custom field responses
-            const customFieldResponses = await getCustomFieldResponses(c.env.DB, participantId)
+                // Fetch custom field responses
+                const customFieldResponses = await getCustomFieldResponses(c.env.DB, participantId)
 
-            const message = generateRegistrationMessage({
-                eventTitle: event.title,
-                fullName: full_name,
-                registrationId,
-                ticketLink,
-                ticketName,
-                ticketPrice,
-                customFieldResponses
-            })
+                const message = generateRegistrationMessage({
+                    eventTitle: event.title,
+                    fullName: full_name,
+                    registrationId,
+                    ticketLink,
+                    ticketName,
+                    ticketPrice,
+                    customFieldResponses
+                })
 
-            const result = await sendWhatsAppMessage(c.env.DB, event.organization_id, phone, message)
-            console.log('[REGISTRATION] WhatsApp send result:', result)
-
-            if (result.success) {
-                await c.env.DB.prepare(`
-                    UPDATE participants 
-                    SET whatsapp_status = 'sent', whatsapp_sent_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?
-                `).bind(participantId).run()
-            } else {
-                await c.env.DB.prepare(`
-                    UPDATE participants 
-                    SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?
-                `).bind(participantId).run()
+                await sendWhatsAppMessage(c.env.DB, event.organization_id, phone, message)
+            } catch (error) {
+                console.error('[REGISTRATION] Error sending WhatsApp:', error)
             }
-        } catch (error) {
-            console.error('[REGISTRATION] Error sending WhatsApp:', error)
-            await c.env.DB.prepare(`
-                UPDATE participants 
-                SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
-                WHERE id = ?
-            `).bind(participantId).run()
-        }
+        })())
+        console.log('[REGISTRATION] WAHA sending scheduled in background')
     } else if (phone && paymentStatus === 'pending') {
         console.log('[REGISTRATION] Skipping WhatsApp for paid event - will send after payment confirmation')
     }
@@ -428,49 +411,32 @@ participants.post('/:id/approve-payment', authMiddleware, async (c) => {
 
     // Send WhatsApp notification after approval
     if (participant.phone) {
-        try {
-            console.log('[APPROVE] Sending WhatsApp notification to:', participant.phone)
-            const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
-            const frontendUrl = 'https://etiket.my.id'
-            const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
+        c.executionCtx.waitUntil((async () => {
+            try {
+                console.log('[APPROVE] Sending WhatsApp notification to:', participant.phone)
+                const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+                const frontendUrl = 'https://etiket.my.id'
+                const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
 
-            // Fetch custom field responses
-            const customFieldResponses = await getCustomFieldResponses(c.env.DB, participant.id)
+                // Fetch custom field responses
+                const customFieldResponses = await getCustomFieldResponses(c.env.DB, participant.id)
 
-            const message = generateRegistrationMessage({
-                eventTitle: participant.event_title,
-                fullName: participant.full_name,
-                registrationId: participant.registration_id,
-                ticketLink,
-                ticketName: participant.ticket_name,
-                ticketPrice: participant.ticket_price,
-                customFieldResponses
-            })
+                const message = generateRegistrationMessage({
+                    eventTitle: participant.event_title,
+                    fullName: participant.full_name,
+                    registrationId: participant.registration_id,
+                    ticketLink,
+                    ticketName: participant.ticket_name,
+                    ticketPrice: participant.ticket_price,
+                    customFieldResponses
+                })
 
-            const result = await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
-            console.log('[APPROVE] WhatsApp send result:', result)
-
-            if (result.success) {
-                await c.env.DB.prepare(`
-                    UPDATE participants 
-                    SET whatsapp_status = 'sent', whatsapp_sent_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?
-                `).bind(participant.id).run()
-            } else {
-                await c.env.DB.prepare(`
-                    UPDATE participants 
-                    SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?
-                `).bind(participant.id).run()
+                await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
+            } catch (error) {
+                console.error('[APPROVE] Error sending WhatsApp:', error)
             }
-        } catch (error) {
-            console.error('[APPROVE] Error sending WhatsApp:', error)
-            await c.env.DB.prepare(`
-                UPDATE participants 
-                SET whatsapp_status = 'failed', whatsapp_sent_at = CURRENT_TIMESTAMP 
-                WHERE id = ?
-            `).bind(participant.id).run()
-        }
+        })())
+        console.log('[APPROVE] WhatsApp notification scheduled in background')
     }
 
     return c.json({
