@@ -14,7 +14,7 @@ import CreateEvent from './pages/events/CreateEvent'
 import EditEvent from './pages/events/EditEvent'
 import EventRegistration from './pages/events/EventRegistration'
 import Participants from './pages/events/Participants'
-import IDCardGenerator from './pages/events/IDCardGenerator'
+
 import PublicTicket from './pages/events/PublicTicket'
 // Super Admin Pages
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard'
@@ -39,7 +39,7 @@ function App() {
         <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
         <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
         <Route path="/events/:id/participants" element={<ProtectedRoute><Participants /></ProtectedRoute>} />
-        <Route path="/events/:id/id-cards" element={<ProtectedRoute><IDCardGenerator /></ProtectedRoute>} />
+
         <Route path="/participants" element={<ProtectedRoute><AllParticipants /></ProtectedRoute>} />
         <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

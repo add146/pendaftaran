@@ -106,90 +106,106 @@ events.post('/', authMiddleware, async (c) => {
 events.put('/:id', authMiddleware, async (c) => {
   const user = c.get('user')
   const { id } = c.req.param()
-  const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type } = body
-  console.log('[DEBUG] Update event payload:', { id, event_type, online_platform })
 
-  const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
-  if (!existing) {
-    return c.json({ error: 'Event not found' }, 404)
-  }
+  try {
+    const body = await c.req.json()
+    console.log('[DEBUG] Update event payload received:', {
+      id,
+      hasCertificateConfig: !!body.certificate_config,
+      certificateConfigLength: body.certificate_config ? body.certificate_config.length : 0
+    })
 
-  // Update event basic info
-  const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
+    const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type } = body
 
-  await c.env.DB.prepare(`
-    UPDATE events SET 
-      title = COALESCE(?, title),
-      description = COALESCE(?, description),
-      event_date = COALESCE(?, event_date),
-      event_time = COALESCE(?, event_time),
-      location = COALESCE(?, location),
-      capacity = COALESCE(?, capacity),
-      event_mode = COALESCE(?, event_mode),
-      payment_mode = COALESCE(?, payment_mode),
-      whatsapp_cs = COALESCE(?, whatsapp_cs),
-      bank_name = COALESCE(?, bank_name),
-      account_holder_name = COALESCE(?, account_holder_name),
-      account_number = COALESCE(?, account_number),
-      visibility = COALESCE(?, visibility),
-      status = COALESCE(?, status),
-      image_url = COALESCE(?, image_url),
-      event_type = ?,
-      online_platform = COALESCE(?, online_platform),
-      online_url = COALESCE(?, online_url),
-      online_password = COALESCE(?, online_password),
-      online_instructions = COALESCE(?, online_instructions),
-      note = COALESCE(?, note),
-      icon_type = COALESCE(?, icon_type),
-      certificate_config = COALESCE(?, certificate_config)
-    WHERE id = ?
-  `).bind(
-    title ?? null,
-    description ?? null,
-    event_date ?? null,
-    event_time ?? null,
-    location ?? null,
-    capacity ?? null,
-    event_mode ?? null,
-    payment_mode ?? null,
-    whatsapp_cs ?? null,
-    bank_name ?? null,
-    account_holder_name ?? null,
-    account_number ?? null,
-    visibility ?? null,
-    status ?? null,
-    imageUrl,
-    event_type || 'offline',
-    online_platform ?? null,
-    online_url ?? null,
-    online_password ?? null,
-    online_instructions ?? null,
-    note ?? null,
-    icon_type ?? 'info',
-    body.certificate_config ?? null,
-    id
-  ).run()
-
-  // Update ticket types if provided
-  if (ticket_types && Array.isArray(ticket_types)) {
-    // First, set ticket_type_id to NULL for all participants of this event to avoid FK constraint
-    await c.env.DB.prepare('UPDATE participants SET ticket_type_id = NULL WHERE event_id = ?').bind(id).run()
-
-    // Delete existing ticket types
-    await c.env.DB.prepare('DELETE FROM ticket_types WHERE event_id = ?').bind(id).run()
-
-    // Insert new ticket types
-    for (const ticket of ticket_types) {
-      const ticketId = `tkt_${crypto.randomUUID().slice(0, 8)}`
-      await c.env.DB.prepare(`
-                INSERT INTO ticket_types (id, event_id, name, price, quota)
-                VALUES (?, ?, ?, ?, ?)
-            `).bind(ticketId, id, ticket.name, parseInt(ticket.price) || 0, ticket.quota ? parseInt(ticket.quota) : null).run()
+    const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
+    if (!existing) {
+      return c.json({ error: 'Event not found' }, 404)
     }
-  }
 
-  return c.json({ message: 'Event updated' })
+    // Update event basic info
+    const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
+
+    try {
+      await c.env.DB.prepare(`
+            UPDATE events SET 
+            title = COALESCE(?, title),
+            description = COALESCE(?, description),
+            event_date = COALESCE(?, event_date),
+            event_time = COALESCE(?, event_time),
+            location = COALESCE(?, location),
+            capacity = COALESCE(?, capacity),
+            event_mode = COALESCE(?, event_mode),
+            payment_mode = COALESCE(?, payment_mode),
+            whatsapp_cs = COALESCE(?, whatsapp_cs),
+            bank_name = COALESCE(?, bank_name),
+            account_holder_name = COALESCE(?, account_holder_name),
+            account_number = COALESCE(?, account_number),
+            visibility = COALESCE(?, visibility),
+            status = COALESCE(?, status),
+            image_url = COALESCE(?, image_url),
+            event_type = ?,
+            online_platform = COALESCE(?, online_platform),
+            online_url = COALESCE(?, online_url),
+            online_password = COALESCE(?, online_password),
+            online_instructions = COALESCE(?, online_instructions),
+            note = COALESCE(?, note),
+            icon_type = COALESCE(?, icon_type),
+            certificate_config = COALESCE(?, certificate_config)
+            WHERE id = ?
+        `).bind(
+        title ?? null,
+        description ?? null,
+        event_date ?? null,
+        event_time ?? null,
+        location ?? null,
+        capacity ?? null,
+        event_mode ?? null,
+        payment_mode ?? null,
+        whatsapp_cs ?? null,
+        bank_name ?? null,
+        account_holder_name ?? null,
+        account_number ?? null,
+        visibility ?? null,
+        status ?? null,
+        imageUrl,
+        event_type || 'offline',
+        online_platform ?? null,
+        online_url ?? null,
+        online_password ?? null,
+        online_instructions ?? null,
+        note ?? null,
+        icon_type ?? 'info',
+        body.certificate_config ?? null,
+        id
+      ).run()
+    } catch (dbError: any) {
+      console.error('[ERROR] Database update failed:', dbError)
+      throw new Error(`Database update failed: ${dbError.message}`)
+    }
+
+    // Update ticket types if provided
+    if (ticket_types && Array.isArray(ticket_types)) {
+      // First, set ticket_type_id to NULL for all participants of this event to avoid FK constraint
+      await c.env.DB.prepare('UPDATE participants SET ticket_type_id = NULL WHERE event_id = ?').bind(id).run()
+
+      // Delete existing ticket types
+      await c.env.DB.prepare('DELETE FROM ticket_types WHERE event_id = ?').bind(id).run()
+
+      // Insert new ticket types
+      for (const ticket of ticket_types) {
+        const ticketId = `tkt_${crypto.randomUUID().slice(0, 8)}`
+        await c.env.DB.prepare(`
+                    INSERT INTO ticket_types (id, event_id, name, price, quota)
+                    VALUES (?, ?, ?, ?, ?)
+                `).bind(ticketId, id, ticket.name, parseInt(ticket.price) || 0, ticket.quota ? parseInt(ticket.quota) : null).run()
+      }
+    }
+
+    return c.json({ message: 'Event updated' })
+  } catch (err: any) {
+    console.error('[ERROR] Update event failed:', err)
+    return c.json({ error: err.message }, 500)
+  }
 })
 
 // Delete event (organization-scoped)

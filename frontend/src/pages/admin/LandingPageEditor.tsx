@@ -10,6 +10,7 @@ export default function LandingPageEditor() {
     const [success, setSuccess] = useState('')
 
     useEffect(() => {
+        console.log('VERSION CHECK: Favicon Feature v2')
         loadConfig()
     }, [])
 
@@ -104,18 +105,50 @@ export default function LandingPageEditor() {
                                 placeholder="MasjidEvent"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Logo Image</label>
-                            <div className="flex items-center gap-4">
-                                {config.header?.logoUrl && (
-                                    <img src={config.header.logoUrl} alt="Logo" className="h-10 object-contain border rounded bg-gray-50 px-2" />
-                                )}
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={e => handleImageUpload(e, 'header', 'logoUrl')}
-                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Logo Image</label>
+                                <div className="flex items-center gap-4">
+                                    {config.header?.logoUrl && (
+                                        <img src={config.header.logoUrl} alt="Logo" className="h-10 object-contain border rounded bg-gray-50 px-2" />
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={e => handleImageUpload(e, 'header', 'logoUrl')}
+                                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Favicon</label>
+                                <div className="flex items-center gap-4">
+                                    {config.favicon && (
+                                        <img src={config.favicon} alt="Favicon" className="w-8 h-8 object-contain border rounded bg-gray-50 p-1" />
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={e => {
+                                            const file = e.target.files?.[0]
+                                            if (!file) return
+
+                                            setSaving(true)
+                                            uploadAPI.uploadImage(file)
+                                                .then(result => {
+                                                    setConfig(prev => ({ ...prev, favicon: result.url }))
+                                                    setSaving(false)
+                                                })
+                                                .catch(err => {
+                                                    console.error('Favicon upload error:', err)
+                                                    setError(err.message || 'Failed to upload favicon')
+                                                    setSaving(false)
+                                                })
+                                        }}
+                                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    />
+                                </div>
                             </div>
                         </div>
 

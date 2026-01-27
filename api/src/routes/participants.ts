@@ -43,8 +43,12 @@ participants.get('/event/:eventId', authMiddleware, async (c) => {
     const params: (string | number)[] = [eventId]
 
     if (status) {
-        query += ' AND p.check_in_status = ?'
-        params.push(status)
+        if (status === 'not_arrived') {
+            query += " AND (p.check_in_status IS NULL OR p.check_in_status != 'checked_in')"
+        } else {
+            query += ' AND p.check_in_status = ?'
+            params.push(status)
+        }
     }
 
     if (payment) {
@@ -67,8 +71,12 @@ participants.get('/event/:eventId', authMiddleware, async (c) => {
     let countQuery = 'SELECT COUNT(*) as total FROM participants WHERE event_id = ?'
     const countParams: string[] = [eventId]
     if (status) {
-        countQuery += ' AND check_in_status = ?'
-        countParams.push(status)
+        if (status === 'not_arrived') {
+            countQuery += " AND (check_in_status IS NULL OR check_in_status != 'checked_in')"
+        } else {
+            countQuery += ' AND check_in_status = ?'
+            countParams.push(status)
+        }
     }
     if (payment) {
         countQuery += ' AND payment_status = ?'

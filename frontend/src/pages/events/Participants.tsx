@@ -305,6 +305,7 @@ export default function Participants() {
             if (filter === 'paid') params.payment = 'paid'
             if (filter === 'pending') params.payment = 'pending'
             if (filter === 'checked_in') params.status = 'checked_in'
+            if (filter === 'not_arrived') params.status = 'not_arrived'
 
             const [eventData, participantsData, statsData] = await Promise.all([
                 eventsAPI.get(id),
@@ -545,7 +546,7 @@ export default function Participants() {
                             {event && (event.event_type === 'online' || event.event_type === 'hybrid') && (
                                 <button
                                     onClick={handleBroadcastLink}
-                                    className="group flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02]"
+                                    className="hidden md:flex group items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-blue-600/20 transition-all hover:scale-[1.02]"
                                 >
                                     <span className="material-symbols-outlined text-[20px]">
                                         broadcast_on_personal
@@ -561,7 +562,7 @@ export default function Participants() {
                                 className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
                             >
                                 <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                                <span>Launch Web Scanner</span>
+                                <span>Scanner</span>
                             </button>
                         </div>
                     </div>
@@ -609,7 +610,7 @@ export default function Participants() {
                             />
                         </div>
                         <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-                            {['All', 'Paid', 'Pending', 'Checked In'].map((label) => (
+                            {['All', 'Paid', 'Pending', 'Checked In', 'Not Arrived'].map((label) => (
                                 <button
                                     key={label}
                                     onClick={() => setFilter(label.toLowerCase().replace(' ', '_'))}

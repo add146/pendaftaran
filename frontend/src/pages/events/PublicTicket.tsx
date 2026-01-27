@@ -262,28 +262,7 @@ export default function PublicTicket() {
         >
             <div className="flex flex-col items-center gap-6 w-full max-w-sm">
 
-                {/* Certificate Download Button */}
-                {ticket.certificate_config && (() => {
-                    try {
-                        const config = JSON.parse(ticket.certificate_config)
-                        return config.enabled
-                    } catch { return false }
-                })() && (
-                        <button
-                            onClick={handleDownloadCertificate}
-                            disabled={downloadingCertificate}
-                            className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all flex items-center justify-center gap-3"
-                        >
-                            {downloadingCertificate ? (
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
-                            ) : (
-                                <span className="material-symbols-outlined text-[28px]">workspace_premium</span>
-                            )}
-                            <span className="text-lg uppercase tracking-wider">
-                                {downloadingCertificate ? 'Generating...' : 'Download Sertifikat'}
-                            </span>
-                        </button>
-                    )}
+
 
                 {/* ID Card */}
                 <div
@@ -346,7 +325,7 @@ export default function PublicTicket() {
                         {/* City/Location */}
                         {ticket.city && (
                             <div className="flex items-center justify-center gap-2 text-gray-500 mb-4">
-                                <span className="material-symbols-outlined text-[18px]">location_on</span>
+                                <span className="material-symbols-outlined text-[18px]">apartment</span>
                                 <span className="text-sm">{ticket.city}</span>
                             </div>
                         )}
@@ -376,8 +355,23 @@ export default function PublicTicket() {
                                             (ticket.icon_type || 'info') === 'warning' ? '⚠️' :
                                                 '🛑'}
                                     </span>
-                                    <span className="font-bold text-sm uppercase tracking-wide">
-                                        {ticket.note}
+                                    <span className="font-bold text-sm uppercase tracking-wide whitespace-pre-wrap break-words">
+                                        {ticket.note.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                                            part.match(/^https?:\/\//) ? (
+                                                <a
+                                                    key={i}
+                                                    href={part}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="underline font-bold hover:opacity-75 transition-opacity"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    {part}
+                                                </a>
+                                            ) : (
+                                                <span key={i}>{part}</span>
+                                            )
+                                        )}
                                     </span>
                                 </div>
                             </div>
@@ -448,6 +442,29 @@ export default function PublicTicket() {
                                 />
                             </div>
                         )}
+
+                        {/* Certificate Download Button */}
+                        {ticket.certificate_config && (() => {
+                            try {
+                                const config = JSON.parse(ticket.certificate_config)
+                                return config.enabled
+                            } catch { return false }
+                        })() && (
+                                <button
+                                    onClick={handleDownloadCertificate}
+                                    disabled={downloadingCertificate}
+                                    className="w-full mt-6 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white font-black py-3 px-4 rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                                >
+                                    {downloadingCertificate ? (
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    ) : (
+                                        <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
+                                    )}
+                                    <span className="text-sm md:text-base uppercase tracking-wider">
+                                        {downloadingCertificate ? 'Generating...' : 'Download Sertifikat'}
+                                    </span>
+                                </button>
+                            )}
                     </div>
 
                     {/* Footer accent with primary color */}

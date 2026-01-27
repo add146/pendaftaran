@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
+import { jsPDF } from 'jspdf'
 import { eventsAPI } from '../lib/api'
 
 interface IdCardDesign {
@@ -38,20 +39,37 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         backgroundColor: '#ffffff',
         sponsorLogo: null
     })
+    const [certificateConfig, setCertificateConfig] = useState<any>(null)
+    const [downloadingCertificate, setDownloadingCertificate] = useState(false)
 
-    // Fetch event design when modal opens
+    // Fetch event design and certificate config when modal opens
     useEffect(() => {
         if (isOpen && eventId) {
+            // Fetch ID Card Design
             eventsAPI.getIdCardDesign(eventId)
                 .then(d => setDesign(d))
                 .catch(() => {
-                    // Use default design on error
                     setDesign({
                         primaryColor: '#1e7b49',
                         backgroundColor: '#ffffff',
                         sponsorLogo: null
                     })
                 })
+
+            // Fetch Event Details (for certificate config)
+            eventsAPI.get(eventId)
+                .then(event => {
+                    if (event.certificate_config) {
+                        try {
+                            setCertificateConfig(JSON.parse(event.certificate_config))
+                        } catch (e) {
+                            console.error("Failed to parse cert config", e)
+                        }
+                    } else {
+                        setCertificateConfig(null)
+                    }
+                })
+                .catch(err => console.error("Failed to fetch event details", err))
         }
     }, [isOpen, eventId])
 
@@ -177,7 +195,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             if (participant.city) {
                 ctx.fillStyle = '#6b7280'
                 ctx.font = '13px Arial, sans-serif'
-                ctx.fillText(`📍 ${participant.city}`, width / 2, 420)
+                ctx.fillText(`🏢 ${participant.city}`, width / 2, 420)
             }
 
             // Registration ID badge
@@ -322,6 +340,101 @@ Sampai jumpa di acara! 🙏`
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank')
     }
 
+    const handleDownloadCertificate = async () => {
+        if (!participant || !certificateConfig || !certificateConfig.enabled) return
+
+        try {
+            setDownloadingCertificate(true)
+
+            // Create PDF with A4 landscape
+            // A4 in mm: 297 x 210
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            })
+
+            const width = doc.internal.pageSize.getWidth()
+            const height = doc.internal.pageSize.getHeight()
+
+            // Load background if exists
+            if (certificateConfig.backgroundUrl) {
+                const img = new Image()
+                img.crossOrigin = "Anonymous"
+                img.src = certificateConfig.backgroundUrl
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve
+                    img.onerror = reject
+                })
+                doc.addImage(img, 'JPEG', 0, 0, width, height)
+            }
+
+            // Add elements
+            for (const el of certificateConfig.elements) {
+                if (el.type === 'text') {
+                    let text = el.label
+                    // Placeholders
+                    if (text === '{Nama Peserta}') text = participant.full_name
+                    if (text === '{ID Registrasi}') text = participant.registration_id
+                    if (text === '{Judul Event}') text = participant.event_title || ''
+                    if (text === '{Tanggal}') text = formatDate(participant.event_date)
+
+                    // Font conversion
+                    doc.setFontSize(el.fontSize)
+                    doc.setTextColor(el.color)
+
+                    // Font mapping
+                    let fontName = 'helvetica'
+
+                    if (el.fontFamily.includes('Playfair Display') || el.fontFamily.includes('Merriweather')) {
+                        fontName = 'times'
+                    }
+                    if (el.fontFamily.includes('Work Sans') || el.fontFamily.includes('Helvetica')) {
+                        fontName = 'helvetica'
+                    }
+
+                    doc.setFont(fontName, 'bold')
+
+                    // Align logic
+                    const x = (el.x / 100) * width
+                    const y = (el.y / 100) * height
+
+                    doc.text(text, x, y, { align: el.align })
+                } else if (el.type === 'qr') {
+                    // Generate QR
+                    try {
+                        const qrDataUrl = await QRCode.toDataURL(participant.qr_code, {
+                            width: 500,
+                            margin: 1,
+                            color: {
+                                dark: '#000000',
+                                light: '#ffffff'
+                            }
+                        })
+
+                        const sizePercent = el.fontSize / 800
+                        const sizeMm = sizePercent * width
+                        const x = (el.x / 100) * width
+                        const y = (el.y / 100) * height
+
+                        doc.addImage(qrDataUrl, 'PNG', x - (sizeMm / 2), y - (sizeMm / 2), sizeMm, sizeMm)
+
+                    } catch (e) {
+                        console.error("Failed to generate QR for certificate", e)
+                    }
+                }
+            }
+
+            doc.save(`Certificate_${participant.full_name.replace(/\s+/g, '_')}.pdf`)
+
+        } catch (err) {
+            console.error('Certificate generation failed:', err)
+            alert('Gagal mengunduh sertifikat. Silakan coba lagi.')
+        } finally {
+            setDownloadingCertificate(false)
+        }
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             {/* Close button outside card */}
@@ -381,7 +494,7 @@ Sampai jumpa di acara! 🙏`
                     {/* City/Location */}
                     {participant.city && (
                         <div className="flex items-center justify-center gap-2 text-gray-500 mb-4">
-                            <span className="material-symbols-outlined text-[18px]">location_on</span>
+                            <span className="material-symbols-outlined text-[18px]">apartment</span>
                             <span className="text-sm">{participant.city}</span>
                         </div>
                     )}
@@ -393,20 +506,67 @@ Sampai jumpa di acara! 🙏`
                         </p>
                     </div>
 
-                    {/* Sponsor Logo */}
-                    {design.sponsorLogo && (
-                        <div className="flex justify-center">
+                    {/* Note with Icon (if present) OR Sponsor Logo */}
+                    {participant.note ? (
+                        <div className={`mt-4 mx-2 p-3 rounded-lg text-sm text-center font-medium opacity-90 shadow-sm border ${participant.icon_type === 'danger' ? 'bg-red-50 text-red-700 border-red-100' :
+                            participant.icon_type === 'warning' ? 'bg-orange-50 text-orange-700 border-orange-100' :
+                                'bg-blue-50 text-blue-700 border-blue-100'
+                            }`}>
+                            <div className="flex items-center justify-center gap-1.5 mb-1.5 opacity-80">
+                                <span className="material-symbols-outlined text-[18px]">
+                                    {participant.icon_type === 'danger' ? 'error' :
+                                        participant.icon_type === 'warning' ? 'warning' : 'info'}
+                                </span>
+                                <span className="uppercase tracking-wider text-[10px] font-bold">
+                                    {participant.icon_type || 'INFO'}
+                                </span>
+                            </div>
+                            <p className="whitespace-pre-wrap break-words leading-relaxed text-xs sm:text-sm">
+                                {participant.note.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+                                    part.match(/^https?:\/\//) ? (
+                                        <a
+                                            key={i}
+                                            href={part}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="underline font-bold hover:opacity-75 transition-opacity"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {part}
+                                        </a>
+                                    ) : part
+                                )}
+                            </p>
+                        </div>
+                    ) : design.sponsorLogo ? (
+                        <div className="flex justify-center mt-4">
                             <img
                                 src={design.sponsorLogo}
                                 alt="Sponsor"
                                 className="max-h-12 max-w-[150px] object-contain"
                             />
                         </div>
-                    )}
+                    ) : null}
                 </div>
 
                 {/* Action Buttons */}
                 <div className="px-6 pb-6">
+                    {/* Certificate Download Button */}
+                    {certificateConfig?.enabled && (
+                        <button
+                            onClick={handleDownloadCertificate}
+                            disabled={downloadingCertificate}
+                            className="w-full mb-3 flex items-center justify-center gap-2 px-4 py-3 bg-yellow-500 text-white rounded-xl font-bold hover:bg-yellow-600 transition-colors disabled:opacity-50"
+                        >
+                            {downloadingCertificate ? (
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                            ) : (
+                                <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
+                            )}
+                            {downloadingCertificate ? 'Generating...' : 'Download Certificate'}
+                        </button>
+                    )}
+
                     {/* WhatsApp Status Message */}
                     {waMessage && (
                         <div className={`mb-3 p-3 rounded-lg text-sm font-medium ${waMessage.type === 'success'

@@ -24,6 +24,8 @@ interface CertificateConfig {
 interface CertificateEditorProps {
     config: CertificateConfig | null;
     onChange: (config: CertificateConfig) => void;
+    onSave?: () => void;
+    isSaving?: boolean;
 }
 
 const DEFAULT_CONFIG: CertificateConfig = {
@@ -117,7 +119,7 @@ const DraggableItem = ({ el, handleDragStop }: DraggableItemProps) => {
     )
 }
 
-export default function CertificateEditor({ config, onChange }: CertificateEditorProps) {
+export default function CertificateEditor({ config, onChange, onSave, isSaving = false }: CertificateEditorProps) {
     const [localConfig, setLocalConfig] = useState<CertificateConfig>(() => {
         if (config) {
             return {
@@ -201,21 +203,7 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
         updateConfig({ ...localConfig, elements: [...localConfig.elements, newElement] })
     }
 
-    const addQrElement = () => {
-        const newId = `qr_${Date.now()}`
-        const newElement: CertificateElement = {
-            id: newId,
-            type: 'qr',
-            label: 'QR Code',
-            x: 50,
-            y: 50,
-            fontSize: 100, // Size of QR in px
-            color: '#000000',
-            fontFamily: 'sans-serif',
-            align: 'center'
-        }
-        updateConfig({ ...localConfig, elements: [...localConfig.elements, newElement] })
-    }
+
 
     const removeElement = (id: string) => {
         const newElements = localConfig.elements.filter(el => el.id !== id)
@@ -301,6 +289,27 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
                 {/* Sidebar Controls */}
                 <div className="lg:col-span-3 flex flex-col gap-6">
 
+                    {/* Save Button */}
+                    {onSave && (
+                        <button
+                            onClick={onSave}
+                            disabled={isSaving}
+                            className="w-full py-3 px-6 rounded-xl bg-primary text-white font-bold hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm transition-all transform active:scale-95"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined text-[20px]">save</span>
+                                    Save Design
+                                </>
+                            )}
+                        </button>
+                    )}
+
                     {/* Status & General */}
                     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
                         <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Configuration</h3>
@@ -315,13 +324,32 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
 
                         <div>
                             <label className="block text-xs font-medium text-gray-500 mb-2">Background Image</label>
-                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                    <span className="material-symbols-outlined text-gray-400 text-3xl mb-2">upload_file</span>
-                                    <p className="text-xs text-gray-500">{uploading ? 'Uploading...' : 'Click to upload'}</p>
+                            {localConfig.backgroundUrl ? (
+                                <div className="relative w-full h-32 border-2 border-gray-200 rounded-lg overflow-hidden group">
+                                    <img
+                                        src={localConfig.backgroundUrl}
+                                        alt="Background"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => updateConfig({ ...localConfig, backgroundUrl: '' })}
+                                            className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg transform hover:scale-110"
+                                            title="Remove Image"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">close</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundUpload} />
-                            </label>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <span className="material-symbols-outlined text-gray-400 text-3xl mb-2">upload_file</span>
+                                        <p className="text-xs text-gray-500">{uploading ? 'Uploading...' : 'Click to upload'}</p>
+                                    </div>
+                                    <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundUpload} />
+                                </label>
+                            )}
                         </div>
 
                         {/* Add Elements Buttons */}
@@ -332,13 +360,6 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
                             >
                                 <span className="material-symbols-outlined text-[16px]">add_box</span>
                                 Add Text
-                            </button>
-                            <button
-                                onClick={addQrElement}
-                                className="flex-1 flex items-center justify-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded-lg transition-colors"
-                            >
-                                <span className="material-symbols-outlined text-[16px]">qr_code_2</span>
-                                Add QR
                             </button>
                         </div>
                     </div>

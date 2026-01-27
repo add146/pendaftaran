@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { eventsAPI, uploadAPI, type Event } from '../../lib/api'
 import CustomFieldsEditor from '../../components/CustomFieldsEditor'
 import CertificateEditor from '../../components/CertificateEditor'
+import IDCardEditor from '../../components/IDCardEditor'
 import { useSearchParams } from 'react-router-dom'
 
 interface TicketType {
@@ -13,12 +14,13 @@ interface TicketType {
 
 export default function EditEvent() {
     const { id } = useParams<{ id: string }>()
-    const navigate = useNavigate()
+    // const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'general')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
+    const [showSuccess, setShowSuccess] = useState(false)
 
     const [formData, setFormData] = useState({
         title: '',
@@ -166,6 +168,7 @@ export default function EditEvent() {
 
         setSaving(true)
         setError('')
+        setShowSuccess(false)
 
         try {
             await eventsAPI.update(id!, {
@@ -195,7 +198,12 @@ export default function EditEvent() {
                 certificate_config: formData.certificate_config ? JSON.stringify(formData.certificate_config) : null
             } as Record<string, unknown>)
 
-            navigate('/events')
+            setShowSuccess(true)
+            setTimeout(() => setShowSuccess(false), 3000)
+
+            // Re-fetch data to ensure everything is in sync (optional but good for consistency)
+            // But since we updated local state, it might be fine. 
+            // We do NOT navigate away.
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to update event')
         } finally {
@@ -245,6 +253,12 @@ export default function EditEvent() {
                         >
                             E-Certificate
                         </button>
+                        <button
+                            onClick={() => setActiveTab('id-card')}
+                            className={`pb-3 px-4 font-medium transition-colors border-b-2 ${activeTab === 'id-card' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                        >
+                            ID Card
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -252,6 +266,12 @@ export default function EditEvent() {
                         {activeTab === 'general' ? (
                             <>
                                 <div className="lg:col-span-2 space-y-6">
+                                    {showSuccess && (
+                                        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2 animate-fadeIn">
+                                            <span className="material-symbols-outlined">check_circle</span>
+                                            Event updated successfully!
+                                        </div>
+                                    )}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <h3 className="text-lg font-bold mb-4">Event Details</h3>
 
@@ -424,7 +444,6 @@ export default function EditEvent() {
                                         </div>
 
                                         <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
-                                        <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
                                     </div>
 
                                     {/* Additional Info (Note & Icon) */}
@@ -441,6 +460,7 @@ export default function EditEvent() {
                                                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-white text-gray-900"
                                                 />
                                             </div>
+
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">Icon Type</label>
                                                 <div className="flex gap-4">
@@ -767,36 +787,25 @@ export default function EditEvent() {
                                     </button>
                                 </div>
                             </>
-                        ) : (
+                        ) : activeTab === 'certificate' ? (
                             <div className="lg:col-span-3">
                                 <CertificateEditor
                                     config={formData.certificate_config}
                                     onChange={(newConfig) => updateField('certificate_config', newConfig as any)}
+                                    onSave={handleSubmit}
+                                    isSaving={saving}
                                 />
-                                <div className="mt-6 flex justify-end">
-                                    <button
-                                        onClick={handleSubmit}
-                                        disabled={saving}
-                                        className="py-3 px-6 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        {saving ? (
-                                            <>
-                                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                Saving...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span className="material-symbols-outlined text-[20px]">save</span>
-                                                Save Configuration
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
+                            </div>
+                        ) : null}
+
+                        {activeTab === 'id-card' && (
+                            <div className="lg:col-span-3">
+                                {id && <IDCardEditor eventId={id} />}
                             </div>
                         )}
                     </div>
                 </div>
-            </main >
-        </div >
+            </main>
+        </div>
     )
 }

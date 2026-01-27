@@ -668,6 +668,7 @@ export interface SubscriptionPayment {
 
 export interface LandingPageConfig {
     publicRegistrationEnabled?: boolean
+    favicon?: string
     header?: {
         logoUrl?: string
         brandName?: string

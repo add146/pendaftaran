@@ -127,7 +127,7 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 
   const participant = await c.env.DB.prepare(`
     SELECT p.*, t.name as ticket_name, t.price as ticket_price,
-           e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design,
+           e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design, e.certificate_config,
            e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions,
            e.note, e.icon_type
     FROM participants p
@@ -176,7 +176,8 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     online_instructions: participant.online_instructions,
     attendance_type: participant.attendance_type,
     note: participant.note,
-    icon_type: participant.icon_type
+    icon_type: participant.icon_type,
+    certificate_config: participant.certificate_config
   })
 })
 // Get landing page configuration

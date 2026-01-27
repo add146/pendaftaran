@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { Helmet } from 'react-helmet-async'
 import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField } from '../../lib/api'
 
 export default function EventRegistration() {
@@ -411,6 +412,24 @@ ${bankSection}`
 
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col">
+            <Helmet>
+                <title>{event?.title || 'Pendaftaran QR'}</title>
+                <meta name="description" content={event?.description?.substring(0, 160).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
+
+                {/* Open Graph */}
+                <meta property="og:title" content={event?.title || 'Pendaftaran QR'} />
+                <meta property="og:description" content={event?.description?.substring(0, 200).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
+                {images.length > 0 && <meta property="og:image" content={images[0]} />}
+                <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="Pendaftaran QR" />
+
+                {/* Twitter */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={event?.title || 'Pendaftaran QR'} />
+                <meta name="twitter:description" content={event?.description?.substring(0, 200).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
+                {images.length > 0 && <meta name="twitter:image" content={images[0]} />}
+            </Helmet>
+
             {/* Header */}
             <header className="flex items-center justify-between border-b border-border-light bg-white px-6 py-4 sticky top-0 z-50">
                 <Link to="/" className="flex items-center gap-3">

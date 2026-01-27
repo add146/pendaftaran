@@ -141,13 +141,7 @@ export default function Events() {
 
                                         {isAdmin && (
                                             <div className="absolute top-4 right-4 z-10 flex gap-2">
-                                                <Link
-                                                    to={`/events/${event.id}/edit`}
-                                                    className="bg-white text-teal-700 w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-gray-50"
-                                                    title="Edit Event"
-                                                >
-                                                    <span className="material-symbols-outlined text-[20px]">edit</span>
-                                                </Link>
+
                                                 <button
                                                     onClick={() => handleDelete(event.id, event.title)}
                                                     className="bg-red-600 text-white w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-red-700"
@@ -184,34 +178,24 @@ export default function Events() {
 
                                         {/* Bottom Actions */}
                                         <div className="flex gap-2 pt-4 border-t border-gray-100 mt-auto">
-                                            {/* ID Cards (Teal/Dark Green) */}
-                                            <Link
-                                                to={`/events/${event.id}/id-cards`}
-                                                className="flex-none sm:flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-teal-800 hover:bg-teal-900 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 w-10 sm:w-auto"
-                                                title="ID Cards"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px] sm:text-[16px]">badge</span>
-                                                <span className="hidden sm:inline">ID Cards</span>
-                                            </Link>
-
                                             {/* Participants (Orange) - Wider on mobile */}
                                             <Link
                                                 to={`/events/${event.id}/participants`}
-                                                className="flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
+                                                className="flex-[7] flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
                                             >
                                                 <span className="material-symbols-outlined text-[18px] sm:text-[16px]">group</span>
                                                 <span>Participants</span>
                                             </Link>
 
-                                            {/* Edit (Teal) - Admin Only */}
+                                            {/* Edit (Blue) - Admin Only */}
                                             {isAdmin && (
                                                 <Link
-                                                    to={`/events/${event.id}/edit?tab=certificate`}
-                                                    className="flex-none sm:flex-1 flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1 w-10 sm:w-auto"
-                                                    title="Certificate"
+                                                    to={`/events/${event.id}/edit`}
+                                                    className="flex-[3] flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-white text-teal-700 border border-teal-700 hover:bg-teal-50 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
+                                                    title="Edit Event"
                                                 >
-                                                    <span className="material-symbols-outlined text-[18px] sm:text-[16px]">workspace_premium</span>
-                                                    <span className="hidden sm:inline">Cert</span>
+                                                    <span className="material-symbols-outlined text-[18px] sm:text-[16px]">edit</span>
+                                                    <span>Edit</span>
                                                 </Link>
                                             )}
                                         </div>
