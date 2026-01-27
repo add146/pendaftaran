@@ -62,6 +62,61 @@ const FONTS = [
     { name: 'Simple Sans', value: 'Helvetica' },
 ]
 
+// Sub-component to handle nodeRef for Draggable
+interface DraggableItemProps {
+    el: CertificateElement
+    handleDragStop: (id: string, e: any, data: { x: number, y: number }) => void
+}
+
+const DraggableItem = ({ el, handleDragStop }: DraggableItemProps) => {
+    const nodeRef = useRef<HTMLDivElement>(null)
+
+    return (
+        <Draggable
+            nodeRef={nodeRef}
+            bounds="parent"
+            position={{
+                x: (el.x / 100) * 800,
+                y: (el.y / 100) * 565
+            }}
+            onStop={(e, data) => handleDragStop(el.id, e, data)}
+        >
+            <div
+                ref={nodeRef}
+                className={`absolute cursor-move border border-transparent hover:border-primary/50 hover:bg-primary/5 rounded transition-all group z-10 ${el.type === 'text' ? 'px-4 py-2' : ''}`}
+                style={{
+                    fontSize: `${el.fontSize}px`,
+                    color: el.color,
+                    fontFamily: el.fontFamily,
+                    textAlign: el.align,
+                    minWidth: el.type === 'text' ? '200px' : 'auto',
+                    transform: 'translate(-50%, -50%)' // Center anchor
+                }}
+            >
+                {/* Handles/Indicators */}
+                <div className="absolute -top-2 -left-2 w-4 h-4 bg-white border border-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-white border border-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                {el.type === 'text' ? el.label : (
+                    <div
+                        style={{
+                            width: `${el.fontSize}px`,
+                            height: `${el.fontSize}px`,
+                            backgroundColor: 'white',
+                            border: '2px solid black',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <span className="material-symbols-outlined text-black" style={{ fontSize: `${el.fontSize * 0.5}px` }}>qr_code_2</span>
+                    </div>
+                )}
+            </div>
+        </Draggable>
+    )
+}
+
 export default function CertificateEditor({ config, onChange }: CertificateEditorProps) {
     const [localConfig, setLocalConfig] = useState<CertificateConfig>(() => {
         if (config) {
@@ -109,12 +164,6 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
 
     const handleDragStop = (id: string, _e: any, data: { x: number, y: number }) => {
         if (!containerRef.current) return
-
-        // Convert pixels to percentage
-        // Convert pixels to percentage
-        // Wait, React-Draggable 'position' prop makes it controlled. 
-        // We are using 'position' prop so data.x/y is the NEW position.
-        // 800px width fixed.
 
         const xPercent = (data.x / 800) * 100
         const yPercent = (data.y / 565) * 100
@@ -404,47 +453,11 @@ export default function CertificateEditor({ config, onChange }: CertificateEdito
                                 )}
 
                                 {(localConfig.elements || []).map(el => (
-                                    <Draggable
+                                    <DraggableItem
                                         key={el.id}
-                                        bounds="parent"
-                                        position={{
-                                            x: (el.x / 100) * 800,
-                                            y: (el.y / 100) * 565
-                                        }}
-                                        onStop={(e, data) => handleDragStop(el.id, e, data)}
-                                    >
-                                        <div
-                                            className={`absolute cursor-move border border-transparent hover:border-primary/50 hover:bg-primary/5 rounded transition-all group z-10 ${el.type === 'text' ? 'px-4 py-2' : ''}`}
-                                            style={{
-                                                fontSize: `${el.fontSize}px`, // For QR, this might just affect container or icon size
-                                                color: el.color,
-                                                fontFamily: el.fontFamily,
-                                                textAlign: el.align,
-                                                minWidth: el.type === 'text' ? '200px' : 'auto',
-                                                transform: 'translate(-50%, -50%)'
-                                            }}
-                                        >
-                                            {/* Handles/Indicators */}
-                                            <div className="absolute -top-2 -left-2 w-4 h-4 bg-white border border-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-white border border-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
-                                            {el.type === 'text' ? el.label : (
-                                                <div
-                                                    style={{
-                                                        width: `${el.fontSize}px`,
-                                                        height: `${el.fontSize}px`,
-                                                        backgroundColor: 'white',
-                                                        border: '2px solid black',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                >
-                                                    <span className="material-symbols-outlined text-black" style={{ fontSize: `${el.fontSize * 0.5}px` }}>qr_code_2</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </Draggable>
+                                        el={el}
+                                        handleDragStop={handleDragStop}
+                                    />
                                 ))}
                             </div>
                         </div>
