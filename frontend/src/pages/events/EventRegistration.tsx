@@ -442,6 +442,16 @@ ${bankSection}`
 
             <main className="flex-grow">
                 <div className="max-w-4xl mx-auto px-4 py-8">
+                    {/* Mobile Registration Button */}
+                    <button
+                        onClick={() => document.getElementById('registration-form')?.scrollIntoView({ behavior: 'smooth' })}
+                        className="lg:hidden w-full bg-orange-500 text-white font-bold py-3 rounded-xl mb-6 flex items-center justify-center gap-2 shadow-sm hover:bg-orange-600 transition-colors"
+                    >
+                        <span className="material-symbols-outlined">keyboard_arrow_down</span>
+                        REGISTRASI
+                        <span className="material-symbols-outlined">keyboard_arrow_down</span>
+                    </button>
+
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                         {/* Event Details */}
                         <div className="lg:col-span-3 space-y-6">
@@ -604,7 +614,7 @@ ${bankSection}`
                         {/* Registration Form */}
                         <div className="lg:col-span-2">
                             <div className="lg:sticky lg:top-24 space-y-6">
-                                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                                <div id="registration-form" className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                                     <h3 className="text-xl font-bold mb-6">Register Now</h3>
 
                                     {!event?.registration_available ? (
