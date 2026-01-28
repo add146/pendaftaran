@@ -600,15 +600,14 @@ Sampai jumpa di acara! 🙏`
                     </div>
                 </div>
             </div>
+
+            {/* Powered by (Outside card) */}
+            <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center justify-center gap-1 text-center pointer-events-none">
+                <span className="text-[10px] text-white/60 uppercase tracking-widest drop-shadow-md">Powered by</span>
+                <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="pointer-events-auto hover:opacity-80 transition-opacity">
+                    <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[25px] w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-all" />
+                </a>
+            </div>
         </div>
-            
-            {/* Powered by (Outside card) */ }
-    <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center justify-center gap-1 text-center pointer-events-none">
-        <span className="text-[10px] text-white/60 uppercase tracking-widest drop-shadow-md">Powered by</span>
-        <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="pointer-events-auto hover:opacity-80 transition-opacity">
-            <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[25px] w-auto brightness-0 invert opacity-80 hover:opacity-100 transition-all" />
-        </a>
-    </div>
-        </div >
     )
 }
