@@ -54,13 +54,8 @@ settings.get('/:key', async (c) => {
     const isSuperAdmin = user.role === 'super_admin'
     const isSystemKey = SYSTEM_SETTINGS_KEYS.includes(key)
 
-    let result
-    if (isSuperAdmin && isSystemKey) {
-        result = await c.env.DB.prepare(
-            'SELECT value FROM settings WHERE key = ? AND (organization_id = ? OR organization_id = \'org_system\') ORDER BY organization_id DESC' // org_system fallback? no, we want specific
-        ).bind(key, user.orgId).first()
-
-        // Actually for system keys we prefer org_system value
+    if (isSystemKey) {
+        // System keys are always fetched from org_system
         result = await c.env.DB.prepare(
             'SELECT value FROM settings WHERE key = ? AND organization_id = \'org_system\''
         ).bind(key).first()
@@ -94,8 +89,11 @@ settings.post('/', async (c) => {
     const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
     // Determine target organization ID
+    // Determine target organization ID
     let targetOrgId = user.orgId
-    if (user.role === 'super_admin' && SYSTEM_SETTINGS_KEYS.includes(key)) {
+
+    // System settings always go to org_system
+    if (SYSTEM_SETTINGS_KEYS.includes(key)) {
         targetOrgId = 'org_system'
     }
 
@@ -132,8 +130,11 @@ settings.post('/bulk', async (c) => {
         const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
         // Determine target organization ID
+        // Determine target organization ID
         let targetOrgId = user.orgId
-        if (user.role === 'super_admin' && SYSTEM_SETTINGS_KEYS.includes(key)) {
+
+        // System settings always go to org_system
+        if (SYSTEM_SETTINGS_KEYS.includes(key)) {
             targetOrgId = 'org_system'
         }
 
