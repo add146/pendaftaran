@@ -141,9 +141,11 @@ events.put('/:id', authMiddleware, async (c) => {
         const closeTime = eventTimeUTC + (60 * 60 * 1000) // +1 hour window
 
         if (Date.now() < closeTime) {
-          console.log('[AutoOpen] Date updated to future. Re-opening event.')
+          console.log(`[AutoOpen] Date updated to future. Re-opening event. Now: ${Date.now()}, CloseTime: ${closeTime}`)
           finalStatus = 'open'
           finalAutoClose = 1
+        } else {
+          console.log(`[AutoOpen] Event past close window. Now: ${Date.now()}, CloseTime: ${closeTime}`)
         }
       } catch (e) {
         console.error('[AutoOpen] Error parsing date:', e)
