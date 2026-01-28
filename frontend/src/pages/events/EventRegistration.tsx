@@ -847,6 +847,14 @@ ${bankSection}`
                                     </form>
                                 )}
                             </div>
+
+                            {/* Powered by */}
+                            <div className="mt-8 flex flex-col items-center justify-center gap-2 text-center">
+                                <span className="text-xs text-gray-400">Powered by</span>
+                                <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                                    <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[30px] w-auto" />
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
