@@ -436,7 +436,7 @@ ${bankSection}`
                     <div className="size-8 text-primary">
                         <span className="material-symbols-outlined text-[32px]">confirmation_number</span>
                     </div>
-                    <h2 className="text-lg font-bold">Pendaftaran QR</h2>
+                    <h2 className="text-lg font-bold truncate">Pendaftaran - {event?.title || 'Loading...'}</h2>
                 </Link>
             </header>
 
