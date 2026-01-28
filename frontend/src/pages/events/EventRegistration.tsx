@@ -603,258 +603,259 @@ ${bankSection}`
 
                         {/* Registration Form */}
                         <div className="lg:col-span-2">
-                            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 lg:sticky lg:top-24">
-                                <h3 className="text-xl font-bold mb-6">Register Now</h3>
+                            <div className="lg:sticky lg:top-24 space-y-6">
+                                <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
+                                    <h3 className="text-xl font-bold mb-6">Register Now</h3>
 
-                                {!event?.registration_available ? (
-                                    <div className="text-center py-8">
-                                        <span className="material-symbols-outlined text-[48px] text-gray-300 mb-3">event_busy</span>
-                                        <p className="text-gray-500">Registration is closed</p>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={handleSubmit} className="space-y-4">
-                                        {error && (
-                                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                                                {error}
-                                            </div>
-                                        )}
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Full Name *</label>
-                                            <input
-                                                type="text"
-                                                value={formData.full_name}
-                                                onChange={e => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                placeholder="Enter your full name"
-                                                required
-                                            />
+                                    {!event?.registration_available ? (
+                                        <div className="text-center py-8">
+                                            <span className="material-symbols-outlined text-[48px] text-gray-300 mb-3">event_busy</span>
+                                            <p className="text-gray-500">Registration is closed</p>
                                         </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Email *</label>
-                                            <input
-                                                type="email"
-                                                value={formData.email}
-                                                onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                placeholder="Enter your email"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">No. WhatsApp *</label>
-                                            <input
-                                                type="tel"
-                                                value={formData.phone}
-                                                onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                placeholder="Contoh: 08123456789"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium mb-1">Kota Tinggal</label>
-                                            <input
-                                                type="text"
-                                                value={formData.city}
-                                                onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                placeholder="Masukkan kota tinggal"
-                                            />
-                                        </div>
-
-
-
-                                        {/* Attendance Type for Hybrid Events */}
-                                        {event?.event_type === 'hybrid' && (
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Attendance Preference</label>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'offline'
-                                                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}>
-                                                        <input
-                                                            type="radio"
-                                                            name="attendance_type"
-                                                            value="offline"
-                                                            checked={formData.attendance_type === 'offline'}
-                                                            onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'offline' }))}
-                                                            className="hidden"
-                                                        />
-                                                        <span className="material-symbols-outlined">accessibility</span>
-                                                        <span className="font-medium">Offline</span>
-                                                    </label>
-                                                    <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'online'
-                                                        ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}>
-                                                        <input
-                                                            type="radio"
-                                                            name="attendance_type"
-                                                            value="online"
-                                                            checked={formData.attendance_type === 'online'}
-                                                            onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'online' }))}
-                                                            className="hidden"
-                                                        />
-                                                        <span className="material-symbols-outlined">videocam</span>
-                                                        <span className="font-medium">Online</span>
-                                                    </label>
+                                    ) : (
+                                        <form onSubmit={handleSubmit} className="space-y-4">
+                                            {error && (
+                                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                                                    {error}
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {/* Ticket Types for paid events */}
-                                        {event?.event_mode === 'paid' && event.ticket_types && event.ticket_types.length > 0 && (
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Select Ticket</label>
-                                                <div className="space-y-2">
-                                                    {event.ticket_types.map(ticket => (
-                                                        <label
-                                                            key={ticket.id}
-                                                            className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-colors ${formData.ticket_type_id === ticket.id
-                                                                ? 'border-primary bg-primary/5'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                }`}
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <input
-                                                                    type="radio"
-                                                                    name="ticket"
-                                                                    value={ticket.id}
-                                                                    checked={formData.ticket_type_id === ticket.id}
-                                                                    onChange={() => setFormData(prev => ({ ...prev, ticket_type_id: ticket.id }))}
-                                                                    className="w-4 h-4 text-primary"
-                                                                />
-                                                                <span className="font-medium">{ticket.name}</span>
-                                                            </div>
-                                                            <span className="font-bold text-primary">
-                                                                Rp {ticket.price.toLocaleString('id-ID')}
-                                                            </span>
+                                                <label className="block text-sm font-medium mb-1">Full Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.full_name}
+                                                    onChange={e => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    placeholder="Enter your full name"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Email *</label>
+                                                <input
+                                                    type="email"
+                                                    value={formData.email}
+                                                    onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    placeholder="Enter your email"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">No. WhatsApp *</label>
+                                                <input
+                                                    type="tel"
+                                                    value={formData.phone}
+                                                    onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    placeholder="Contoh: 08123456789"
+                                                    required
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-1">Kota Tinggal</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.city}
+                                                    onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                    placeholder="Masukkan kota tinggal"
+                                                />
+                                            </div>
+
+
+
+                                            {/* Attendance Type for Hybrid Events */}
+                                            {event?.event_type === 'hybrid' && (
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Attendance Preference</label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'offline'
+                                                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}>
+                                                            <input
+                                                                type="radio"
+                                                                name="attendance_type"
+                                                                value="offline"
+                                                                checked={formData.attendance_type === 'offline'}
+                                                                onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'offline' }))}
+                                                                className="hidden"
+                                                            />
+                                                            <span className="material-symbols-outlined">accessibility</span>
+                                                            <span className="font-medium">Offline</span>
                                                         </label>
-                                                    ))}
+                                                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'online'
+                                                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            }`}>
+                                                            <input
+                                                                type="radio"
+                                                                name="attendance_type"
+                                                                value="online"
+                                                                checked={formData.attendance_type === 'online'}
+                                                                onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'online' }))}
+                                                                className="hidden"
+                                                            />
+                                                            <span className="material-symbols-outlined">videocam</span>
+                                                            <span className="font-medium">Online</span>
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
 
-                                        {/* Custom Fields */}
-                                        {customFields.map(field => (
-                                            <div key={field.id}>
-                                                <label className="block text-sm font-medium mb-1">
-                                                    {field.label} {field.required && '*'}
-                                                </label>
-                                                {field.field_type === 'text' && (
-                                                    <input
-                                                        type="text"
-                                                        value={(customFieldResponses[field.id] as string) || ''}
-                                                        onChange={e => setCustomFieldResponses(prev => ({
-                                                            ...prev,
-                                                            [field.id]: e.target.value
-                                                        }))}
-                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                        required={field.required}
-                                                    />
-                                                )}
-                                                {field.field_type === 'textarea' && (
-                                                    <textarea
-                                                        value={(customFieldResponses[field.id] as string) || ''}
-                                                        onChange={e => setCustomFieldResponses(prev => ({
-                                                            ...prev,
-                                                            [field.id]: e.target.value
-                                                        }))}
-                                                        rows={4}
-                                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
-                                                        required={field.required}
-                                                    />
-                                                )}
-                                                {field.field_type === 'radio' && field.options && (
+                                            {/* Ticket Types for paid events */}
+                                            {event?.event_mode === 'paid' && event.ticket_types && event.ticket_types.length > 0 && (
+                                                <div>
+                                                    <label className="block text-sm font-medium mb-2">Select Ticket</label>
                                                     <div className="space-y-2">
-                                                        {field.options.map((option, index) => (
-                                                            <label key={index} className="flex items-center gap-2 cursor-pointer">
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`field_${field.id}`}
-                                                                    value={option}
-                                                                    checked={customFieldResponses[field.id] === option}
-                                                                    onChange={e => setCustomFieldResponses(prev => ({
-                                                                        ...prev,
-                                                                        [field.id]: e.target.value
-                                                                    }))}
-                                                                    className="w-4 h-4 text-primary"
-                                                                    required={field.required && !customFieldResponses[field.id]}
-                                                                />
-                                                                <span>{option}</span>
+                                                        {event.ticket_types.map(ticket => (
+                                                            <label
+                                                                key={ticket.id}
+                                                                className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-colors ${formData.ticket_type_id === ticket.id
+                                                                    ? 'border-primary bg-primary/5'
+                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                    }`}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="ticket"
+                                                                        value={ticket.id}
+                                                                        checked={formData.ticket_type_id === ticket.id}
+                                                                        onChange={() => setFormData(prev => ({ ...prev, ticket_type_id: ticket.id }))}
+                                                                        className="w-4 h-4 text-primary"
+                                                                    />
+                                                                    <span className="font-medium">{ticket.name}</span>
+                                                                </div>
+                                                                <span className="font-bold text-primary">
+                                                                    Rp {ticket.price.toLocaleString('id-ID')}
+                                                                </span>
                                                             </label>
                                                         ))}
                                                     </div>
-                                                )}
-                                                {field.field_type === 'checkbox' && field.options && (
-                                                    <div className="space-y-2">
-                                                        {field.options.map((option, index) => {
-                                                            const responses = (customFieldResponses[field.id] || []) as string[]
-                                                            return (
+                                                </div>
+                                            )}
+
+                                            {/* Custom Fields */}
+                                            {customFields.map(field => (
+                                                <div key={field.id}>
+                                                    <label className="block text-sm font-medium mb-1">
+                                                        {field.label} {field.required && '*'}
+                                                    </label>
+                                                    {field.field_type === 'text' && (
+                                                        <input
+                                                            type="text"
+                                                            value={(customFieldResponses[field.id] as string) || ''}
+                                                            onChange={e => setCustomFieldResponses(prev => ({
+                                                                ...prev,
+                                                                [field.id]: e.target.value
+                                                            }))}
+                                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            required={field.required}
+                                                        />
+                                                    )}
+                                                    {field.field_type === 'textarea' && (
+                                                        <textarea
+                                                            value={(customFieldResponses[field.id] as string) || ''}
+                                                            onChange={e => setCustomFieldResponses(prev => ({
+                                                                ...prev,
+                                                                [field.id]: e.target.value
+                                                            }))}
+                                                            rows={4}
+                                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                                                            required={field.required}
+                                                        />
+                                                    )}
+                                                    {field.field_type === 'radio' && field.options && (
+                                                        <div className="space-y-2">
+                                                            {field.options.map((option, index) => (
                                                                 <label key={index} className="flex items-center gap-2 cursor-pointer">
                                                                     <input
-                                                                        type="checkbox"
+                                                                        type="radio"
+                                                                        name={`field_${field.id}`}
                                                                         value={option}
-                                                                        checked={responses.includes(option)}
-                                                                        onChange={e => {
-                                                                            const newResponses = e.target.checked
-                                                                                ? [...responses, option]
-                                                                                : responses.filter(r => r !== option)
-                                                                            setCustomFieldResponses(prev => ({
-                                                                                ...prev,
-                                                                                [field.id]: newResponses
-                                                                            }))
-                                                                        }}
-                                                                        className="w-4 h-4 text-primary rounded"
+                                                                        checked={customFieldResponses[field.id] === option}
+                                                                        onChange={e => setCustomFieldResponses(prev => ({
+                                                                            ...prev,
+                                                                            [field.id]: e.target.value
+                                                                        }))}
+                                                                        className="w-4 h-4 text-primary"
+                                                                        required={field.required && !customFieldResponses[field.id]}
                                                                     />
                                                                     <span>{option}</span>
                                                                 </label>
-                                                            )
-                                                        })}
-                                                    </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    {field.field_type === 'checkbox' && field.options && (
+                                                        <div className="space-y-2">
+                                                            {field.options.map((option, index) => {
+                                                                const responses = (customFieldResponses[field.id] || []) as string[]
+                                                                return (
+                                                                    <label key={index} className="flex items-center gap-2 cursor-pointer">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            value={option}
+                                                                            checked={responses.includes(option)}
+                                                                            onChange={e => {
+                                                                                const newResponses = e.target.checked
+                                                                                    ? [...responses, option]
+                                                                                    : responses.filter(r => r !== option)
+                                                                                setCustomFieldResponses(prev => ({
+                                                                                    ...prev,
+                                                                                    [field.id]: newResponses
+                                                                                }))
+                                                                            }}
+                                                                            className="w-4 h-4 text-primary rounded"
+                                                                        />
+                                                                        <span>{option}</span>
+                                                                    </label>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+
+                                            <button
+                                                type="submit"
+                                                disabled={submitting}
+                                                className="w-full py-4 rounded-lg bg-primary text-white font-bold text-lg hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2"
+                                            >
+                                                {submitting ? (
+                                                    <>
+                                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                                        Processing...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="material-symbols-outlined">how_to_reg</span>
+                                                        Register
+                                                    </>
                                                 )}
-                                            </div>
-                                        ))}
+                                            </button>
 
-                                        <button
-                                            type="submit"
-                                            disabled={submitting}
-                                            className="w-full py-4 rounded-lg bg-primary text-white font-bold text-lg hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2"
-                                        >
-                                            {submitting ? (
-                                                <>
-                                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                    Processing...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className="material-symbols-outlined">how_to_reg</span>
-                                                    Register
-                                                </>
+                                            {event?.capacity && (
+                                                <p className="text-center text-sm text-gray-500">
+                                                    {event.registered_count} / {event.capacity} registered
+                                                </p>
                                             )}
-                                        </button>
-
-                                        {event?.capacity && (
-                                            <p className="text-center text-sm text-gray-500">
-                                                {event.registered_count} / {event.capacity} registered
-                                            </p>
-                                        )}
-                                    </form>
-                                )}
+                                        </form>
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* Powered by */}
-                        <div className="mt-8 flex flex-col items-center justify-center gap-1 text-center opacity-80">
-                            <span className="text-[10px] text-gray-400 uppercase tracking-widest">Powered by</span>
-                            <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                                <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[25px] w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all" />
-                            </a>
+                            <div className="flex flex-col items-center justify-center gap-1 text-center opacity-80">
+                                <span className="text-[10px] text-gray-400 uppercase tracking-widest">Powered by</span>
+                                <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
+                                    <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[25px] w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all" />
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
