@@ -413,19 +413,19 @@ ${bankSection}`
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen flex flex-col">
             <Helmet>
-                <title>{event?.title || 'Pendaftaran QR'}</title>
+                <title>{event?.title || 'E-TIKET'}</title>
                 <meta name="description" content={event?.description?.substring(0, 160).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
 
                 {/* Open Graph */}
-                <meta property="og:title" content={event?.title || 'Pendaftaran QR'} />
+                <meta property="og:title" content={event?.title || 'E-TIKET'} />
                 <meta property="og:description" content={event?.description?.substring(0, 200).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
                 {images.length > 0 && <meta property="og:image" content={images[0]} />}
                 <meta property="og:type" content="website" />
-                <meta property="og:site_name" content="Pendaftaran QR" />
+                <meta property="og:site_name" content="E-TIKET" />
 
                 {/* Twitter */}
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={event?.title || 'Pendaftaran QR'} />
+                <meta name="twitter:title" content={event?.title || 'E-TIKET'} />
                 <meta name="twitter:description" content={event?.description?.substring(0, 200).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
                 {images.length > 0 && <meta name="twitter:image" content={images[0]} />}
             </Helmet>
@@ -436,7 +436,7 @@ ${bankSection}`
                     <div className="size-8 text-primary">
                         <span className="material-symbols-outlined text-[32px]">confirmation_number</span>
                     </div>
-                    <h2 className="text-lg font-bold truncate">Pendaftaran - {event?.title || 'Loading...'}</h2>
+                    <h2 className="text-lg font-bold truncate">E-TIKET - {event?.title || 'Loading...'}</h2>
                 </Link>
             </header>
 

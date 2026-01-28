@@ -1,4 +1,4 @@
-# Pendaftaran QR - Event Registration System
+# E-TIKET - Event Registration System
 
 Sistem pendaftaran event dengan QR code check-in untuk masjid dan komunitas.
 

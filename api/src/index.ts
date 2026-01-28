@@ -53,7 +53,7 @@ app.use('*', cors({
 app.get('/', (c) => {
 	return c.json({
 		status: 'ok',
-		message: 'Pendaftaran QR API',
+		message: 'E-TIKET API',
 		version: '1.2.0'
 	})
 })
