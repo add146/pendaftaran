@@ -125,6 +125,31 @@ events.put('/:id', authMiddleware, async (c) => {
     // Update event basic info
     const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
+    // Logic: Auto-reopen event if date is moved to valid future window
+    let finalStatus = status
+    let finalAutoClose = auto_close
+
+    if (body.event_date || body.event_time) {
+      try {
+        const d = body.event_date || existing.event_date
+        const t = body.event_time || existing.event_time || '00:00'
+        const eventDateTimeStr = `${d}T${t}:00`
+
+        const eventTimeRaw = new Date(eventDateTimeStr).getTime()
+        // Convert WIB (UTC+7) to UTC
+        const eventTimeUTC = eventTimeRaw - (7 * 60 * 60 * 1000)
+        const closeTime = eventTimeUTC + (60 * 60 * 1000) // +1 hour window
+
+        if (Date.now() < closeTime) {
+          console.log('[AutoOpen] Date updated to future. Re-opening event.')
+          finalStatus = 'open'
+          finalAutoClose = 1
+        }
+      } catch (e) {
+        console.error('[AutoOpen] Error parsing date:', e)
+      }
+    }
+
     try {
       await c.env.DB.prepare(`
             UPDATE events SET 
@@ -167,7 +192,7 @@ events.put('/:id', authMiddleware, async (c) => {
         account_holder_name ?? null,
         account_number ?? null,
         visibility ?? null,
-        status ?? null,
+        finalStatus ?? null,
         imageUrl,
         event_type || 'offline',
         online_platform ?? null,
@@ -177,7 +202,7 @@ events.put('/:id', authMiddleware, async (c) => {
         note ?? null,
         icon_type ?? 'info',
         body.certificate_config ?? null,
-        auto_close !== undefined ? auto_close : null,
+        finalAutoClose !== undefined ? finalAutoClose : null,
         id
       ).run()
     } catch (dbError: any) {
