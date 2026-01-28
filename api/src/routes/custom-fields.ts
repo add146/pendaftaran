@@ -10,12 +10,13 @@ customFields.post('/:eventId/custom-fields', authMiddleware, async (c) => {
     const user = c.get('user')
     const { eventId } = c.req.param()
     const body = await c.req.json()
-    const { field_type, label, required, options, display_order } = body as {
+    const { field_type, label, required, options, display_order, show_on_id } = body as {
         field_type: 'text' | 'textarea' | 'radio' | 'checkbox'
         label: string
         required?: boolean
         options?: string[]
         display_order?: number
+        show_on_id?: boolean
     }
 
     // Verify user owns this event
@@ -41,8 +42,8 @@ customFields.post('/:eventId/custom-fields', authMiddleware, async (c) => {
     const optionsJson = options ? JSON.stringify(options) : null
 
     await c.env.DB.prepare(`
-        INSERT INTO event_custom_fields (id, event_id, field_type, label, required, options, display_order)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO event_custom_fields (id, event_id, field_type, label, required, options, display_order, show_on_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
         fieldId,
         eventId,
@@ -50,7 +51,8 @@ customFields.post('/:eventId/custom-fields', authMiddleware, async (c) => {
         label,
         required ? 1 : 0,
         optionsJson,
-        display_order || 0
+        display_order || 0,
+        show_on_id ? 1 : 0
     ).run()
 
     return c.json({
@@ -64,7 +66,7 @@ customFields.get('/:eventId/custom-fields', async (c) => {
     const { eventId } = c.req.param()
 
     const fields = await c.env.DB.prepare(`
-        SELECT id, event_id, field_type, label, required, options, display_order, created_at
+        SELECT id, event_id, field_type, label, required, options, display_order, show_on_id, created_at
         FROM event_custom_fields
         WHERE event_id = ?
         ORDER BY display_order ASC, created_at ASC
@@ -74,6 +76,7 @@ customFields.get('/:eventId/custom-fields', async (c) => {
     const parsedFields = fields.results.map((field: any) => ({
         ...field,
         required: field.required === 1,
+        show_on_id: field.show_on_id === 1,
         options: field.options ? JSON.parse(field.options) : null
     }))
 
@@ -85,11 +88,12 @@ customFields.put('/:eventId/custom-fields/:fieldId', authMiddleware, async (c) =
     const user = c.get('user')
     const { eventId, fieldId } = c.req.param()
     const body = await c.req.json()
-    const { label, required, options, display_order } = body as {
+    const { label, required, options, display_order, show_on_id } = body as {
         label?: string
         required?: boolean
         options?: string[]
         display_order?: number
+        show_on_id?: boolean
     }
 
     // Verify user owns this event
@@ -122,13 +126,15 @@ customFields.put('/:eventId/custom-fields/:fieldId', authMiddleware, async (c) =
         SET label = COALESCE(?, label),
             required = COALESCE(?, required),
             options = COALESCE(?, options),
-            display_order = COALESCE(?, display_order)
+            display_order = COALESCE(?, display_order),
+            show_on_id = COALESCE(?, show_on_id)
         WHERE id = ? AND event_id = ?
     `).bind(
         label ?? null,
         required !== undefined ? (required ? 1 : 0) : null,
         optionsJson ?? null,
         display_order ?? null,
+        show_on_id !== undefined ? (show_on_id ? 1 : 0) : null,
         fieldId,
         eventId
     ).run()

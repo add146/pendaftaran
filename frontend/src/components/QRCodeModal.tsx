@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
-import { eventsAPI } from '../lib/api'
+import { eventsAPI, participantsAPI, type Participant } from '../lib/api'
 
 interface IdCardDesign {
     primaryColor: string
@@ -13,20 +13,7 @@ interface QRCodeModalProps {
     isOpen: boolean
     onClose: () => void
     eventId?: string
-    participant: {
-        full_name: string
-        registration_id: string
-        qr_code: string
-        event_title?: string
-        event_date?: string
-        event_time?: string
-        city?: string
-        ticket_name?: string
-        phone?: string
-        attendance_type?: 'offline' | 'online'
-        note?: string
-        icon_type?: 'info' | 'warning' | 'danger'
-    } | null
+    participant: Partial<Participant> | null
 }
 
 export default function QRCodeModal({ isOpen, onClose, eventId, participant }: QRCodeModalProps) {
@@ -41,6 +28,26 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
     })
     const [certificateConfig, setCertificateConfig] = useState<any>(null)
     const [downloadingCertificate, setDownloadingCertificate] = useState(false)
+    const [fullParticipant, setFullParticipant] = useState<Partial<Participant> | null>(null)
+
+    // Sync participant prop to state and fetch details if needed
+    useEffect(() => {
+        if (isOpen && participant) {
+            if (participant.custom_fields) {
+                setFullParticipant(participant)
+            } else if (participant.id) {
+                // Fetch full details including custom_fields (Admin side)
+                participantsAPI.get(participant.id)
+                    .then(p => setFullParticipant(p))
+                    .catch(e => {
+                        console.error("Failed to fetch participant details", e)
+                        setFullParticipant(participant)
+                    })
+            } else {
+                setFullParticipant(participant)
+            }
+        }
+    }, [isOpen, participant])
 
     // Fetch event design and certificate config when modal opens
     useEffect(() => {
@@ -74,10 +81,10 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
     }, [isOpen, eventId])
 
     useEffect(() => {
-        if (isOpen && participant?.qr_code) {
+        if (isOpen && fullParticipant?.qr_code) {
             // Generate visible QR code (white on dark)
             if (canvasRef.current) {
-                QRCode.toCanvas(canvasRef.current, participant.qr_code, {
+                QRCode.toCanvas(canvasRef.current, fullParticipant.qr_code, {
                     width: 160,
                     margin: 1,
                     color: {
@@ -92,13 +99,13 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             // Generate ID Card image
             generateIDCardImage()
         }
-    }, [isOpen, participant, design])
+    }, [isOpen, fullParticipant, design])
 
     const generateIDCardImage = async () => {
-        if (!participant) return
+        if (!fullParticipant || !fullParticipant.qr_code) return
 
         // Generate QR code as data URL first
-        const qrImageUrl = await QRCode.toDataURL(participant.qr_code, {
+        const qrImageUrl = await QRCode.toDataURL(fullParticipant.qr_code, {
             width: 180,
             margin: 1,
             color: {
@@ -112,9 +119,13 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         const ctx = canvas.getContext('2d')
         if (!ctx) return
 
-        // Card dimensions
+        // Calculate height based on content
+        // Base height 550. Add extra for each custom field showing on ID.
+        const customFieldsToShow = fullParticipant.custom_fields?.filter(f => f.show_on_id) || []
+        const extraHeight = customFieldsToShow.length * 25
         const width = 400
-        const height = 550
+        const height = 550 + extraHeight
+
         canvas.width = width
         canvas.height = height
 
@@ -130,7 +141,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         ctx.fillStyle = '#ffffff'
         ctx.font = 'bold 18px Arial, sans-serif'
         ctx.textAlign = 'center'
-        const eventTitle = (participant.event_title || 'EVENT').toUpperCase()
+        const eventTitle = (fullParticipant.event_title || 'EVENT').toUpperCase()
         const maxTitleWidth = width - 40
         let titleFontSize = 18
         ctx.font = `bold ${titleFontSize}px Arial, sans-serif`
@@ -141,10 +152,10 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         ctx.fillText(eventTitle, width / 2, 45)
 
         // Date badge
-        if (participant.event_date) {
-            let dateStr = formatDate(participant.event_date)
-            if (participant.event_time) {
-                dateStr += ` | ${participant.event_time}`
+        if (fullParticipant.event_date) {
+            let dateStr = formatDate(fullParticipant.event_date)
+            if (fullParticipant.event_time) {
+                dateStr += ` | ${fullParticipant.event_time}`
             }
             const dateText = dateStr.toUpperCase()
 
@@ -172,12 +183,10 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             // QR image
             ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
 
-            // Removed: Scan text (no longer needed)
-
             // Participant name
             ctx.fillStyle = '#1f2937'
             ctx.font = 'bold 24px Arial, sans-serif'
-            const name = participant.full_name.toUpperCase()
+            const name = (fullParticipant.full_name || '').toUpperCase()
             let nameFontSize = 24
             ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
             while (ctx.measureText(name).width > width - 40 && nameFontSize > 14) {
@@ -189,14 +198,52 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             // Ticket type with primary color
             ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px Arial, sans-serif'
-            ctx.fillText((participant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 390)
+            ctx.fillText((fullParticipant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 390)
+
+            let currentY = 420
+
+            // Custom Fields (Above City, Bold)
+            if (customFieldsToShow.length > 0) {
+                ctx.fillStyle = '#374151'
+                ctx.font = 'bold 14px Arial, sans-serif'
+                for (const field of customFieldsToShow) {
+                    // Check if response is valid
+                    if (field.response) {
+                        // Truncate if too long
+                        let text = field.response.toString()
+                        if (text.length > 35) text = text.substring(0, 32) + '...'
+                        ctx.fillText(text.toUpperCase(), width / 2, currentY)
+                        currentY += 25
+                    }
+                }
+            }
 
             // City
-            if (participant.city) {
+            if (fullParticipant.city) {
                 ctx.fillStyle = '#6b7280'
                 ctx.font = '13px Arial, sans-serif'
-                ctx.fillText(`🏢 ${participant.city}`, width / 2, 420)
+                ctx.fillText(`🏢 ${fullParticipant.city}`, width / 2, currentY)
+                currentY += 25
             }
+
+            // Custom Fields
+            if (customFieldsToShow.length > 0) {
+                ctx.fillStyle = '#374151'
+                ctx.font = 'bold 13px Arial, sans-serif'
+                for (const field of customFieldsToShow) {
+                    // Check if response is valid
+                    if (field.response) {
+                        // Truncate if too long
+                        let text = field.response.toString()
+                        if (text.length > 35) text = text.substring(0, 32) + '...'
+                        ctx.fillText(text.toUpperCase(), width / 2, currentY)
+                        currentY += 25
+                    }
+                }
+            }
+
+            // Space before badge
+            currentY += 15
 
             // Registration ID badge
             // Convert hex to rgba
@@ -209,54 +256,65 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             ctx.fillStyle = hexToRgba(design.primaryColor, 0.1)
             const regBadgeWidth = 200
             const regBadgeHeight = 40
-            roundRect(ctx, (width - regBadgeWidth) / 2, 460, regBadgeWidth, regBadgeHeight, 10)
+            roundRect(ctx, (width - regBadgeWidth) / 2, currentY, regBadgeWidth, regBadgeHeight, 10)
             ctx.fill()
 
             ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px, Courier, monospace'
-            ctx.fillText(participant.registration_id, width / 2, 485)
+            ctx.fillText(fullParticipant.registration_id || '', width / 2, currentY + 25)
+
+            currentY += 55
 
             // Note with Icon (if present)
-            if (participant.note) {
-                const iconMap = {
+            if (fullParticipant.note) {
+                const iconMap: Record<string, string> = {
                     info: 'ℹ️',
                     warning: '⚠️',
                     danger: '🛑'
                 }
-                const icon = iconMap[participant.icon_type || 'info']
-                const noteText = `${icon} ${participant.note}`.toUpperCase()
+                const icon = iconMap[fullParticipant.icon_type || 'info']
+                const noteText = `${icon} ${fullParticipant.note}`.toUpperCase()
 
                 // Background for note
-                const noteColorMap = {
+                const noteColorMap: Record<string, string> = {
                     info: '#e0f2fe',    // blue-100
                     warning: '#ffedd5', // orange-100
                     danger: '#fee2e2'   // red-100
                 }
-                const noteTextColorMap = {
+                const noteTextColorMap: Record<string, string> = {
                     info: '#0369a1',    // blue-700
                     warning: '#c2410c', // orange-700
                     danger: '#b91c1c'   // red-700
                 }
 
-                ctx.fillStyle = noteColorMap[participant.icon_type || 'info'] || '#f3f4f6'
-                roundRect(ctx, 40, 495, width - 80, 40, 8)
+                ctx.fillStyle = noteColorMap[fullParticipant.icon_type || 'info'] || '#f3f4f6'
+                roundRect(ctx, 40, currentY, width - 80, 40, 8)
                 ctx.fill()
 
-                ctx.fillStyle = noteTextColorMap[participant.icon_type || 'info'] || '#374151'
+                ctx.fillStyle = noteTextColorMap[fullParticipant.icon_type || 'info'] || '#374151'
                 ctx.font = 'bold 12px Arial, sans-serif'
-                ctx.fillText(noteText, width / 2, 520)
+                ctx.fillText(noteText, width / 2, currentY + 25)
             } else if (design.sponsorLogo) {
-                // If no note, show sponsor logo at bottom
+                // If no note, show sponsor logo
+                // We load it here, but drawing image is async.
+                // Since this is already in an onload, we need to load another image.
+                // Nesting callbacks or using await (if we made this an async function and used promises for image loading)
+                // But simplified:
                 const logoImg = new Image()
+                logoImg.crossOrigin = "Anonymous" // Important for canvas export
                 logoImg.onload = () => {
                     const aspect = logoImg.width / logoImg.height
                     const logoHeight = 40
                     const logoWidth = logoHeight * aspect
-                    ctx.drawImage(logoImg, (width - logoWidth) / 2, 500, logoWidth, logoHeight)
+                    ctx.drawImage(logoImg, (width - logoWidth) / 2, currentY + 5, logoWidth, logoHeight)
+                    setCardDataUrl(canvas.toDataURL('image/png'))
+                }
+                logoImg.onerror = () => {
+                    // If logo fails, just save what we have
                     setCardDataUrl(canvas.toDataURL('image/png'))
                 }
                 logoImg.src = design.sponsorLogo
-                return // Exit here because onload will handle setCardDataUrl
+                return
             }
 
             // Generate data URL
@@ -291,40 +349,40 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         }
     }
 
-    if (!isOpen || !participant) return null
+    if (!isOpen || !fullParticipant) return null
 
     const handleDownload = () => {
         if (!cardDataUrl) return
         const link = document.createElement('a')
-        link.download = `ID-Card-${participant.registration_id}.png`
+        link.download = `ID-Card-${fullParticipant.registration_id}.png`
         link.href = cardDataUrl
         link.click()
     }
 
     const handleSendWhatsApp = async () => {
-        if (!participant?.phone) {
+        if (!fullParticipant?.phone) {
             setWaMessage({ type: 'error', text: 'No phone number found for this participant' })
             setTimeout(() => setWaMessage(null), 3000)
             return
         }
 
         // Format phone number (remove leading 0 and add 62 for Indonesia)
-        const formattedPhone = participant.phone.replace(/^0/, '62').replace(/[^0-9]/g, '')
+        const formattedPhone = fullParticipant.phone.replace(/^0/, '62').replace(/[^0-9]/g, '')
 
         // Generate ticket link
-        const ticketLink = `https://etiket.my.id/ticket/${participant.registration_id}`
+        const ticketLink = `https://etiket.my.id/ticket/${fullParticipant.registration_id}`
 
         // Create message matching WAHA gateway format
         let message = `🎉 *PENDAFTARAN BERHASIL!*
     
 Terima kasih telah mendaftar untuk:
-📌 *Event:* ${participant.event_title || 'Event'}
+📌 *Event:* ${fullParticipant.event_title || 'Event'}
 
-👤 *Nama:* ${participant.full_name}
-🔖 *ID Registrasi:* ${participant.registration_id}`
+👤 *Nama:* ${fullParticipant.full_name}
+🔖 *ID Registrasi:* ${fullParticipant.registration_id}`
 
-        if (participant.ticket_name) {
-            message += `\n🎫 *Tiket:* ${participant.ticket_name}`
+        if (fullParticipant.ticket_name) {
+            message += `\n🎫 *Tiket:* ${fullParticipant.ticket_name}`
         }
 
         message += `
@@ -341,18 +399,22 @@ Sampai jumpa di acara! 🙏`
     }
 
     const handleDownloadCertificate = async () => {
-        if (!participant || !certificateConfig || !certificateConfig.enabled) return
+        if (!fullParticipant || !certificateConfig || !certificateConfig.enabled) return
+        // Note: Certificate generation logic uses fullParticipant which should match Participant type
+        // ... (rest of certificate logic)
+        // For brevity implying it reuses fullParticipant similar to original participant
 
         try {
             setDownloadingCertificate(true)
 
             // Create PDF with A4 landscape
-            // A4 in mm: 297 x 210
             const doc = new jsPDF({
                 orientation: 'landscape',
                 unit: 'mm',
                 format: 'a4'
             })
+            // ... (rest of certificate logic - reusing same logic)
+            // Just need to ensure fullParticipant properties are accessed safely
 
             const width = doc.internal.pageSize.getWidth()
             const height = doc.internal.pageSize.getHeight()
@@ -374,10 +436,10 @@ Sampai jumpa di acara! 🙏`
                 if (el.type === 'text') {
                     let text = el.label
                     // Placeholders
-                    if (text === '{Nama Peserta}') text = participant.full_name
-                    if (text === '{ID Registrasi}') text = participant.registration_id
-                    if (text === '{Judul Event}') text = participant.event_title || ''
-                    if (text === '{Tanggal}') text = formatDate(participant.event_date)
+                    if (text === '{Nama Peserta}') text = fullParticipant.full_name || ''
+                    if (text === '{ID Registrasi}') text = fullParticipant.registration_id || ''
+                    if (text === '{Judul Event}') text = fullParticipant.event_title || ''
+                    if (text === '{Tanggal}') text = formatDate(fullParticipant.event_date)
 
                     // Font conversion
                     doc.setFontSize(el.fontSize)
@@ -402,8 +464,8 @@ Sampai jumpa di acara! 🙏`
                     doc.text(text, x, y, { align: el.align })
                 } else if (el.type === 'qr') {
                     // Generate QR
-                    try {
-                        const qrDataUrl = await QRCode.toDataURL(participant.qr_code, {
+                    if (fullParticipant.qr_code) {
+                        const qrDataUrl = await QRCode.toDataURL(fullParticipant.qr_code, {
                             width: 500,
                             margin: 1,
                             color: {
@@ -411,21 +473,16 @@ Sampai jumpa di acara! 🙏`
                                 light: '#ffffff'
                             }
                         })
-
                         const sizePercent = el.fontSize / 800
                         const sizeMm = sizePercent * width
                         const x = (el.x / 100) * width
                         const y = (el.y / 100) * height
-
                         doc.addImage(qrDataUrl, 'PNG', x - (sizeMm / 2), y - (sizeMm / 2), sizeMm, sizeMm)
-
-                    } catch (e) {
-                        console.error("Failed to generate QR for certificate", e)
                     }
                 }
             }
 
-            doc.save(`Certificate_${participant.full_name.replace(/\s+/g, '_')}.pdf`)
+            doc.save(`Certificate_${(fullParticipant.full_name || 'participant').replace(/\s+/g, '_')}.pdf`)
 
         } catch (err) {
             console.error('Certificate generation failed:', err)
@@ -446,23 +503,23 @@ Sampai jumpa di acara! 🙏`
             </button>
 
             {/* ID Card */}
-            <div ref={cardCanvasRef as any} className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden">
+            <div ref={cardCanvasRef as any} className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header with event color */}
                 <div className="px-6 py-5 text-center" style={{ backgroundColor: design.primaryColor }}>
                     <h2 className="text-white font-black text-xl tracking-wider uppercase">
-                        {participant.event_title || 'EVENT REGISTRATION'}
+                        {fullParticipant.event_title || 'EVENT REGISTRATION'}
                     </h2>
-                    {participant.event_date && (
+                    {fullParticipant.event_date && (
                         <div className="mt-3 inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full">
                             <span className="material-symbols-outlined text-white text-[18px]">calendar_month</span>
                             <span className="text-white text-sm font-bold uppercase tracking-wide">
-                                {formatDate(participant.event_date)}
+                                {formatDate(fullParticipant.event_date)}
                             </span>
-                            {participant.event_time && (
+                            {fullParticipant.event_time && (
                                 <>
                                     <span className="text-white/50 mx-1 font-light text-lg">|</span>
                                     <span className="text-white text-sm font-bold uppercase tracking-wide">
-                                        {participant.event_time}
+                                        {fullParticipant.event_time}
                                     </span>
                                 </>
                             )}
@@ -471,86 +528,10 @@ Sampai jumpa di acara! 🙏`
                 </div>
 
                 {/* Card Body */}
-                <div className="px-6 py-6" style={{ backgroundColor: design.backgroundColor }}>
-                    {/* QR Code Container - Only for Offline */}
-                    {(participant as any).attendance_type !== 'online' && (
-                        <div className="flex justify-center mb-5">
-                            <div className="p-4 bg-gray-800 rounded-2xl shadow-lg">
-                                <canvas ref={canvasRef}></canvas>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Participant Name */}
-                    <div className="text-center mb-4">
-                        <h3 className="text-2xl font-black text-gray-800 uppercase tracking-wide">
-                            {participant.full_name}
-                        </h3>
-                        <p className="font-bold text-sm uppercase tracking-wider mt-1" style={{ color: design.primaryColor }}>
-                            {participant.ticket_name || 'PARTICIPANT'}
-                        </p>
-                    </div>
-
-                    {/* City/Location */}
-                    {participant.city && (
-                        <div className="flex items-center justify-center gap-2 text-gray-500 mb-4">
-                            <span className="material-symbols-outlined text-[18px]">apartment</span>
-                            <span className="text-sm">{participant.city}</span>
-                        </div>
-                    )}
-
-                    {/* Registration ID Badge */}
-                    <div className="rounded-xl py-3 px-4 text-center mb-4" style={{ backgroundColor: `${design.primaryColor}15` }}>
-                        <p className="font-mono font-bold text-sm tracking-wider" style={{ color: design.primaryColor }}>
-                            {participant.registration_id}
-                        </p>
-                    </div>
-
-                    {/* Note with Icon (if present) OR Sponsor Logo */}
-                    {participant.note ? (
-                        <div className={`mt-4 mx-2 p-3 rounded-lg text-sm text-center font-medium opacity-90 shadow-sm border ${participant.icon_type === 'danger' ? 'bg-red-50 text-red-700 border-red-100' :
-                            participant.icon_type === 'warning' ? 'bg-orange-50 text-orange-700 border-orange-100' :
-                                'bg-blue-50 text-blue-700 border-blue-100'
-                            }`}>
-                            <div className="flex items-center justify-center gap-1.5 mb-1.5 opacity-80">
-                                <span className="material-symbols-outlined text-[18px]">
-                                    {participant.icon_type === 'danger' ? 'error' :
-                                        participant.icon_type === 'warning' ? 'warning' : 'info'}
-                                </span>
-                                <span className="uppercase tracking-wider text-[10px] font-bold">
-                                    {participant.icon_type || 'INFO'}
-                                </span>
-                            </div>
-                            <p className="whitespace-pre-wrap break-words leading-relaxed text-xs sm:text-sm">
-                                {participant.note.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-                                    part.match(/^https?:\/\//) ? (
-                                        <a
-                                            key={i}
-                                            href={part}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="underline font-bold hover:opacity-75 transition-opacity"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            {part}
-                                        </a>
-                                    ) : part
-                                )}
-                            </p>
-                        </div>
-                    ) : design.sponsorLogo ? (
-                        <div className="flex justify-center mt-4">
-                            <img
-                                src={design.sponsorLogo}
-                                alt="Sponsor"
-                                className="max-h-12 max-w-[150px] object-contain"
-                            />
-                        </div>
-                    ) : null}
-                </div>
+                <img src={cardDataUrl} alt="ID Card" className="w-full" />
 
                 {/* Action Buttons */}
-                <div className="px-6 pb-6">
+                <div className="px-6 pb-6 pt-4">
                     {/* Certificate Download Button */}
                     {certificateConfig?.enabled && (
                         <button
@@ -578,7 +559,7 @@ Sampai jumpa di acara! 🙏`
                     )}
 
                     <div className="flex gap-3">
-                        {(participant as any).attendance_type !== 'online' && (
+                        {(fullParticipant as any).attendance_type !== 'online' && (
                             <button
                                 onClick={handleDownload}
                                 disabled={!cardDataUrl}
@@ -590,9 +571,9 @@ Sampai jumpa di acara! 🙏`
                         )}
                         <button
                             onClick={handleSendWhatsApp}
-                            disabled={!participant?.phone}
+                            disabled={!fullParticipant?.phone}
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={!participant?.phone ? 'No phone number available' : 'Send ticket via WhatsApp'}
+                            title={!fullParticipant?.phone ? 'No phone number available' : 'Send ticket via WhatsApp'}
                         >
                             <span className="material-symbols-outlined text-[20px]">send</span>
                             Send WA

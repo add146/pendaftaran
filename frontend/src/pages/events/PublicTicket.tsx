@@ -32,6 +32,7 @@ interface TicketData {
     note?: string
     icon_type?: 'info' | 'warning' | 'danger'
     certificate_config?: string
+    custom_fields?: Array<{ label: string; response: string; show_on_id: boolean }>
 }
 
 export default function PublicTicket() {
@@ -321,6 +322,13 @@ export default function PublicTicket() {
                                 {ticket.ticket_name || 'PARTICIPANT'}
                             </p>
                         </div>
+
+                        {/* Custom Fields (Above City, Bold) */}
+                        {ticket.custom_fields?.filter(f => f.show_on_id).map((field, i) => (
+                            <div key={i} className="text-center font-bold text-gray-700 text-sm mb-1 uppercase">
+                                {field.response}
+                            </div>
+                        ))}
 
                         {/* City/Location */}
                         {ticket.city && (

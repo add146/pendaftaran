@@ -12,9 +12,9 @@ function generateRegId(): string {
 }
 
 // Fetch custom field responses for a participant
-async function getCustomFieldResponses(db: D1Database, participantId: string): Promise<Array<{ label: string; response: string }>> {
+async function getCustomFieldResponses(db: D1Database, participantId: string): Promise<Array<{ label: string; response: string; show_on_id: boolean }>> {
     const responses = await db.prepare(`
-        SELECT ecf.label, pfr.response
+        SELECT ecf.label, pfr.response, ecf.show_on_id
         FROM participant_field_responses pfr
         JOIN event_custom_fields ecf ON pfr.field_id = ecf.id
         WHERE pfr.participant_id = ?
@@ -23,7 +23,8 @@ async function getCustomFieldResponses(db: D1Database, participantId: string): P
 
     return responses.results.map((r: any) => ({
         label: r.label,
-        response: r.response
+        response: r.response,
+        show_on_id: r.show_on_id === 1 || r.show_on_id === true || r.show_on_id === '1'
     }))
 }
 
@@ -103,13 +104,18 @@ participants.get('/:id', authMiddleware, async (c) => {
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     LEFT JOIN events e ON p.event_id = e.id
     WHERE (p.id = ? OR p.registration_id = ?) AND e.organization_id = ?
-  `).bind(id, id, user.orgId).first()
+  `).bind(id, id, user.orgId).first() as any
 
     if (!participant) {
         return c.json({ error: 'Participant not found' }, 404)
     }
 
-    return c.json(participant)
+    const customFields = await getCustomFieldResponses(c.env.DB, participant.id)
+
+    return c.json({
+        ...participant,
+        custom_fields: customFields
+    })
 })
 
 // Register for event (public)

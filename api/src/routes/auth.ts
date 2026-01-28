@@ -66,6 +66,17 @@ auth.post('/login', async (c) => {
 
 // Register
 auth.post('/register', async (c) => {
+    // Check if public registration is enabled
+    const setting = await c.env.DB.prepare(
+        "SELECT value FROM settings WHERE key = 'public_registration_enabled' AND organization_id = 'org_system'"
+    ).first()
+
+    const isEnabled = setting?.value === 'true' || setting?.value === '1'
+
+    if (!isEnabled) {
+        return c.json({ error: 'Public registration is currently disabled' }, 403)
+    }
+
     const { email, password, name, organizationName } = await c.req.json()
 
     if (!email || !password || !name) {
@@ -98,8 +109,8 @@ auth.post('/register', async (c) => {
     const passwordHash = await hashPassword(password)
 
     await c.env.DB.prepare(
-        'INSERT INTO users (id, organization_id, email, password_hash, name) VALUES (?, ?, ?, ?, ?)'
-    ).bind(userId, orgId, email, passwordHash, name).run()
+        'INSERT INTO users (id, organization_id, email, password_hash, name, role) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(userId, orgId, email, passwordHash, name, 'user').run()
 
     // Create nonprofit subscription (default free plan)
     const subId = `sub_${crypto.randomUUID().slice(0, 8)}`
@@ -112,7 +123,7 @@ auth.post('/register', async (c) => {
         userId,
         email,
         orgId,
-        role: 'admin'
+        role: 'user'
     }, c.env.JWT_SECRET)
 
     return c.json({

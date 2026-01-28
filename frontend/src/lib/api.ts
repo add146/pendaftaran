@@ -344,6 +344,7 @@ export const customFieldsAPI = {
         required: boolean
         options?: string[]
         display_order: number
+        show_on_id: boolean
     }) =>
         fetchAPI<{ message: string; field_id: string }>(
             `/api/events/${eventId}/custom-fields`,
@@ -355,6 +356,7 @@ export const customFieldsAPI = {
         required?: boolean
         options?: string[]
         display_order?: number
+        show_on_id?: boolean
     }) =>
         fetchAPI<{ message: string }>(
             `/api/events/${eventId}/custom-fields/${fieldId}`,
@@ -514,10 +516,15 @@ export interface Participant {
     ticket_name?: string
     ticket_price?: number
     event_title?: string
+    event_date?: string
+    event_time?: string
+    note?: string
+    icon_type?: 'info' | 'warning' | 'danger'
     whatsapp_status?: 'pending' | 'sent' | 'failed'
     whatsapp_sent_at?: string
     created_at: string
     attendance_type?: 'offline' | 'online'
+    custom_fields?: Array<{ label: string; response: string; show_on_id: boolean }>
 }
 
 export interface CustomField {
@@ -528,6 +535,7 @@ export interface CustomField {
     required: boolean
     options?: string[]
     display_order: number
+    show_on_id: boolean
     created_at: string
 }
 

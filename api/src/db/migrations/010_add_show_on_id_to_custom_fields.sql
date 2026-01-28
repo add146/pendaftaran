@@ -1,0 +1,2 @@
+-- Migration: 010_add_show_on_id_to_custom_fields
+ALTER TABLE event_custom_fields ADD COLUMN show_on_id INTEGER DEFAULT 0;

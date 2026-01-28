@@ -157,6 +157,8 @@ dashboardStatsRoute.get('/stats', authMiddleware, async (c) => {
   })
 })
 
+
+
 // Get public ticket by registration ID
 publicRoutes.get('/ticket/:registrationId', async (c) => {
   const { registrationId } = c.req.param()
@@ -191,6 +193,21 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     }
   }
 
+  // Fetch custom field responses
+  const customFields = await c.env.DB.prepare(`
+        SELECT ecf.label, pfr.response, ecf.show_on_id
+        FROM participant_field_responses pfr
+        JOIN event_custom_fields ecf ON pfr.field_id = ecf.id
+        WHERE pfr.participant_id = ?
+        ORDER BY ecf.display_order ASC
+    `).bind(participant.id).all()
+
+  const formattedCustomFields = customFields.results.map((r: any) => ({
+    label: r.label,
+    response: r.response,
+    show_on_id: r.show_on_id === 1 || r.show_on_id === true || r.show_on_id === '1'
+  }))
+
   return c.json({
     registration_id: participant.registration_id,
     full_name: participant.full_name,
@@ -213,7 +230,8 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     attendance_type: participant.attendance_type,
     note: participant.note,
     icon_type: participant.icon_type,
-    certificate_config: participant.certificate_config
+    certificate_config: participant.certificate_config,
+    custom_fields: formattedCustomFields
   })
 })
 // Get landing page configuration

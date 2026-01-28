@@ -133,6 +133,9 @@ export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps)
                                         {field.required && (
                                             <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Required</span>
                                         )}
+                                        {field.show_on_id && (
+                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Show on ID</span>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-gray-500">
                                         <span className="px-2 py-1 bg-gray-100 rounded">
@@ -216,6 +219,7 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
     const [fieldType, setFieldType] = useState<'text' | 'textarea' | 'radio' | 'checkbox'>(field?.field_type || 'text')
     const [label, setLabel] = useState(field?.label || '')
     const [required, setRequired] = useState(field?.required || false)
+    const [showOnId, setShowOnId] = useState(field?.show_on_id || false)
     const [options, setOptions] = useState<string[]>(field?.options || [''])
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -256,7 +260,8 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                 label: label.trim(),
                 required,
                 options: (fieldType === 'radio' || fieldType === 'checkbox') ? options.filter(o => o.trim()) : undefined,
-                display_order: field ? field.display_order : existingFields.length
+                display_order: field ? field.display_order : existingFields.length,
+                show_on_id: showOnId
             }
 
             if (field) {
@@ -338,6 +343,18 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                         </label>
                     </div>
 
+                    <div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={showOnId}
+                                onChange={(e) => setShowOnId(e.target.checked)}
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                            />
+                            <span className="text-sm font-medium">Show on ID Card (Public)</span>
+                        </label>
+                    </div>
+
                     {(fieldType === 'radio' || fieldType === 'checkbox') && (
                         <div>
                             <label className="block text-sm font-medium mb-2">Options *</label>
@@ -391,7 +408,7 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }
