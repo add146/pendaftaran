@@ -139,7 +139,7 @@ export default function Events() {
                             return (
                                 <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full group">
                                     {/* Event Image & Overlay Actions */}
-                                    <div className="relative aspect-[4/5] bg-gray-100">
+                                    <div className="relative h-48 bg-gray-100">
                                         {/* Image */}
                                         {eventImage ? (
                                             <img

@@ -447,7 +447,7 @@ ${bankSection}`
                         <div className="lg:col-span-3 space-y-6">
                             {/* Hero Image Slider */}
                             {/* Hero Image Slider */}
-                            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
+                            <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
                                 {images.length === 0 ? (
                                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/30 to-primary/10">
                                         <span className="material-symbols-outlined text-[80px] text-primary/30">event</span>
