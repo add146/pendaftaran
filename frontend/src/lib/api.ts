@@ -464,6 +464,7 @@ export interface Event {
     note?: string
     icon_type?: string
     certificate_config?: string // JSON string
+    auto_close?: number
 }
 
 export interface PublicEvent extends Event {

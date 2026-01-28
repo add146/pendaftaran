@@ -58,6 +58,32 @@ export default function Events() {
         }
     }
 
+
+    const handleToggleStatus = async (id: string, currentStatus: string, title: string) => {
+        const isClosed = currentStatus === 'closed'
+        const newStatus = isClosed ? 'open' : 'closed'
+        const action = isClosed ? 'Open' : 'Close'
+
+        if (!confirm(`Are you sure you want to ${action} event "${title}"?`)) return
+
+        try {
+            await eventsAPI.update(id, {
+                status: newStatus,
+                // If re-opening, disable auto-close to prevent it from closing again immediately if past time
+                auto_close: isClosed ? 0 : undefined
+            })
+            setEvents(prev => prev.map(e => {
+                if (e.id === id) {
+                    return { ...e, status: newStatus as 'open' | 'closed' | 'draft' }
+                }
+                return e
+            }))
+        } catch (err) {
+            console.error(err)
+            alert(`Failed to ${action} event`)
+        }
+    }
+
     return (
         <AdminLayout title="Events" currentPage="events">
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
@@ -141,6 +167,20 @@ export default function Events() {
 
                                         {isAdmin && (
                                             <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                                {/* Toggle Status Button */}
+                                                <button
+                                                    onClick={() => handleToggleStatus(event.id, event.status, event.title)}
+                                                    className={`w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 ${event.status === 'closed'
+                                                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                                                            : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                                        }`}
+                                                    title={event.status === 'closed' ? 'Open Event' : 'Close Event'}
+                                                >
+                                                    <span className="material-symbols-outlined text-[20px]">
+                                                        {event.status === 'closed' ? 'lock_open' : 'block'}
+                                                    </span>
+                                                </button>
+
 
                                                 <button
                                                     onClick={() => handleDelete(event.id, event.title)}

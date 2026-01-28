@@ -83,7 +83,7 @@ events.get('/:id', authMiddleware, async (c) => {
 events.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions, auto_close } = body
 
   if (!title || !event_date) {
     return c.json({ error: 'Title and event date required' }, 400)
@@ -95,9 +95,9 @@ events.post('/', authMiddleware, async (c) => {
   const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
   await c.env.DB.prepare(`
-    INSERT INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(eventId, user.orgId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl, event_type || 'offline', online_platform || null, online_url || null, online_password || null, online_instructions || null, body.note || null, body.icon_type || 'info').run()
+    INSERT INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(eventId, user.orgId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl, event_type || 'offline', online_platform || null, online_url || null, online_password || null, online_instructions || null, body.note || null, body.icon_type || 'info', auto_close !== undefined ? auto_close : 1).run()
 
   return c.json({ id: eventId, slug }, 201)
 })
@@ -115,7 +115,7 @@ events.put('/:id', authMiddleware, async (c) => {
       certificateConfigLength: body.certificate_config ? body.certificate_config.length : 0
     })
 
-    const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type } = body
+    const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close } = body
 
     const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
     if (!existing) {
@@ -150,7 +150,8 @@ events.put('/:id', authMiddleware, async (c) => {
             online_instructions = COALESCE(?, online_instructions),
             note = COALESCE(?, note),
             icon_type = COALESCE(?, icon_type),
-            certificate_config = COALESCE(?, certificate_config)
+            certificate_config = COALESCE(?, certificate_config),
+            auto_close = COALESCE(?, auto_close)
             WHERE id = ?
         `).bind(
         title ?? null,
@@ -176,6 +177,7 @@ events.put('/:id', authMiddleware, async (c) => {
         note ?? null,
         icon_type ?? 'info',
         body.certificate_config ?? null,
+        auto_close !== undefined ? auto_close : null,
         id
       ).run()
     } catch (dbError: any) {

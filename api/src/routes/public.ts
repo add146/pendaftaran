@@ -37,6 +37,42 @@ publicRoutes.get('/events/:slug', async (c) => {
     return c.json({ error: 'Event not found' }, 404)
   }
 
+  // Auto-close logic
+  // Check if event is OPEN and should be closed (1 hour after start time)
+  // Default auto_close to 1 (true) if null
+  const autoClose = event.auto_close !== 0
+
+  if (event.status === 'open' && autoClose) {
+    try {
+      const eventDateTimeStr = `${event.event_date}T${event.event_time || '00:00'}:00`
+      // Parse time. In Workers (UTC env), this creates a date at that time UTC.
+      // E.g. "2023-01-01T10:00:00" -> 10:00 UTC.
+      const eventTimeRaw = new Date(eventDateTimeStr).getTime()
+
+      // Assumption: Event times are in WIB (UTC+7)
+      // We need to convert 10:00 UTC (which represents 10:00 WIB) to actual UTC check.
+      // 10:00 WIB = 03:00 UTC.
+      // So we subtract 7 hours from the raw parsed timestamp.
+      const eventTimeUTC = eventTimeRaw - (7 * 60 * 60 * 1000)
+
+      // Close 1 hour after start
+      const closeTime = eventTimeUTC + (60 * 60 * 1000)
+
+      if (Date.now() > closeTime) {
+        console.log(`[AutoClose] Event ${event.title} is past closing time. Closing now.`)
+
+        // Update DB
+        await c.env.DB.prepare("UPDATE events SET status = 'closed' WHERE id = ?")
+          .bind(event.id).run()
+
+        // Update local object for response
+        event.status = 'closed'
+      }
+    } catch (e) {
+      console.error('[AutoClose] Error checking time:', e)
+    }
+  }
+
   // Get ticket types
   const tickets = await c.env.DB.prepare(`
     SELECT t.*, 
