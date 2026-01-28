@@ -849,10 +849,10 @@ ${bankSection}`
                             </div>
 
                             {/* Powered by */}
-                            <div className="mt-8 flex flex-col items-center justify-center gap-2 text-center">
-                                <span className="text-xs text-gray-400">Powered by</span>
+                            <div className="mt-8 flex flex-col items-center justify-center gap-1 text-center opacity-80">
+                                <span className="text-[10px] text-gray-400 uppercase tracking-widest">Powered by</span>
                                 <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                                    <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[30px] w-auto" />
+                                    <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[25px] w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all" />
                                 </a>
                             </div>
                         </div>
