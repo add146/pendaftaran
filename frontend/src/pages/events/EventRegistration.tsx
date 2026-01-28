@@ -860,12 +860,7 @@ ${bankSection}`
                 </div>
             </main >
 
-            {/* Footer */}
-            < footer className="border-t border-gray-200 bg-white py-6" >
-                <div className="max-w-4xl mx-auto px-4 text-center text-sm text-gray-500">
-                    Powered by <span className="font-semibold text-primary">Pendaftaran QR</span>
-                </div>
-            </footer >
+
         </div >
     )
 }
