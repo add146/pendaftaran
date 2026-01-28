@@ -139,10 +139,14 @@ export default function Events() {
                             return (
                                 <div key={event.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full group">
                                     {/* Event Image & Overlay Actions */}
-                                    <div className="relative h-48 bg-gray-100">
+                                    <div className="relative aspect-[4/5] bg-gray-100">
                                         {/* Image */}
                                         {eventImage ? (
-                                            <img src={eventImage} alt={event.title} className="w-full h-full object-cover" />
+                                            <img
+                                                src={eventImage}
+                                                alt={event.title}
+                                                className={`w-full h-full object-cover ${event.status === 'closed' ? 'grayscale' : ''}`}
+                                            />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                                                 <span className="material-symbols-outlined text-[48px] text-primary/40">event</span>
@@ -171,8 +175,8 @@ export default function Events() {
                                                 <button
                                                     onClick={() => handleToggleStatus(event.id, event.status, event.title)}
                                                     className={`w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 ${event.status === 'closed'
-                                                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                                                            : 'bg-amber-500 hover:bg-amber-600 text-white'
+                                                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                                                        : 'bg-amber-500 hover:bg-amber-600 text-white'
                                                         }`}
                                                     title={event.status === 'closed' ? 'Open Event' : 'Close Event'}
                                                 >
@@ -231,7 +235,7 @@ export default function Events() {
                                             {isAdmin && (
                                                 <Link
                                                     to={`/events/${event.id}/edit`}
-                                                    className="flex-[3] flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-white text-teal-700 border border-teal-700 hover:bg-teal-50 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
+                                                    className="flex-[3] flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-green-100 text-green-800 hover:bg-green-200 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
                                                     title="Edit Event"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px] sm:text-[16px]">edit</span>
