@@ -168,7 +168,7 @@ export default function EventRegistration() {
             phone: '',
             city: '',
             ticket_type_id: event?.ticket_types?.[0]?.id || '',
-            attendance_type: 'offline',
+            attendance_type: event?.event_type === 'online' ? 'online' : 'offline',
             custom_fields: {}
         }])
     }
@@ -298,7 +298,7 @@ export default function EventRegistration() {
                     email: p.email,
                     phone: p.phone,
                     city: p.city || undefined,
-                    attendance_type: event.event_type === 'hybrid' ? (p.attendance_type as 'offline' | 'online') : undefined,
+                    attendance_type: p.attendance_type as 'offline' | 'online',
                     custom_fields: customFieldsData
                 }
             })
@@ -708,6 +708,42 @@ ${bankSection}`
                                                                 required
                                                             />
                                                         </div>
+                                                        {/* Attendance Type (For Hybrid Events) */}
+                                                        {event.event_type === 'hybrid' && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium mb-2">Attendance Type</label>
+                                                                <div className="flex gap-4">
+                                                                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg bg-white hover:bg-gray-50 flex-1">
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`attendance_${index}`}
+                                                                            value="offline"
+                                                                            checked={p.attendance_type === 'offline'}
+                                                                            onChange={e => updateParticipant(index, 'attendance_type', e.target.value)}
+                                                                            className="w-4 h-4 text-primary"
+                                                                        />
+                                                                        <div>
+                                                                            <span className="block font-medium">Hadir Langsung (Offline)</span>
+                                                                            <span className="text-xs text-gray-500">Datang ke lokasi acara</span>
+                                                                        </div>
+                                                                    </label>
+                                                                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg bg-white hover:bg-gray-50 flex-1">
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`attendance_${index}`}
+                                                                            value="online"
+                                                                            checked={p.attendance_type === 'online'}
+                                                                            onChange={e => updateParticipant(index, 'attendance_type', e.target.value)}
+                                                                            className="w-4 h-4 text-primary"
+                                                                        />
+                                                                        <div>
+                                                                            <span className="block font-medium">Hadir Online</span>
+                                                                            <span className="text-xs text-gray-500">via Zoom / Google Meet</span>
+                                                                        </div>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        )}
 
                                                         {/* Ticket Type */}
                                                         {event.ticket_types && event.ticket_types.length > 0 && event.event_mode === 'paid' && (
