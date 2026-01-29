@@ -213,8 +213,12 @@ export const participantsAPI = {
 
     get: (id: string) => fetchAPI<Participant>(`/api/participants/${id}`),
 
-    register: (data: RegisterParticipantData | RegisterParticipantData[]) =>
-        fetchAPI<{
+    register: (data: RegisterParticipantData | RegisterParticipantData[]) => {
+        const payload = Array.isArray(data)
+            ? { event_id: data[0]?.event_id, participants: data }
+            : data
+
+        return fetchAPI<{
             id?: string;
             registration_id?: string;
             order_id?: string;
@@ -224,8 +228,9 @@ export const participantsAPI = {
             message: string
         }>(
             '/api/participants/register',
-            { method: 'POST', body: JSON.stringify(data) }
-        ),
+            { method: 'POST', body: JSON.stringify(payload) }
+        )
+    },
 
     checkIn: (id: string, eventId?: string) =>
         fetchAPI<{ message: string; participant: { id: string; full_name: string; registration_id: string; check_in_time: string } }>(
