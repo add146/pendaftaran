@@ -59,6 +59,11 @@ events.get('/:id', authMiddleware, async (c) => {
     'SELECT * FROM ticket_types WHERE event_id = ?'
   ).bind(id).all()
 
+  // Get bulk discounts
+  const discounts = await c.env.DB.prepare(
+    'SELECT * FROM event_bulk_discounts WHERE event_id = ? ORDER BY min_qty ASC'
+  ).bind(id).all()
+
   // Get participant stats
   const stats = await c.env.DB.prepare(`
     SELECT 
@@ -75,6 +80,7 @@ events.get('/:id', authMiddleware, async (c) => {
   return c.json({
     ...event,
     ticket_types: tickets.results,
+    bulk_discounts: discounts.results,
     stats
   })
 })

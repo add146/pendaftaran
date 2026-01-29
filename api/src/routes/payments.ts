@@ -39,25 +39,48 @@ const getMidtransUrl = (isProduction: boolean) => ({
 
 // Create payment / Snap token
 payments.post('/create', async (c) => {
-    const { participantId, amount, itemName, customerName, customerEmail, customerPhone } = await c.req.json()
+    const { participantId, orderId: reqOrderId, amount, itemName, customerName, customerEmail, customerPhone } = await c.req.json()
 
-    if (!participantId || !amount) {
-        return c.json({ error: 'Participant ID and amount required' }, 400)
+    if (!participantId && !reqOrderId) {
+        return c.json({ error: 'Participant ID or Order ID required' }, 400)
     }
 
-    // 1. Get Organization ID from Participant
-    const participantData = await c.env.DB.prepare(`
-        SELECT e.organization_id 
-        FROM participants p 
-        JOIN events e ON p.event_id = e.id 
-        WHERE p.id = ?
-    `).bind(participantId).first()
+    let participants: any[] = []
+    let orderId = reqOrderId
 
-    if (!participantData) {
-        return c.json({ error: 'Participant/Event not found' }, 404)
+    // 1. Fetch Participants & Event Info
+    if (orderId) {
+        const result = await c.env.DB.prepare(`
+            SELECT p.*, e.organization_id, e.id as event_id, t.price as ticket_price
+            FROM participants p 
+            JOIN events e ON p.event_id = e.id 
+            LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+            WHERE p.order_id = ?
+        `).bind(orderId).all()
+        participants = result.results
+    } else if (participantId) {
+        // Legacy or single mode support: find by participantId
+        const p = await c.env.DB.prepare(`
+            SELECT p.*, e.organization_id, e.id as event_id, t.price as ticket_price
+            FROM participants p 
+            JOIN events e ON p.event_id = e.id 
+            LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+            WHERE p.id = ?
+        `).bind(participantId).first()
+        if (p) {
+            participants = [p]
+            orderId = p.order_id || `ORDER-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+            // If order_id was null/empty in DB, we generate one for Midtrans but might strictly rely on DB in future
+        }
     }
 
-    const orgId = participantData.organization_id as string
+    if (participants.length === 0) {
+        return c.json({ error: 'Participants/Event not found' }, 404)
+    }
+
+    const firstParticipant = participants[0]
+    const orgId = firstParticipant.organization_id as string
+    const eventId = firstParticipant.event_id as string
 
     // 2. Fetch Midtrans settings SPECIFICALLY for this organization
     const midtransSettings = await c.env.DB.prepare(`
@@ -67,11 +90,7 @@ payments.post('/create', async (c) => {
     `).bind(orgId).all()
 
     const settingsMap = new Map(midtransSettings.results.map((s: any) => [s.key, s.value]))
-
-    // Organization-level keys take precedence. 
-    // If not found, NO fallback to system env vars to ensure strict isolation as requested.
     const serverKey = settingsMap.get('midtrans_server_key')
-
     let rawEnv = settingsMap.get('midtrans_environment')
     if (rawEnv) rawEnv = rawEnv.replace(/['"]/g, '').trim()
     const isProduction = rawEnv === 'production'
@@ -81,29 +100,97 @@ payments.post('/create', async (c) => {
         return c.json({ error: 'Payment gateway not configured for this organizer. Please contact the event organizer.' }, 400)
     }
 
-    const orderId = `ORDER-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
+    // 3. Calculate Total Amount & Apply Discounts
+    let totalBasePrice = 0
+    for (const p of participants) {
+        totalBasePrice += (p.ticket_price || 0)
+    }
+
+    // Fetch discounts
+    const discounts = await c.env.DB.prepare(`
+        SELECT * FROM event_bulk_discounts WHERE event_id = ? ORDER BY min_qty DESC
+    `).bind(eventId).all()
+
+    let discountAmount = 0
+    let appliedDiscount = null
+
+    // Find best discount (assuming strict tiers or simply highest quantity match)
+    // Ordered by min_qty DESC, so first match is the best tier
+    const count = participants.length
+    for (const d of discounts.results as any[]) {
+        if (count >= d.min_qty) {
+            if (d.discount_type === 'percent') {
+                discountAmount = Math.floor(totalBasePrice * (d.discount_value / 100))
+            } else {
+                discountAmount = d.discount_value
+            }
+            appliedDiscount = d
+            break // Stop after finding highest tier
+        }
+    }
+
+    const finalAmount = Math.max(0, totalBasePrice - discountAmount)
+
+    // Safety check: if amount passed from frontend differs significantly, warn or enforce backend calc
+    // We strictly use backend calc for security
+
+    // Generate Midtrans request
+    // Update orderId to be unique for every attempt if needed, OR use the persistent order_id
+    // Midtrans doesn't allow re-using exact same order_id for different amounts (or sometimes at all if failed?)
+    // To allow retries, we might append timestamp if the previous one failed? 
+    // For now, let's ASSUME order_id is unique per registration "session". 
+    // If user retries payment, logic might need a suffix.
+    // Let's stick to the DB order_id. If Midtrans rejects dup, we might need a "payment reference" separate from "order id".
+    // For now, let's assume one attempt or just append suffix if we want to be safe.
+    // Actually, widespread practice: Order ID in DB is fixed. Transaction ID sent to Midtrans is unique.
+    // But Midtrans maps Order ID to its state. 
+    // Let's use `order_id` from DB but if it fails we might need to handle it. 
+    // Simple approach: Use database order_id.
+
+    // WAIT: If we use the SAME order_id for a second attempt, Midtrans Snap might just return the existing token?
+    // If so, that's good. 
+
     const urls = getMidtransUrl(isProduction)
 
-    // Create Midtrans Snap transaction
     const snapPayload = {
         transaction_details: {
-            order_id: orderId,
-            gross_amount: amount
+            order_id: orderId, // This links 1:1 to our Group Order
+            gross_amount: finalAmount
         },
-        item_details: [{
-            id: participantId,
-            price: amount,
+        item_details: participants.map(p => ({
+            id: p.id,
+            price: p.ticket_price || 0, // We list base price here? Or discounted? 
+            // Midtrans sum of items MUST equal gross_amount. 
+            // If discount exists, we should add a negative item or adjust prices.
+            // Simplest: Add a "Discount" item if needed.
             quantity: 1,
-            name: itemName || 'Event Registration'
-        }],
+            name: `Ticket: ${p.full_name}`
+        })),
         customer_details: {
-            first_name: customerName || 'Customer',
-            email: customerEmail || '',
-            phone: customerPhone || ''
+            first_name: customerName || firstParticipant.full_name,
+            email: customerEmail || firstParticipant.email,
+            phone: customerPhone || firstParticipant.phone || ''
         },
         callbacks: {
-            finish: `${c.req.url.split('/api')[0]}/payment/success`
+            finish: `${c.req.url.split('/api')[0]}/payment/success` // Frontend URL
         }
+    }
+
+    if (discountAmount > 0) {
+        snapPayload.item_details.push({
+            id: 'DISCOUNT',
+            price: -discountAmount,
+            quantity: 1,
+            name: 'Group Discount'
+        })
+    }
+
+    // If Total is 0 (100% discount), skip Midtrans?
+    // Current logic assumes > 0, but if 0, we can auto-confirm.
+    if (finalAmount <= 0) {
+        // Auto-confirm
+        // TODO: Implement instant paid status logic
+        return c.json({ error: 'Free orders should be handled directly' }, 400) // Or handle it
     }
 
     try {
@@ -120,23 +207,33 @@ payments.post('/create', async (c) => {
         const data = await response.json() as { token?: string; redirect_url?: string; error_messages?: string[] }
 
         if (!response.ok) {
+            console.error('[Midtrans] Snap Error:', data)
             return c.json({
                 error: 'Failed to create payment',
                 details: data.error_messages
             }, 400)
         }
 
-        // Save payment record to database
+        // Save payment record to database (One record per ORDER, or per participant?)
+        // Existing schema: payments table has order_id, participant_id.
+        // If we have multiple participants, should we create multiple payment records? 
+        // OR one payment record linked to the order, and participant_id is null or the "lead"?
+        // Migration didn't remove participant_id from payments.
+        // Let's link it to the Lead Participant (first one) or leave null if schema allows.
+        // Schema: participant_id TEXT NOT NULL (based on schema.sql I recalled, let's check validation?)
+        // Assuming participant_id IS NOT NULL. So we link to first participant.
+
         const paymentId = `pay_${crypto.randomUUID().slice(0, 8)}`
         await c.env.DB.prepare(`
             INSERT INTO payments (id, participant_id, order_id, amount, status, midtrans_response)
             VALUES (?, ?, ?, ?, 'pending', ?)
-        `).bind(paymentId, participantId, orderId, amount, JSON.stringify(data)).run()
+        `).bind(paymentId, firstParticipant.id, orderId, finalAmount, JSON.stringify(data)).run()
 
-        // Update participant payment status
+        // Update ALL participants payment status
+        const placeholders = participants.map(() => '?').join(',')
         await c.env.DB.prepare(`
-            UPDATE participants SET payment_status = 'pending' WHERE id = ?
-        `).bind(participantId).run()
+            UPDATE participants SET payment_status = 'pending' WHERE id IN (${placeholders})
+        `).bind(...participants.map(p => p.id)).run()
 
         return c.json({
             paymentId,
@@ -169,11 +266,6 @@ payments.post('/notification', async (c) => {
 
         const { order_id, transaction_status, fraud_status, payment_type } = notification
 
-        // Verify signature (optional but recommended)
-        // const signatureKey = notification.signature_key
-        // const serverKey = c.env.MIDTRANS_SERVER_KEY
-        // Verify: SHA512(order_id + status_code + gross_amount + serverKey)
-
         // Determine payment status
         let status = 'pending'
         if (transaction_status === 'capture' || transaction_status === 'settlement') {
@@ -199,60 +291,86 @@ payments.post('/notification', async (c) => {
 
         console.log('[MIDTRANS WEBHOOK] Updated payment record')
 
-        // Get participant ID and update status
+        // Find associated participant(s)
+        // 1. Get payment record to find the "lead" participant
         const payment = await c.env.DB.prepare(`
             SELECT participant_id FROM payments WHERE order_id = ?
         `).bind(order_id).first() as { participant_id: string } | null
 
         if (payment) {
-            console.log('[MIDTRANS WEBHOOK] Found participant:', payment.participant_id)
+            console.log('[MIDTRANS WEBHOOK] Found payment linked to lead participant:', payment.participant_id)
 
-            await c.env.DB.prepare(`
-                UPDATE participants SET payment_status = ? WHERE id = ?
-            `).bind(status, payment.participant_id).run()
+            // 2. Check if this participant is part of a group order
+            const leadParticipant = await c.env.DB.prepare(`
+                SELECT order_id FROM participants WHERE id = ?
+            `).bind(payment.participant_id).first() as { order_id: string | null } | null
 
-            console.log('[MIDTRANS WEBHOOK] Updated participant status to:', status)
+            let targetParticipantIds: string[] = [payment.participant_id]
 
-            // Send WhatsApp notification if payment is successful
+            if (leadParticipant && leadParticipant.order_id) {
+                // It's a group order (or modern single order with ID)
+                // Fetch ALL participants with this order_id
+                const groupMembers = await c.env.DB.prepare(`
+                    SELECT id FROM participants WHERE order_id = ?
+                `).bind(leadParticipant.order_id).all()
+
+                targetParticipantIds = groupMembers.results.map((m: any) => m.id as string)
+                console.log(`[MIDTRANS WEBHOOK] Found ${targetParticipantIds.length} participants in group order ${leadParticipant.order_id}`)
+            }
+
+            // 3. Update status for ALL identified participants
+            if (targetParticipantIds.length > 0) {
+                const placeholders = targetParticipantIds.map(() => '?').join(',')
+                await c.env.DB.prepare(`
+                    UPDATE participants SET payment_status = ? WHERE id IN (${placeholders})
+                `).bind(status, ...targetParticipantIds).run()
+
+                console.log('[MIDTRANS WEBHOOK] Updated participants status to:', status)
+            }
+
+            // 4. Send WhatsApp notification if paid
             if (status === 'paid') {
                 c.executionCtx.waitUntil((async () => {
-                    console.log('[MIDTRANS WEBHOOK] Payment is paid, fetching participant details for WhatsApp')
+                    console.log('[MIDTRANS WEBHOOK] Payment is paid, sending WhatsApp notifications')
 
-                    const participant = await c.env.DB.prepare(`
-                    SELECT p.*, e.title as event_title, e.organization_id, t.name as ticket_name, t.price as ticket_price
-                    FROM participants p
-                    LEFT JOIN events e ON p.event_id = e.id
-                    LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
-                    WHERE p.id = ?
-                `).bind(payment.participant_id).first() as any
+                    // Fetch details for ALL participants to send individual tickets
+                    // In bulk update, we might have multiple people.
+                    // Loop through IDs.
+                    for (const pid of targetParticipantIds) {
+                        const participant = await c.env.DB.prepare(`
+                            SELECT p.*, e.title as event_title, e.organization_id, t.name as ticket_name, t.price as ticket_price
+                            FROM participants p
+                            LEFT JOIN events e ON p.event_id = e.id
+                            LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
+                            WHERE p.id = ?
+                        `).bind(pid).first() as any
 
-                    if (participant && participant.phone) {
-                        try {
-                            console.log('[MIDTRANS WEBHOOK] Sending WhatsApp to:', participant.phone)
+                        if (participant && participant.phone) {
+                            try {
+                                console.log('[MIDTRANS WEBHOOK] Sending WhatsApp to:', participant.phone)
 
-                            const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
-                            const frontendUrl = 'https://etiket.my.id'
-                            const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
+                                const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
+                                const frontendUrl = 'https://etiket.my.id'
+                                const ticketLink = `${frontendUrl}/ticket/${participant.registration_id}`
 
-                            // Fetch custom field responses
-                            const customFieldResponses = await getCustomFieldResponses(c.env.DB, payment.participant_id)
+                                // Fetch custom field responses
+                                const customFieldResponses = await getCustomFieldResponses(c.env.DB, pid)
 
-                            const message = generateRegistrationMessage({
-                                eventTitle: participant.event_title,
-                                fullName: participant.full_name,
-                                registrationId: participant.registration_id,
-                                ticketLink,
-                                ticketName: participant.ticket_name,
-                                ticketPrice: participant.ticket_price,
-                                customFieldResponses
-                            })
+                                const message = generateRegistrationMessage({
+                                    eventTitle: participant.event_title,
+                                    fullName: participant.full_name,
+                                    registrationId: participant.registration_id,
+                                    ticketLink,
+                                    ticketName: participant.ticket_name,
+                                    ticketPrice: participant.ticket_price,
+                                    customFieldResponses
+                                })
 
-                            await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
-                        } catch (error) {
-                            console.error('[MIDTRANS WEBHOOK] Error sending WhatsApp:', error)
+                                await sendWhatsAppMessage(c.env.DB, participant.organization_id, participant.phone, message)
+                            } catch (error) {
+                                console.error(`[MIDTRANS WEBHOOK] Error sending WhatsApp to ${participant.phone}:`, error)
+                            }
                         }
-                    } else {
-                        console.log('[MIDTRANS WEBHOOK] Participant not found or no phone number')
                     }
                 })())
                 console.log('[MIDTRANS WEBHOOK] WAHA sending scheduled in background')

@@ -118,29 +118,39 @@ participants.get('/:id', authMiddleware, async (c) => {
     })
 })
 
-// Register for event (public)
+// Register for event (public) - Supports Bulk Registration
 participants.post('/register', async (c) => {
     const body = await c.req.json()
-    const { event_id, ticket_type_id, full_name, email, phone, city, gender, attendance_type, custom_fields } = body as {
-        event_id: string
-        ticket_type_id?: string
-        full_name: string
-        email: string
-        phone?: string
-        city?: string
-        gender?: string
-        attendance_type?: string
-        custom_fields?: Array<{ field_id: string; response: string | string[] }>
+
+    // Normalize input to array
+    let participantsList: any[] = []
+    let eventId: string = ''
+
+    if (body.participants && Array.isArray(body.participants)) {
+        // Bulk mode
+        participantsList = body.participants
+        eventId = body.event_id
+    } else {
+        // Single mode (Legacy support)
+        participantsList = [body]
+        eventId = body.event_id
     }
 
-    if (!event_id || !full_name || !email) {
-        return c.json({ error: 'Event ID, full name, and email required' }, 400)
+    if (!eventId || participantsList.length === 0) {
+        return c.json({ error: 'Event ID and at least one participant required' }, 400)
+    }
+
+    // Validate basics for all
+    for (const p of participantsList) {
+        if (!p.full_name || !p.email) {
+            return c.json({ error: 'Full name and email required for all participants' }, 400)
+        }
     }
 
     // Check event exists and is open
     const event = await c.env.DB.prepare(
         'SELECT id, organization_id, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, title FROM events WHERE id = ? AND status = ?'
-    ).bind(event_id, 'open').first() as {
+    ).bind(eventId, 'open').first() as {
         id: string;
         organization_id: string;
         capacity: number;
@@ -157,128 +167,176 @@ participants.post('/register', async (c) => {
         return c.json({ error: 'Event not found or not accepting registrations' }, 400)
     }
 
-    // Validate custom fields
+    // Validate custom fields metadata (fetch once)
     const eventFields = await c.env.DB.prepare(
         'SELECT id, field_type, label, required, options FROM event_custom_fields WHERE event_id = ?'
-    ).bind(event_id).all()
+    ).bind(eventId).all()
 
     const fieldMap = new Map(eventFields.results.map((f: any) => [f.id, f]))
 
-    // Check required fields
-    for (const field of eventFields.results as any[]) {
-        if (field.required === 1) {
-            const response = custom_fields?.find(cf => cf.field_id === field.id)
-            if (!response || !response.response || (Array.isArray(response.response) && response.response.length === 0)) {
-                return c.json({ error: `Field "${field.label}" is required` }, 400)
+    // Validate each participant's custom fields
+    for (const [index, p] of participantsList.entries()) {
+        for (const field of eventFields.results as any[]) {
+            if (field.required === 1) {
+                const response = p.custom_fields?.find((cf: any) => cf.field_id === field.id)
+                if (!response || !response.response || (Array.isArray(response.response) && response.response.length === 0)) {
+                    return c.json({ error: `Peserta ${index + 1}: Field "${field.label}" wajib diisi` }, 400)
+                }
             }
         }
     }
 
-    // Check capacity
+    // Check total capacity
     if (event.capacity) {
         const participantCount = await c.env.DB.prepare(
             'SELECT COUNT(*) as count FROM participants WHERE event_id = ?'
-        ).bind(event_id).first()
+        ).bind(eventId).first()
 
-        if (participantCount && (participantCount.count as number) >= event.capacity) {
-            return c.json({ error: 'Event is full' }, 400)
+        const currentCount = participantCount?.count as number || 0
+        if (currentCount + participantsList.length > event.capacity) {
+            return c.json({ error: 'Not enough seats available' }, 400)
         }
     }
 
-    // NOTE: Allowing duplicate email registrations per user request
-    // Previously checked for duplicate email per event, now removed
-
-    const participantId = `prt_${crypto.randomUUID().slice(0, 8)}`
-    const registrationId = generateRegId()
-    const qrCode = `${event_id}:${participantId}:${registrationId}`
-
-    // Determine payment status based on event mode
+    // Determine shared Order ID and Payment Status
+    const orderId = `ord_${crypto.randomUUID().slice(0, 8)}`
     const paymentStatus = event.event_mode === 'free' ? 'paid' : 'pending'
 
-    // Get ticket price if paid event
-    let ticketPrice = 0
-    let ticketName = ''
-    if (ticket_type_id) {
-        const ticket = await c.env.DB.prepare(
-            'SELECT name, price FROM ticket_types WHERE id = ?'
-        ).bind(ticket_type_id).first() as { name: string; price: number } | null
-        if (ticket) {
-            ticketPrice = ticket.price
-            ticketName = ticket.name
+    const insertedParticipants: any[] = []
+    const messagesToSend: { phone: string, message: string }[] = []
+
+    // Process insertion
+    const batchStmts: D1PreparedStatement[] = []
+
+    for (const p of participantsList) {
+        const participantId = `prt_${crypto.randomUUID().slice(0, 8)}`
+        const registrationId = generateRegId()
+        const qrCode = `${eventId}:${participantId}:${registrationId}`
+
+        const ticketTypeId = p.ticket_type_id || body.ticket_type_id // Allow global or per-person ticket
+
+        batchStmts.push(c.env.DB.prepare(`
+            INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, city, gender, payment_status, qr_code, attendance_type, order_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+            participantId,
+            eventId,
+            ticketTypeId || null,
+            registrationId,
+            p.full_name,
+            p.email,
+            p.phone || null,
+            p.city || null,
+            p.gender || null,
+            paymentStatus,
+            qrCode,
+            p.attendance_type || 'offline',
+            orderId
+        ))
+
+        // Store custom field responses
+        if (p.custom_fields && p.custom_fields.length > 0) {
+            for (const fieldResponse of p.custom_fields) {
+                if (!fieldMap.has(fieldResponse.field_id)) continue
+
+                const responseId = `cfr_${crypto.randomUUID().slice(0, 8)}`
+                const responseValue = Array.isArray(fieldResponse.response)
+                    ? fieldResponse.response.join(', ')
+                    : fieldResponse.response
+
+                batchStmts.push(c.env.DB.prepare(`
+                    INSERT INTO participant_field_responses (id, participant_id, field_id, response)
+                    VALUES (?, ?, ?, ?)
+                `).bind(responseId, participantId, fieldResponse.field_id, responseValue))
+            }
         }
+
+        insertedParticipants.push({
+            id: participantId,
+            registration_id: registrationId,
+            full_name: p.full_name,
+            ticket_type_id: ticketTypeId
+        })
     }
 
-    await c.env.DB.prepare(`
-    INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, city, gender, payment_status, qr_code, attendance_type)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(participantId, event_id, ticket_type_id || null, registrationId, full_name, email, phone || null, city || null, gender || null, paymentStatus, qrCode, attendance_type || 'offline').run()
+    // Execute Batch
+    await c.env.DB.batch(batchStmts)
 
-    // Store custom field responses
-    if (custom_fields && custom_fields.length > 0) {
-        for (const fieldResponse of custom_fields) {
-            if (!fieldMap.has(fieldResponse.field_id)) continue
-
-            const responseId = `cfr_${crypto.randomUUID().slice(0, 8)}`
-            const responseValue = Array.isArray(fieldResponse.response)
-                ? fieldResponse.response.join(', ')
-                : fieldResponse.response
-
-            await c.env.DB.prepare(`
-                INSERT INTO participant_field_responses (id, participant_id, field_id, response)
-                VALUES (?, ?, ?, ?)
-            `).bind(responseId, participantId, fieldResponse.field_id, responseValue).run()
-        }
-    }
-
-    // Send WhatsApp notification ONLY for FREE events (paid status)
-    // For PAID events, WhatsApp will be sent after payment confirmation via webhook or manual approve
-    if (phone && paymentStatus === 'paid') {
+    // Handle WhatsApp (Only for FREE events immediately)
+    // For PAID events, it waits for payment.
+    if (paymentStatus === 'paid') {
         c.executionCtx.waitUntil((async () => {
             try {
-                console.log('[REGISTRATION] Sending WhatsApp for free event to:', phone)
                 const { sendWhatsAppMessage, generateRegistrationMessage } = await import('../lib/whatsapp')
-
                 const frontendUrl = 'https://etiket.my.id'
-                const ticketLink = `${frontendUrl}/ticket/${registrationId}`
 
-                // Fetch custom field responses
-                const customFieldResponses = await getCustomFieldResponses(c.env.DB, participantId)
+                for (const p of participantsList) {
+                    if (!p.phone) continue
 
-                const message = generateRegistrationMessage({
-                    eventTitle: event.title,
-                    fullName: full_name,
-                    registrationId,
-                    ticketLink,
-                    ticketName,
-                    ticketPrice,
-                    customFieldResponses
-                })
+                    // Find generated details
+                    const inserted = insertedParticipants.find(i => i.full_name === p.full_name) // Simple match
+                    if (!inserted) continue
 
-                await sendWhatsAppMessage(c.env.DB, event.organization_id, phone, message)
+                    const ticketLink = `${frontendUrl}/ticket/${inserted.registration_id}`
+
+                    // Simple fetch custom fields for msg
+                    // Optimization: We could reuse valid data but let's fetch strictly from DB or use passed data
+                    const customFieldResponses = p.custom_fields?.map((cf: any) => ({
+                        label: fieldMap.get(cf.field_id)?.label || '',
+                        response: Array.isArray(cf.response) ? cf.response.join(', ') : cf.response,
+                        show_on_id: true // simplified
+                    })) || []
+
+                    let ticketName = ''
+                    let ticketPrice = 0
+                    if (inserted.ticket_type_id) {
+                        // This inside loop is n+1 but generally small batch (max 10)
+                        const ticket = await c.env.DB.prepare('SELECT name, price FROM ticket_types WHERE id = ?').bind(inserted.ticket_type_id).first() as any
+                        if (ticket) { ticketName = ticket.name; ticketPrice = ticket.price }
+                    }
+
+                    const message = generateRegistrationMessage({
+                        eventTitle: event.title,
+                        fullName: p.full_name,
+                        registrationId: inserted.registration_id,
+                        ticketLink,
+                        ticketName,
+                        ticketPrice,
+                        customFieldResponses
+                    })
+
+                    await sendWhatsAppMessage(c.env.DB, event.organization_id, p.phone, message)
+                }
             } catch (error) {
                 console.error('[REGISTRATION] Error sending WhatsApp:', error)
             }
         })())
-        console.log('[REGISTRATION] WAHA sending scheduled in background')
-    } else if (phone && paymentStatus === 'pending') {
-        console.log('[REGISTRATION] Skipping WhatsApp for paid event - will send after payment confirmation')
     }
 
+    // Prepare response
+    // For single registration (legacy), return flat structure
+    // For bulk, we return order_id and summary
+
+    // Calculate total price preview
+    let totalPrice = 0
+    let discountApplied = 0
+    // We can do a quick calc here or leave it to payment page
+
     return c.json({
-        id: participantId,
-        registration_id: registrationId,
-        qr_code: qrCode,
+        order_id: orderId,
+        participant_count: insertedParticipants.length,
         payment_status: paymentStatus,
         event_title: event.title,
-        // Payment info for frontend flow
-        payment_mode: event.payment_mode || 'manual',
-        whatsapp_cs: event.whatsapp_cs || null,
-        bank_name: event.bank_name || null,
-        account_holder_name: event.account_holder_name || null,
-        account_number: event.account_number || null,
-        ticket_name: ticketName,
-        ticket_price: ticketPrice,
-        message: paymentStatus === 'paid' ? 'Registration successful!' : 'Please complete payment'
+        redirect_url: `/payment/${orderId}`, // New flow: redirect to payment page with Order ID
+
+        // Legacy fields for backward compat if single
+        ...(participantsList.length === 1 ? {
+            id: insertedParticipants[0].id,
+            registration_id: insertedParticipants[0].registration_id,
+            message: paymentStatus === 'paid' ? 'Registration successful!' : 'Please complete payment'
+        } : {
+            message: 'Registration successful! Proceeding to payment.'
+        })
     }, 201)
 })
 

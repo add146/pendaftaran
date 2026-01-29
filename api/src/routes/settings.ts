@@ -54,6 +54,7 @@ settings.get('/:key', async (c) => {
     const isSuperAdmin = user.role === 'super_admin'
     const isSystemKey = SYSTEM_SETTINGS_KEYS.includes(key)
 
+    let result
     if (isSystemKey) {
         // System keys are always fetched from org_system
         result = await c.env.DB.prepare(
