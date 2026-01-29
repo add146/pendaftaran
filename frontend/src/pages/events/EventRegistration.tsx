@@ -327,7 +327,7 @@ export default function EventRegistration() {
             // { message: 'Registration successful', order_id, participant_count, payment_status, redirect_url, event_title, ... }
 
             // Let's assume result has necessary fields
-            const anyResult = result as any
+
             setPaymentInfo({
                 payment_mode: event.payment_mode || 'manual',
                 whatsapp_cs: event.whatsapp_cs || null,
