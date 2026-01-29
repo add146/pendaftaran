@@ -126,7 +126,10 @@ participants.post('/register', async (c) => {
     let participantsList: any[] = []
     let eventId: string = ''
 
-    if (body.participants && Array.isArray(body.participants)) {
+    if (Array.isArray(body)) {
+        participantsList = body
+        eventId = body[0]?.event_id
+    } else if (body.participants && Array.isArray(body.participants)) {
         // Bulk mode
         participantsList = body.participants
         eventId = body.event_id
