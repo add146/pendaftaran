@@ -339,7 +339,13 @@ participants.post('/register', async (c) => {
             message: paymentStatus === 'paid' ? 'Registration successful!' : 'Please complete payment'
         } : {
             message: 'Registration successful! Proceeding to payment.'
-        })
+        }),
+
+        // Group details for frontend WA generation
+        participants: insertedParticipants.map(p => ({
+            full_name: p.full_name,
+            registration_id: p.registration_id
+        }))
     }, 201)
 })
 

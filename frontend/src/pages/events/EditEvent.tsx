@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { eventsAPI, uploadAPI, type Event, type BulkDiscount } from '../../lib/api'
+import { eventsAPI, uploadAPI, settingsAPI, type Event, type BulkDiscount } from '../../lib/api'
 import CustomFieldsEditor from '../../components/CustomFieldsEditor'
 import CertificateEditor from '../../components/CertificateEditor'
 import IDCardEditor from '../../components/IDCardEditor'
@@ -86,7 +86,27 @@ export default function EditEvent() {
         setImages(images.filter((_, i) => i !== index))
     }
 
+    // Midtrans check
+    const [_midtransConfig, setMidtransConfig] = useState<{ production_server_key?: string; production_client_key?: string } | null>(null)
+    const [hasMidtransProdKeys, setHasMidtransProdKeys] = useState(false)
+
     useEffect(() => {
+        // Load Midtrans settings to check for production keys
+        settingsAPI.get('midtrans_config')
+            .then(data => {
+                if (data && data.value) {
+                    const config = data.value
+                    setMidtransConfig(config)
+                    // Check if production keys are filled
+                    const hasKeys = !!config.production_server_key && !!config.production_client_key
+                    setHasMidtransProdKeys(hasKeys)
+                    // console.log('[DEBUG] Midtrans Production Keys status:', hasKeys)
+                }
+            })
+            .catch(err => {
+                console.warn('Failed to check Midtrans config:', err)
+            })
+
         if (!id) return
 
         eventsAPI.get(id)
@@ -552,21 +572,31 @@ export default function EditEvent() {
                                                                 </div>
                                                             </div>
                                                         </label>
-                                                        <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                                                            }`}>
+                                                        <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto'
+                                                                ? (!hasMidtransProdKeys ? 'border-amber-500 bg-amber-50' : 'border-primary bg-primary/5')
+                                                                : 'border-gray-200'
+                                                            } ${!hasMidtransProdKeys ? 'cursor-not-allowed opacity-80' : ''}`}>
                                                             <input
                                                                 type="radio"
                                                                 name="payment_mode"
                                                                 value="auto"
                                                                 checked={formData.payment_mode === 'auto'}
                                                                 onChange={() => updateField('payment_mode', 'auto')}
+                                                                disabled={!hasMidtransProdKeys}
                                                                 className="hidden"
                                                             />
                                                             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
-                                                                <span className="material-symbols-outlined text-primary text-[28px] md:text-[24px]">credit_card</span>
+                                                                <span className={`material-symbols-outlined text-[28px] md:text-[24px] ${formData.payment_mode === 'auto' ? 'text-primary' : 'text-gray-400'}`}>credit_card</span>
                                                                 <div>
-                                                                    <p className="font-medium text-sm md:text-base">Otomatis (Midtrans)</p>
-                                                                    <p className="text-[10px] md:text-xs text-gray-500">Pembayaran online langsung</p>
+                                                                    <p className={`font-medium text-sm md:text-base ${formData.payment_mode === 'auto' ? '' : 'text-gray-500'}`}>Otomatis (Midtrans)</p>
+                                                                    {!hasMidtransProdKeys ? (
+                                                                        <p className="text-[10px] md:text-xs text-amber-600 flex items-center gap-1 justify-center md:justify-start">
+                                                                            <span className="material-symbols-outlined text-[10px]">warning</span>
+                                                                            Production Keys required
+                                                                        </p>
+                                                                    ) : (
+                                                                        <p className="text-[10px] md:text-xs text-gray-500">Pembayaran online langsung</p>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </label>
@@ -832,16 +862,22 @@ export default function EditEvent() {
 
                                             <div className="border-t border-gray-100 pt-4">
                                                 <label className="block text-sm font-medium mb-2">Donations</label>
-                                                <div className="flex items-center gap-2 mb-2">
+                                                <label className="flex items-center gap-2 mb-2">
                                                     <input
                                                         type="checkbox"
-                                                        id="donation_enabled"
                                                         checked={formData.donation_enabled === 1}
                                                         onChange={(e) => updateField('donation_enabled', e.target.checked ? 1 : 0)}
-                                                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                                        disabled={!hasMidtransProdKeys}
+                                                        className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     />
-                                                    <label htmlFor="donation_enabled" className="text-sm cursor-pointer select-none">Enable Donations</label>
-                                                </div>
+                                                    <span className={`text-sm font-medium ${!hasMidtransProdKeys ? 'text-gray-400' : ''}`}>Enable Donations</span>
+                                                </label>
+                                                {!hasMidtransProdKeys && (
+                                                    <p className="text-xs text-amber-600 mb-2 flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[14px]">warning</span>
+                                                        Midtrans Production Keys required. Go to Settings to configure.
+                                                    </p>
+                                                )}
                                                 {formData.donation_enabled === 1 && (
                                                     <div className="space-y-3 pl-6 mt-3 animate-fadeIn">
                                                         <div>
@@ -867,6 +903,7 @@ export default function EditEvent() {
                                                     </div>
                                                 )}
                                             </div>
+
 
                                             <div>
                                                 <label className="block text-sm font-medium mb-2">Event Format</label>

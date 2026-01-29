@@ -238,8 +238,8 @@ export async function sendWhatsAppMessage(
 
         // --- HUMAN LIKE BEHAVIOR START ---
 
-        // 1. Random Delay (3-8 seconds)
-        const initialDelay = getRandomDelay(3000, 8000)
+        // 1. Random Delay (8-15 seconds)
+        const initialDelay = getRandomDelay(8000, 15000)
         console.log(`[WAHA] Waiting for ${initialDelay}ms before processing...`)
         await sleep(initialDelay)
 
@@ -255,8 +255,8 @@ export async function sendWhatsAppMessage(
         console.log('[WAHA] sending startTyping...')
         await startTyping(config, chatId)
 
-        // Typing duration based on message length, but kept simple 2-4s for now
-        const typingDuration = getRandomDelay(2000, 4000)
+        // Typing duration based on message length, but kept simple 3-6s for now
+        const typingDuration = getRandomDelay(3000, 6000)
         console.log(`[WAHA] Typing for ${typingDuration}ms...`)
         await sleep(typingDuration)
 

@@ -225,7 +225,8 @@ export const participantsAPI = {
             participant_count?: number;
             qr_code?: string;
             payment_status: string;
-            message: string
+            message: string;
+            participants?: { full_name: string; registration_id: string }[]
         }>(
             '/api/participants/register',
             { method: 'POST', body: JSON.stringify(payload) }

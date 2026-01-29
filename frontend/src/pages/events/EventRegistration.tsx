@@ -27,6 +27,7 @@ export default function EventRegistration() {
         order_id?: string
         participant_count?: number
         amount: number
+        participants?: { full_name: string; registration_id: string }[]
     } | null>(null)
 
     const [showImagePopup, setShowImagePopup] = useState(false)
@@ -320,7 +321,8 @@ export default function EventRegistration() {
                 registration_id: result.registration_id, // Might be empty if multiple? API returns first ID?
                 order_id: result.order_id,
                 participant_count: result.participant_count || participants.length,
-                amount: total
+                amount: total,
+                participants: result.participants
             })
 
             // Construct Payment Info for Success Page
@@ -338,8 +340,16 @@ export default function EventRegistration() {
 
             // Let's assume result has necessary fields
 
+            // Logic to determine payment mode
+            // If Free Event + Donation + Midtrans Keys Present -> Force 'auto'
+            // Otherwise respect event settings
+            let effectivePaymentMode = event.payment_mode || 'manual'
+            if (event.event_mode === 'free' && total > 0 && event.midtrans_client_key) {
+                effectivePaymentMode = 'auto'
+            }
+
             setPaymentInfo({
-                payment_mode: event.payment_mode || 'manual',
+                payment_mode: effectivePaymentMode,
                 whatsapp_cs: event.whatsapp_cs || null,
                 bank_name: event.bank_name || null,
                 account_holder_name: event.account_holder_name || null,
@@ -440,7 +450,10 @@ Mohon konfirmasi pembayaran sebesar *Rp ${paymentInfo.ticket_price.toLocaleStrin
 👤 *Nama Pendaftar:* ${participants[0].full_name} (${participants[0].email})
 👥 *Jumlah Peserta:* ${participants.length} Orang
 
-🎫 *Total Tiket:* ${paymentInfo.ticket_name}
+${registrationResult?.participants && registrationResult.participants.length > 0 ? `👥 *Daftar Peserta:*
+${registrationResult.participants.map((p, i) => `${i + 1}. ${p.full_name} (${p.registration_id})`).join('\n')}
+
+` : ''}🎫 *Total Tiket:* ${paymentInfo.ticket_name}
 💰 *Total Tagihan:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
 🔖 *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
 ${bankSection}`

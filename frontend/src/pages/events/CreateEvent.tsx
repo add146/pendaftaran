@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { eventsAPI, uploadAPI } from '../../lib/api'
+import { eventsAPI, uploadAPI, settingsAPI } from '../../lib/api'
 
 interface EventFormData {
     title: string
@@ -32,6 +32,23 @@ export default function CreateEvent() {
     const [error, setError] = useState('')
     const [images, setImages] = useState<string[]>([])
     const [uploadingImage, setUploadingImage] = useState(false)
+    const [hasMidtransProdKeys, setHasMidtransProdKeys] = useState(false)
+
+    useEffect(() => {
+        const checkKeys = async () => {
+            try {
+                const data = await settingsAPI.get('midtrans_config')
+                if (data && data.value) {
+                    const config = data.value
+                    const hasKeys = !!config.production_server_key && !!config.production_client_key
+                    setHasMidtransProdKeys(hasKeys)
+                }
+            } catch (err) {
+                console.error('Failed to fetch midtrans config', err)
+            }
+        }
+        checkKeys()
+    }, [])
 
     const [formData, setFormData] = useState<EventFormData>({
         title: '',
@@ -132,9 +149,11 @@ export default function CreateEvent() {
         }
     }
 
+
     return (
         <div className="bg-background-light text-text-main font-display min-h-screen">
             {/* Header */}
+
             <header className="sticky top-0 z-50 flex items-center justify-between border-b border-border-light bg-background-light/80 backdrop-blur-md px-6 py-3 lg:px-10">
                 <div className="flex items-center gap-4">
                     <Link to="/events" className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
@@ -537,25 +556,36 @@ export default function CreateEvent() {
                                                         </div>
                                                     </div>
                                                 </label>
-                                                <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto' ? 'border-primary bg-primary/5' : 'border-gray-200'
-                                                    }`}>
+                                                <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto' ? 'border-primary bg-primary/5' : 'border-gray-200'} ${!hasMidtransProdKeys ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}`}>
                                                     <input
                                                         type="radio"
                                                         name="payment_mode"
                                                         value="auto"
                                                         checked={formData.payment_mode === 'auto'}
                                                         onChange={() => updateField('payment_mode', 'auto')}
+                                                        disabled={!hasMidtransProdKeys}
                                                         className="hidden"
                                                     />
                                                     <div className="flex items-center gap-3">
                                                         <span className="material-symbols-outlined text-primary">credit_card</span>
                                                         <div>
-                                                            <p className="font-medium">Otomatis (Midtrans)</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-medium">Otomatis (Midtrans)</p>
+                                                                {!hasMidtransProdKeys && (
+                                                                    <span className="material-symbols-outlined text-amber-500 text-[16px] animate-pulse" title="Production Keys Required">warning</span>
+                                                                )}
+                                                            </div>
                                                             <p className="text-xs text-gray-500">Pembayaran online langsung</p>
                                                         </div>
                                                     </div>
                                                 </label>
                                             </div>
+                                            {!hasMidtransProdKeys && (
+                                                <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                                                    <span className="material-symbols-outlined text-[14px]">info</span>
+                                                    Midtrans Production Keys are not configured. Go to Settings to enable.
+                                                </p>
+                                            )}
                                         </div>
 
                                         {formData.payment_mode === 'manual' && (

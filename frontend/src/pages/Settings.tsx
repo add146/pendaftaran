@@ -176,12 +176,16 @@ export default function Settings() {
             await settingsAPI.save('account_number', bankConfig.account_number)
             await settingsAPI.save('bank_config', bankConfig) // Keep for UI state
 
-            // Save WAHA keys individually
-            await settingsAPI.save('waha_enabled', wahaConfig.enabled.toString()) // Backend expects "true"/"false" string
-            await settingsAPI.save('waha_api_url', wahaConfig.api_url)
-            await settingsAPI.save('waha_api_key', wahaConfig.api_key)
-            await settingsAPI.save('waha_session', wahaConfig.session)
-            await settingsAPI.save('waha_config', wahaConfig) // Keep for UI state
+            // Save WAHA keys individually - ONLY for super admin
+            // Regular admins should not save WAHA config (they can't see/edit it anyway)
+            // This prevents accidental overwrite of existing WAHA settings with empty values
+            if (isSuperAdmin) {
+                await settingsAPI.save('waha_enabled', wahaConfig.enabled.toString()) // Backend expects "true"/"false" string
+                await settingsAPI.save('waha_api_url', wahaConfig.api_url)
+                await settingsAPI.save('waha_api_key', wahaConfig.api_key)
+                await settingsAPI.save('waha_session', wahaConfig.session)
+                await settingsAPI.save('waha_config', wahaConfig) // Keep for UI state
+            }
 
             // Save notification preferences
             console.log('Saving notification preferences:', notifications)
