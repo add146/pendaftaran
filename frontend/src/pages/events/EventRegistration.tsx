@@ -63,6 +63,7 @@ export default function EventRegistration() {
     useEffect(() => {
         if (!slug) return
 
+        setLoading(true)
         publicAPI.event(slug)
             .then(data => {
                 setEvent(data)
@@ -70,23 +71,26 @@ export default function EventRegistration() {
                 if (data.ticket_types && data.ticket_types.length > 0) {
                     setParticipants(prev => prev.map(p => ({ ...p, ticket_type_id: data.ticket_types![0].id })))
                 }
+
+                // Fetch custom fields using the event ID
+                return customFieldsAPI.list(data.id)
+            })
+            .then(fields => {
+                setCustomFields(fields || [])
                 setLoading(false)
             })
             .catch(err => {
-                setError(err.message || 'Event not found')
+                console.error('Error loading event data:', err)
+                // If it's the second error (custom fields), we still show event but maybe with warning?
+                // Actually if event fetch fails, it goes here.
+                if (!event) {
+                    setError(err.message || 'Event not found')
+                } else {
+                    // Event loaded, but custom fields failed
+                    console.warn('Custom fields failed to load')
+                }
                 setLoading(false)
             })
-
-        // Fetch custom fields for this event
-        if (slug) {
-            publicAPI.event(slug)
-                .then(eventData => {
-                    customFieldsAPI.list(eventData.id)
-                        .then(fields => setCustomFields(fields))
-                        .catch(err => console.error('Failed to load custom fields:', err))
-                })
-                .catch(() => { /* Event already handled above */ })
-        }
     }, [slug])
 
     // Load Midtrans Snap Script
