@@ -81,6 +81,11 @@ publicRoutes.get('/events/:slug', async (c) => {
     WHERE t.event_id = ?
   `).bind(event.id).all()
 
+  // Get bulk discounts
+  const discounts = await c.env.DB.prepare(
+    'SELECT * FROM event_bulk_discounts WHERE event_id = ? ORDER BY min_qty ASC'
+  ).bind(event.id).all()
+
   // Check if registration is still available
   const isAvailable = event.status === 'open' &&
     (!event.capacity || (event.registered_count as number) < (event.capacity as number))
@@ -105,6 +110,7 @@ publicRoutes.get('/events/:slug', async (c) => {
   return c.json({
     ...event,
     ticket_types: tickets.results,
+    bulk_discounts: discounts.results,
     registration_available: isAvailable,
     midtrans_client_key: midtransClientKey,
     midtrans_environment: midtransEnvironment
