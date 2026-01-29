@@ -89,7 +89,7 @@ events.get('/:id', authMiddleware, async (c) => {
 events.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions, auto_close } = body
+  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions, auto_close, donation_enabled, donation_min_amount, donation_description } = body
 
   if (!title || !event_date) {
     return c.json({ error: 'Title and event date required' }, 400)
@@ -101,9 +101,24 @@ events.post('/', authMiddleware, async (c) => {
   const imageUrl = images && Array.isArray(images) && images.length > 0 ? JSON.stringify(images) : null
 
   await c.env.DB.prepare(`
-    INSERT INTO events (id, organization_id, title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, slug, image_url, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).bind(eventId, user.orgId, title, description || null, event_date, event_time || null, location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null, bank_name || null, account_holder_name || null, account_number || null, visibility || 'public', slug, imageUrl, event_type || 'offline', online_platform || null, online_url || null, online_password || null, online_instructions || null, body.note || null, body.icon_type || 'info', auto_close !== undefined ? auto_close : 1).run()
+        INSERT INTO events (
+            id, organization_id, title, description, event_date, event_time, 
+            location, capacity, event_mode, payment_mode, whatsapp_cs, 
+            bank_name, account_holder_name, account_number, visibility, status, 
+            slug, image_url, event_type, online_platform, online_url, 
+            online_password, online_instructions, note, icon_type, auto_close,
+            donation_enabled, donation_min_amount, donation_description
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+    eventId, user.orgId, title, description || null, event_date, event_time || null,
+    location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null,
+    bank_name || null, account_holder_name || null, account_number || null, visibility || 'public',
+    slug, imageUrl, event_type || 'offline', online_platform || null, online_url || null,
+    online_password || null, online_instructions || null, body.note || null, body.icon_type || 'info',
+    auto_close !== undefined ? auto_close : 1,
+    donation_enabled ? 1 : 0, donation_min_amount || 0, donation_description || null
+  ).run()
 
   return c.json({ id: eventId, slug }, 201)
 })
@@ -184,7 +199,10 @@ events.put('/:id', authMiddleware, async (c) => {
             note = COALESCE(?, note),
             icon_type = COALESCE(?, icon_type),
             certificate_config = COALESCE(?, certificate_config),
-            auto_close = COALESCE(?, auto_close)
+            auto_close = COALESCE(?, auto_close),
+            donation_enabled = COALESCE(?, donation_enabled),
+            donation_min_amount = COALESCE(?, donation_min_amount),
+            donation_description = COALESCE(?, donation_description)
             WHERE id = ?
         `).bind(
         title ?? null,
@@ -211,6 +229,9 @@ events.put('/:id', authMiddleware, async (c) => {
         icon_type ?? 'info',
         body.certificate_config ?? null,
         finalAutoClose !== undefined ? finalAutoClose : null,
+        body.donation_enabled !== undefined ? (body.donation_enabled ? 1 : 0) : null,
+        body.donation_min_amount !== undefined ? body.donation_min_amount : null,
+        body.donation_description ?? null,
         id
       ).run()
     } catch (dbError: any) {

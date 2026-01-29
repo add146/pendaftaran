@@ -1,3 +1,3 @@
 -- Add note and icon_type columns to events table
-ALTER TABLE events ADD COLUMN note TEXT;
-ALTER TABLE events ADD COLUMN icon_type TEXT DEFAULT 'info';
+-- ALTER TABLE events ADD COLUMN note TEXT;
+-- ALTER TABLE events ADD COLUMN icon_type TEXT DEFAULT 'info';

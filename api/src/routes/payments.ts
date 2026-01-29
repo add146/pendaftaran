@@ -39,7 +39,8 @@ const getMidtransUrl = (isProduction: boolean) => ({
 
 // Create payment / Snap token
 payments.post('/create', async (c) => {
-    const { participantId, orderId: reqOrderId, amount, itemName, customerName, customerEmail, customerPhone } = await c.req.json()
+    const { participantId, orderId: reqOrderId, amount, itemName, customerName, customerEmail, customerPhone, donationAmount } = await c.req.json()
+
 
     if (!participantId && !reqOrderId) {
         return c.json({ error: 'Participant ID or Order ID required' }, 400)
@@ -129,7 +130,13 @@ payments.post('/create', async (c) => {
         }
     }
 
-    const finalAmount = Math.max(0, totalBasePrice - discountAmount)
+    let finalAmount = Math.max(0, totalBasePrice - discountAmount)
+
+    // Add Donation
+    if (donationAmount && typeof donationAmount === 'number' && donationAmount > 0) {
+        finalAmount += donationAmount
+    }
+
 
     // Safety check: if amount passed from frontend differs significantly, warn or enforce backend calc
     // We strictly use backend calc for security
@@ -185,6 +192,16 @@ payments.post('/create', async (c) => {
         })
     }
 
+    if (donationAmount && typeof donationAmount === 'number' && donationAmount > 0) {
+        snapPayload.item_details.push({
+            id: 'DONATION',
+            price: donationAmount,
+            quantity: 1,
+            name: 'Donasi Event'
+        })
+    }
+
+
     // If Total is 0 (100% discount), skip Midtrans?
     // Current logic assumes > 0, but if 0, we can auto-confirm.
     if (finalAmount <= 0) {
@@ -234,6 +251,15 @@ payments.post('/create', async (c) => {
         await c.env.DB.prepare(`
             UPDATE participants SET payment_status = 'pending' WHERE id IN (${placeholders})
         `).bind(...participants.map(p => p.id)).run()
+
+        // 4. Save Donation Record
+        if (donationAmount && typeof donationAmount === 'number' && donationAmount > 0) {
+            const donationId = `don_${crypto.randomUUID().slice(0, 8)}`
+            await c.env.DB.prepare(`
+                INSERT INTO donations (id, participant_id, order_id, amount, status, payment_type)
+                VALUES (?, ?, ?, ?, 'pending', 'midtrans')
+            `).bind(donationId, firstParticipant.id, orderId, donationAmount).run()
+        }
 
         return c.json({
             paymentId,
@@ -288,6 +314,14 @@ payments.post('/notification', async (c) => {
             SET status = ?, payment_type = ?, midtrans_response = ?
             WHERE order_id = ?
         `).bind(status, payment_type, JSON.stringify(notification), order_id).run()
+
+        // Update donation status if exists
+        await c.env.DB.prepare(`
+            UPDATE donations
+            SET status = ?, payment_type = ?
+            WHERE order_id = ?
+        `).bind(status, payment_type, order_id).run()
+
 
         console.log('[MIDTRANS WEBHOOK] Updated payment record')
 

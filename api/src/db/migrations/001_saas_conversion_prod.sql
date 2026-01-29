@@ -5,7 +5,7 @@
 PRAGMA foreign_keys = OFF;
 
 -- 1. Modify settings table to be organization-scoped
-ALTER TABLE settings ADD COLUMN organization_id TEXT;
+-- ALTER TABLE settings ADD COLUMN organization_id TEXT;
 
 -- Update existing settings to belong to first organization (if any)
 UPDATE settings 
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS waha_config (
 );
 
 -- 3. Add WAHA toggle to organizations
-ALTER TABLE organizations ADD COLUMN waha_enabled INTEGER DEFAULT 0;
+-- ALTER TABLE organizations ADD COLUMN waha_enabled INTEGER DEFAULT 0;
 
 -- 4. Create subscriptions table
 CREATE TABLE IF NOT EXISTS subscriptions (

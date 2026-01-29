@@ -4,7 +4,7 @@
 
 -- 1. Update settings table for multi-tenancy
 -- Add organization_id to settings
-ALTER TABLE settings ADD COLUMN organization_id TEXT REFERENCES organizations(id);
+-- ALTER TABLE settings ADD COLUMN organization_id TEXT REFERENCES organizations(id);
 
 -- Create index for organization-scoped settings
 CREATE INDEX IF NOT EXISTS idx_settings_org_key ON settings(organization_id, key);
@@ -27,10 +27,10 @@ INSERT OR IGNORE INTO waha_config (id, api_url, api_key, enabled)
 VALUES ('global', '', '', 0);
 
 -- 3. Add WAHA toggle per organization (user-level control)
-ALTER TABLE organizations ADD COLUMN waha_enabled INTEGER DEFAULT 0;
+-- ALTER TABLE organizations ADD COLUMN waha_enabled INTEGER DEFAULT 0;
 
 -- 4. Add super_admin flag to users table
-ALTER TABLE users ADD COLUMN is_super_admin INTEGER DEFAULT 0;
+-- ALTER TABLE users ADD COLUMN is_super_admin INTEGER DEFAULT 0;
 
 -- Make first user super admin
 UPDATE users SET is_super_admin = 1 WHERE id = (SELECT id FROM users ORDER BY created_at ASC LIMIT 1);

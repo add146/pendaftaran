@@ -1,2 +1,2 @@
 -- Add auto_close column to events table
-ALTER TABLE events ADD COLUMN auto_close INTEGER DEFAULT 1;
+-- ALTER TABLE events ADD COLUMN auto_close INTEGER DEFAULT 1;

@@ -45,7 +45,11 @@ export default function EditEvent() {
         online_instructions: '',
         note: '',
         icon_type: 'info' as 'info' | 'warning' | 'danger',
-        certificate_config: null as any
+        certificate_config: null as any,
+        donation_enabled: 0,
+        donation_min_amount: '',
+        donation_description: ''
+
     })
 
     const [tickets, setTickets] = useState<TicketType[]>([])
@@ -114,7 +118,11 @@ export default function EditEvent() {
                     online_instructions: data.online_instructions || '',
                     note: data.note || '',
                     icon_type: (data.icon_type as 'info' | 'warning' | 'danger') || 'info',
-                    certificate_config: data.certificate_config ? JSON.parse(data.certificate_config) : null
+                    certificate_config: data.certificate_config ? JSON.parse(data.certificate_config) : null,
+                    donation_enabled: data.donation_enabled || 0,
+                    donation_min_amount: data.donation_min_amount?.toString() || '',
+                    donation_description: data.donation_description || ''
+
                 }
                 console.log('[DEBUG] Setting FormData:', newFormData)
                 setFormData(newFormData)
@@ -148,9 +156,10 @@ export default function EditEvent() {
             })
     }, [id])
 
-    const updateField = (field: string, value: string) => {
+    const updateField = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }))
     }
+
 
     const addTicket = () => {
         setTickets([...tickets, { name: '', price: '0', quota: '' }])
@@ -213,7 +222,11 @@ export default function EditEvent() {
                 online_instructions: formData.event_type !== 'offline' ? formData.online_instructions : undefined,
                 note: formData.note,
                 icon_type: formData.icon_type,
-                certificate_config: formData.certificate_config ? JSON.stringify(formData.certificate_config) : null
+                certificate_config: formData.certificate_config ? JSON.stringify(formData.certificate_config) : null,
+                donation_enabled: formData.donation_enabled,
+                donation_min_amount: formData.donation_min_amount ? parseInt(formData.donation_min_amount) : 0,
+                donation_description: formData.donation_description
+
             } as Record<string, unknown>)
 
             setShowSuccess(true)
@@ -781,6 +794,78 @@ export default function EditEvent() {
                                                     <option value="open">Open</option>
                                                     <option value="closed">Closed</option>
                                                 </select>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-3">Event Mode</label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <label className={`p-3 rounded-lg border cursor-pointer text-center transition-all ${formData.event_mode === 'free'
+                                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                                        : 'border-gray-200 hover:bg-gray-50'
+                                                        }`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="event_mode"
+                                                            value="free"
+                                                            checked={formData.event_mode === 'free'}
+                                                            onChange={() => updateField('event_mode', 'free')}
+                                                            className="hidden"
+                                                        />
+                                                        <span className="font-medium text-sm">Free</span>
+                                                    </label>
+                                                    <label className={`p-3 rounded-lg border cursor-pointer text-center transition-all ${formData.event_mode === 'paid'
+                                                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                                        : 'border-gray-200 hover:bg-gray-50'
+                                                        }`}>
+                                                        <input
+                                                            type="radio"
+                                                            name="event_mode"
+                                                            value="paid"
+                                                            checked={formData.event_mode === 'paid'}
+                                                            onChange={() => updateField('event_mode', 'paid')}
+                                                            className="hidden"
+                                                        />
+                                                        <span className="font-medium text-sm">Paid</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-gray-100 pt-4">
+                                                <label className="block text-sm font-medium mb-2">Donations</label>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="donation_enabled"
+                                                        checked={formData.donation_enabled === 1}
+                                                        onChange={(e) => updateField('donation_enabled', e.target.checked ? 1 : 0)}
+                                                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                                    />
+                                                    <label htmlFor="donation_enabled" className="text-sm cursor-pointer select-none">Enable Donations</label>
+                                                </div>
+                                                {formData.donation_enabled === 1 && (
+                                                    <div className="space-y-3 pl-6 mt-3 animate-fadeIn">
+                                                        <div>
+                                                            <label className="block text-xs font-medium mb-1 text-gray-500">Min Amount (Rp)</label>
+                                                            <input
+                                                                type="number"
+                                                                value={formData.donation_min_amount}
+                                                                onChange={(e) => updateField('donation_min_amount', e.target.value)}
+                                                                placeholder="e.g. 10000"
+                                                                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-medium mb-1 text-gray-500">Description</label>
+                                                            <input
+                                                                type="text"
+                                                                value={formData.donation_description}
+                                                                onChange={(e) => updateField('donation_description', e.target.value)}
+                                                                placeholder="e.g. Infaq shodaqoh"
+                                                                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div>

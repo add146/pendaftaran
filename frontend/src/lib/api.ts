@@ -475,7 +475,11 @@ export interface Event {
     icon_type?: string
     certificate_config?: string // JSON string
     auto_close?: number
+
     bulk_discounts?: BulkDiscount[]
+    donation_enabled?: number
+    donation_min_amount?: number
+    donation_description?: string
 }
 
 export interface PublicEvent extends Event {
@@ -578,7 +582,9 @@ export const paymentsAPI = {
         itemName?: string
         customerName?: string
         customerEmail?: string
+
         customerPhone?: string
+        donationAmount?: number
     }) =>
         fetchAPI<{ paymentId: string; orderId: string; token: string; redirectUrl: string }>(
             '/api/payments/create',

@@ -59,6 +59,8 @@ export default function EventRegistration() {
 
     const [orderId, setOrderId] = useState('')
     const [participantId, setParticipantId] = useState('') // Fallback for single
+    const [donationAmount, setDonationAmount] = useState<number | ''>('')
+
 
     useEffect(() => {
         if (!slug) return
@@ -155,11 +157,13 @@ export default function EventRegistration() {
         return {
             subtotal,
             discount,
-            total: Math.max(0, subtotal - discount)
+            donation: typeof donationAmount === 'number' ? donationAmount : 0,
+            total: Math.max(0, subtotal - discount) + (typeof donationAmount === 'number' ? donationAmount : 0)
         }
     }
 
-    const { subtotal, discount, total } = calculateTotals()
+    const { subtotal, discount, donation, total } = calculateTotals()
+
 
     const addParticipant = () => {
         setParticipants(prev => [...prev, {
@@ -218,7 +222,9 @@ export default function EventRegistration() {
                 itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`,
                 customerName: participants[0].full_name,
                 customerEmail: participants[0].email,
-                customerPhone: participants[0].phone
+                customerPhone: participants[0].phone,
+                donationAmount: donation // Pass donation amount separately for backend itemization
+
             }
 
             if (orderId) payLoad.orderId = orderId
@@ -850,32 +856,74 @@ ${bankSection}`
                                                 Tambah Peserta
                                             </button>
 
+                                            {/* Donation Section */}
+                                            {event.donation_enabled === 1 && (
+                                                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mt-6">
+                                                    <h3 className="font-bold flex items-center gap-2 mb-2 text-gray-800">
+                                                        <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
+                                                        Donasi (Sukarela)
+                                                    </h3>
+                                                    {event.donation_description && (
+                                                        <p className="text-sm text-gray-600 mb-4">{event.donation_description}</p>
+                                                    )}
+                                                    <div className="space-y-2">
+                                                        <label className="block text-xs font-bold text-gray-500 uppercase">Jumlah Donasi</label>
+                                                        <div className="relative">
+                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <span className="text-gray-500 font-bold">Rp</span>
+                                                            </div>
+                                                            <input
+                                                                type="number"
+                                                                value={donationAmount}
+                                                                onChange={(e) => setDonationAmount(e.target.value ? parseInt(e.target.value) : '')}
+                                                                placeholder={`Minimal Rp ${(event.donation_min_amount || 0).toLocaleString('id-ID')}`}
+                                                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                                min={event.donation_min_amount || 0}
+                                                            />
+                                                        </div>
+                                                        <p className="text-xs text-gray-500">
+                                                            Donasi Anda akan ditambahkan ke total pembayaran.
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            )}
+
+
                                             {/* Price Calculation (Summary) */}
-                                            {event.event_mode === 'paid' && (
-                                                <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+                                            <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+                                                {event.event_mode === 'paid' && (
                                                     <div className="flex justify-between text-gray-600">
                                                         <span>Total Tiket ({participants.length}x)</span>
                                                         <span>{formatRp(subtotal)}</span>
                                                     </div>
-                                                    {discount > 0 && (
-                                                        <div className="flex justify-between text-green-600 font-medium">
-                                                            <span>Diskon Group</span>
-                                                            <span>- {formatRp(discount)}</span>
-                                                        </div>
-                                                    )}
-                                                    <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
-                                                        <span>Total Bayar</span>
-                                                        <span>{formatRp(total)}</span>
+                                                )}
+                                                {discount > 0 && (
+                                                    <div className="flex justify-between text-green-600 font-medium">
+                                                        <span>Diskon Group</span>
+                                                        <span>- {formatRp(discount)}</span>
                                                     </div>
+                                                )}
+                                                {(donation || 0) > 0 && (
+                                                    <div className="flex justify-between text-pink-600 font-medium">
+                                                        <span>Donasi</span>
+                                                        <span>+ {formatRp(donation || 0)}</span>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
+                                                    <span>Total Bayar</span>
+                                                    <span>{formatRp(total)}</span>
                                                 </div>
-                                            )}
+                                            </div>
+
 
                                             <button
                                                 type="submit"
                                                 disabled={submitting}
                                                 className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-primary-hover disabled:opacity-50 transition-all active:scale-[0.98]"
                                             >
-                                                {submitting ? 'Memproses...' : (event.event_mode === 'paid' ? `Bayar Sekarang • ${formatRp(total)}` : 'Daftar Sekarang')}
+                                                {submitting ? 'Memproses...' : (total > 0 ? `Bayar Sekarang • ${formatRp(total)}` : 'Daftar Sekarang')}
+
                                             </button>
                                         </form>
                                     )}
