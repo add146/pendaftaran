@@ -38,7 +38,9 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
         { id: 'participants', label: 'Participants', icon: 'group', href: '/participants' },
         { id: 'payments', label: 'Payments', icon: 'credit_card', href: '/payments' },
         { id: 'organization', label: 'Organization', icon: 'apartment', href: '/organization' },
+        { id: 'donations', label: 'Donations', icon: 'volunteer_activism', href: '/donations' },
         { id: 'settings', label: 'Settings', icon: 'settings', href: '/settings' },
+
     ]
 
     // Filter nav items - users cannot see Organization

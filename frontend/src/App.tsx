@@ -8,6 +8,8 @@ import Events from './pages/Events'
 import Payments from './pages/Payments'
 import Settings from './pages/Settings'
 import OrganizationSettings from './pages/OrganizationSettings'
+import Donations from './pages/Donations'
+
 import Profile from './pages/Profile'
 import AllParticipants from './pages/AllParticipants'
 import CreateEvent from './pages/events/CreateEvent'
@@ -44,7 +46,9 @@ function App() {
         <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/organization" element={<ProtectedRoute><OrganizationSettings /></ProtectedRoute>} />
+        <Route path="/donations" element={<ProtectedRoute><Donations /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
 
         {/* Super Admin routes (requires super_admin role) */}
         <Route path="/super-admin" element={<ProtectedRoute requiredRole="super_admin"><SuperAdminDashboard /></ProtectedRoute>} />

@@ -12,8 +12,10 @@ import { uploads } from './routes/uploads'
 import { settings } from './routes/settings'
 import { organizations } from './routes/organizations'
 import { subscriptions } from './routes/subscriptions'
+import { donations } from './routes/donations'
 import { admin } from './routes/admin'
 import { customFields } from './routes/custom-fields'
+
 
 export type Bindings = {
 	DB: D1Database
@@ -71,7 +73,9 @@ app.route('/api/settings', settings)
 app.route('/api/organizations', organizations)
 app.route('/api/subscriptions', subscriptions)
 app.route('/api/admin', admin)
+app.route('/api/donations', donations)
 import { debug } from './routes/debug'
+
 app.route('/api/debug', debug)
 
 

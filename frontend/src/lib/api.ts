@@ -649,6 +649,35 @@ export const subscriptionsAPI = {
         fetchAPI<SubscriptionPayment>(`/api/subscriptions/payment-status/${paymentId}`),
 }
 
+// Donations API
+export interface Donation {
+    id: string
+    participant_id: string
+    order_id: string
+    amount: number
+    status: string
+    created_at: string
+    donor_name?: string
+    donor_email?: string
+    event_title?: string
+}
+
+export const donationsAPI = {
+    list: async (params?: { event_id?: string, limit?: number, offset?: number }) => {
+        const query = new URLSearchParams()
+        if (params?.event_id) query.append('event_id', params.event_id)
+        if (params?.limit) query.append('limit', params.limit.toString())
+        if (params?.offset) query.append('offset', params.offset.toString())
+        return fetchAPI<{ data: Donation[], total: number }>(`/api/donations?${query.toString()}`)
+    },
+    stats: async (params?: { event_id?: string }) => {
+        const query = new URLSearchParams()
+        if (params?.event_id) query.append('event_id', params.event_id)
+        return fetchAPI<{ total_donors: number, total_amount: number }>(`/api/donations/stats?${query.toString()}`)
+    }
+}
+
+
 // Additional Types
 
 export interface RegisterParticipantData {
