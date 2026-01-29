@@ -741,8 +741,16 @@ ${bankSection}`
                                                                                 required={field.required}
                                                                             />
                                                                         )}
+                                                                        {field.field_type === 'textarea' && (
+                                                                            <textarea
+                                                                                value={(p.custom_fields[field.id] as string) || ''}
+                                                                                onChange={e => updateParticipantCustomField(index, field.id, e.target.value)}
+                                                                                className="w-full px-3 py-2 rounded-lg border border-gray-300 resize-none h-24"
+                                                                                required={field.required}
+                                                                            />
+                                                                        )}
                                                                         {field.field_type === 'radio' && field.options && (
-                                                                            <div className="flex gap-4">
+                                                                            <div className="flex flex-wrap gap-4">
                                                                                 {field.options.map((opt, i) => (
                                                                                     <label key={i} className="flex items-center gap-2 text-sm cursor-pointer">
                                                                                         <input
@@ -756,6 +764,36 @@ ${bankSection}`
                                                                                         {opt}
                                                                                     </label>
                                                                                 ))}
+                                                                            </div>
+                                                                        )}
+                                                                        {field.field_type === 'checkbox' && field.options && (
+                                                                            <div className="flex flex-wrap gap-4">
+                                                                                {field.options.map((opt, i) => {
+                                                                                    const current = (p.custom_fields[field.id] as string[]) || []
+                                                                                    const isChecked = Array.isArray(current) ? current.includes(opt) : current === opt
+
+                                                                                    return (
+                                                                                        <label key={i} className="flex items-center gap-2 text-sm cursor-pointer">
+                                                                                            <input
+                                                                                                type="checkbox"
+                                                                                                value={opt}
+                                                                                                checked={isChecked}
+                                                                                                onChange={e => {
+                                                                                                    const val = e.target.value
+                                                                                                    let newVal: string[] = Array.isArray(current) ? [...current] : (current ? [current] : [])
+
+                                                                                                    if (e.target.checked) {
+                                                                                                        newVal.push(val)
+                                                                                                    } else {
+                                                                                                        newVal = newVal.filter(v => v !== val)
+                                                                                                    }
+                                                                                                    updateParticipantCustomField(index, field.id, newVal)
+                                                                                                }}
+                                                                                            />
+                                                                                            {opt}
+                                                                                        </label>
+                                                                                    )
+                                                                                })}
                                                                             </div>
                                                                         )}
                                                                     </div>
