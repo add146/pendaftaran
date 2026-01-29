@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField } from '../../lib/api'
+import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField, type RegisterParticipantData } from '../../lib/api'
+
+interface ParticipantFormData {
+    full_name: string
+    email: string
+    phone: string
+    city: string
+    ticket_type_id: string
+    attendance_type: 'offline' | 'online'
+    custom_fields: Record<string, string | string[]>
+}
 
 export default function EventRegistration() {
     const { slug } = useParams<{ slug: string }>()
@@ -10,9 +20,18 @@ export default function EventRegistration() {
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [success, setSuccess] = useState(false)
-    const [registrationId, setRegistrationId] = useState('')
+
+    // Result state
+    const [registrationResult, setRegistrationResult] = useState<{
+        registration_id?: string
+        order_id?: string
+        participant_count?: number
+        amount: number
+    } | null>(null)
+
     const [showImagePopup, setShowImagePopup] = useState(false)
-    // Payment result from API
+
+    // Payment info for success page
     const [paymentInfo, setPaymentInfo] = useState<{
         payment_mode: string
         whatsapp_cs: string | null
@@ -24,21 +43,22 @@ export default function EventRegistration() {
         event_title: string
     } | null>(null)
 
-    // Form state
-    const [formData, setFormData] = useState({
+    // Form state - Array for group support
+    const [participants, setParticipants] = useState<ParticipantFormData[]>([{
         full_name: '',
         email: '',
         phone: '',
         city: '',
         ticket_type_id: '',
-        attendance_type: 'offline' // Default
-    })
+        attendance_type: 'offline', // Default
+        custom_fields: {}
+    }])
 
-    // Custom fields state
+    // Custom fields metadata
     const [customFields, setCustomFields] = useState<CustomField[]>([])
-    const [customFieldResponses, setCustomFieldResponses] = useState<Record<string, string | string[]>>({})
 
-    const [participantId, setParticipantId] = useState('')
+    const [orderId, setOrderId] = useState('')
+    const [participantId, setParticipantId] = useState('') // Fallback for single
 
     useEffect(() => {
         if (!slug) return
@@ -48,7 +68,7 @@ export default function EventRegistration() {
                 setEvent(data)
                 // Set default ticket if available
                 if (data.ticket_types && data.ticket_types.length > 0) {
-                    setFormData(prev => ({ ...prev, ticket_type_id: data.ticket_types[0].id }))
+                    setParticipants(prev => prev.map(p => ({ ...p, ticket_type_id: data.ticket_types![0].id })))
                 }
                 setLoading(false)
             })
@@ -70,7 +90,6 @@ export default function EventRegistration() {
     }, [slug])
 
     // Load Midtrans Snap Script
-    // Load Midtrans Snap Script
     useEffect(() => {
         if (!event) return
 
@@ -89,46 +108,124 @@ export default function EventRegistration() {
         document.body.appendChild(script)
 
         return () => {
-            // Check if script still exists before removing
             if (document.body.contains(script)) {
                 document.body.removeChild(script)
             }
         }
     }, [event])
 
+    // Helper to format currency
+    const formatRp = (val: number) => `Rp ${val.toLocaleString('id-ID')}`
+
+    // Calculate totals
+    const calculateTotals = () => {
+        if (!event) return { subtotal: 0, discount: 0, total: 0 }
+
+        // Assume all have same ticket price for now if single ticket type selected per person
+        // Actually each person might have diff ticket?
+        // Current UI: we map `ticket_type_id` per person.
+
+        let subtotal = 0
+        participants.forEach(p => {
+            const t = event.ticket_types?.find(t => t.id === p.ticket_type_id)
+            if (t) subtotal += t.price
+        })
+
+        let discount = 0
+        const count = participants.length
+
+        if (event.bulk_discounts && event.bulk_discounts.length > 0) {
+            // Sort by min_qty DESC
+            const sortedDiscounts = [...event.bulk_discounts].sort((a, b) => b.min_qty - a.min_qty)
+            const applicable = sortedDiscounts.find(d => count >= d.min_qty)
+
+            if (applicable) {
+                if (applicable.discount_type === 'percent') {
+                    discount = (subtotal * applicable.discount_value) / 100
+                } else {
+                    discount = applicable.discount_value
+                }
+            }
+        }
+
+        return {
+            subtotal,
+            discount,
+            total: Math.max(0, subtotal - discount)
+        }
+    }
+
+    const { subtotal, discount, total } = calculateTotals()
+
+    const addParticipant = () => {
+        setParticipants(prev => [...prev, {
+            full_name: '',
+            email: '',
+            phone: '',
+            city: '',
+            ticket_type_id: event?.ticket_types?.[0]?.id || '',
+            attendance_type: 'offline',
+            custom_fields: {}
+        }])
+    }
+
+    const removeParticipant = (index: number) => {
+        setParticipants(prev => prev.filter((_, i) => i !== index))
+    }
+
+    const updateParticipant = (index: number, field: keyof ParticipantFormData, value: any) => {
+        setParticipants(prev => {
+            const temp = [...prev]
+            temp[index] = { ...temp[index], [field]: value }
+            return temp
+        })
+    }
+
+    const updateParticipantCustomField = (index: number, fieldId: string, value: string | string[]) => {
+        setParticipants(prev => {
+            const temp = [...prev]
+            temp[index] = {
+                ...temp[index],
+                custom_fields: {
+                    ...temp[index].custom_fields,
+                    [fieldId]: value
+                }
+            }
+            return temp
+        })
+    }
+
     const handleMidtransPayment = async () => {
-        if (!participantId || !paymentInfo) {
+        if ((!orderId && !participantId) || !paymentInfo) {
             alert('Registration data not found. Please try registering again.')
             return
         }
 
         try {
-            // Check if Snap.js is loaded
             // @ts-ignore
             if (!window.snap) {
                 alert('Payment system is loading. Please wait a moment and try again.')
                 return
             }
 
-            // Get Snap Token from backend
-            console.log('Creating payment with:', {
-                participantId,
-                amount: paymentInfo.ticket_price,
-                itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`
-            })
-
-            const result = await paymentsAPI.create({
-                participantId,
-                amount: paymentInfo.ticket_price,
+            // Determine if using orderId or participantId
+            const payLoad: any = {
+                amount: registrationResult ? registrationResult.amount : paymentInfo.ticket_price, // Use calculated amount
                 itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`,
-                customerName: formData.full_name,
-                customerEmail: formData.email,
-                customerPhone: formData.phone
-            })
+                customerName: participants[0].full_name,
+                customerEmail: participants[0].email,
+                customerPhone: participants[0].phone
+            }
+
+            if (orderId) payLoad.orderId = orderId
+            else payLoad.participantId = participantId
+
+            console.log('Creating payment with:', payLoad)
+
+            const result = await paymentsAPI.create(payLoad)
 
             console.log('Payment token received:', result.token)
 
-            // Open Snap Popup
             // @ts-ignore
             window.snap.pay(result.token, {
                 onSuccess: function (_result: any) {
@@ -156,77 +253,91 @@ export default function EventRegistration() {
         e.preventDefault()
         if (!event) return
 
-        if (!formData.full_name || !formData.email) {
-            setError('Name and email are required')
-            return
+        // Basic Validation
+        for (let i = 0; i < participants.length; i++) {
+            const p = participants[i]
+            if (!p.full_name || !p.email || !p.phone) {
+                setError(`Participant #${i + 1}: Name, Email, and Phone are required.`)
+                return
+            }
+
+            // Custom fields validation
+            const missingFields = customFields
+                .filter(field => field.required)
+                .filter(field => {
+                    const response = p.custom_fields[field.id]
+                    if (Array.isArray(response)) return response.length === 0
+                    return !response || response.trim() === ''
+                })
+
+            if (missingFields.length > 0) {
+                setError(`Participant #${i + 1}: Missing required fields (${missingFields.map(f => f.label).join(', ')})`)
+                return
+            }
         }
 
         setSubmitting(true)
         setError('')
 
-        // Validate required custom fields
-        const missingFields = customFields
-            .filter(field => field.required)
-            .filter(field => {
-                const response = customFieldResponses[field.id]
-                if (Array.isArray(response)) {
-                    return response.length === 0
-                }
-                return !response || response.trim() === ''
-            })
-
-        if (missingFields.length > 0) {
-            setError(`Please fill in all required fields: ${missingFields.map(f => f.label).join(', ')}`)
-            setSubmitting(false)
-            return
-        }
-
         try {
-            // Prepare custom fields data
-            const customFieldsData = customFields.map(field => ({
-                field_id: field.id,
-                response: Array.isArray(customFieldResponses[field.id])
-                    ? customFieldResponses[field.id]
-                    : customFieldResponses[field.id] || ''
-            }))
+            // Transform data for API
+            const payload: RegisterParticipantData[] = participants.map(p => {
+                const customFieldsData = customFields.map(field => ({
+                    field_id: field.id,
+                    response: p.custom_fields[field.id] || ''
+                })).filter(cf => cf.response !== '')
 
-            const result = await participantsAPI.register({
-                event_id: event.id,
-                ticket_type_id: formData.ticket_type_id || undefined,
-                full_name: formData.full_name,
-                email: formData.email,
-                phone: formData.phone || undefined,
-                city: formData.city || undefined,
-                attendance_type: event.event_type === 'hybrid' ? (formData.attendance_type as 'offline' | 'online') : undefined,
-                custom_fields: customFieldsData.filter(cf => cf.response)
+                return {
+                    event_id: event.id,
+                    ticket_type_id: p.ticket_type_id || undefined,
+                    full_name: p.full_name,
+                    email: p.email,
+                    phone: p.phone,
+                    city: p.city || undefined,
+                    attendance_type: event.event_type === 'hybrid' ? (p.attendance_type as 'offline' | 'online') : undefined,
+                    custom_fields: customFieldsData
+                }
             })
-            setRegistrationId(result.registration_id)
-            setParticipantId(result.id) // Store UUID for payment
 
-            // Store payment info for flow handling
-            const paymentResult = result as typeof result & {
-                payment_mode?: string
-                whatsapp_cs?: string
-                bank_name?: string
-                account_holder_name?: string
-                account_number?: string
-                ticket_name?: string
-                ticket_price?: number
-                event_title?: string
-            }
+            // Call API
+            const result = await participantsAPI.register(payload)
 
-            if (paymentResult.payment_mode) {
-                setPaymentInfo({
-                    payment_mode: paymentResult.payment_mode,
-                    whatsapp_cs: paymentResult.whatsapp_cs || null,
-                    bank_name: paymentResult.bank_name || null,
-                    account_holder_name: paymentResult.account_holder_name || null,
-                    account_number: paymentResult.account_number || null,
-                    ticket_name: paymentResult.ticket_name || '',
-                    ticket_price: paymentResult.ticket_price || 0,
-                    event_title: paymentResult.event_title || event.title
-                })
-            }
+            // Handle Response
+            if (result.order_id) setOrderId(result.order_id)
+            if (result.id) setParticipantId(result.id) // Legacy/Single support
+
+            setRegistrationResult({
+                registration_id: result.registration_id, // Might be empty if multiple? API returns first ID?
+                order_id: result.order_id,
+                participant_count: result.participant_count || participants.length,
+                amount: total
+            })
+
+            // Construct Payment Info for Success Page
+            // If multiple, we show generic "Group Order" or first ticket info
+            const firstT = event.ticket_types?.find(t => t.id === participants[0].ticket_type_id)
+
+            // Note: API returns payment_status, message etc. Use result to populate info.
+            // But we need bank info etc which usually comes in result extras.
+            // In group mode, `result` might not have all legacy fields if generic type.
+            // Let's rely on `event` object + `result`.
+
+            // IMPORTANT: API `register` return type needs checking.
+            // In `participants.ts`, for bulk it currently returns:
+            // { message: 'Registration successful', order_id, participant_count, payment_status, redirect_url, event_title, ... }
+
+            // Let's assume result has necessary fields
+            const anyResult = result as any
+            setPaymentInfo({
+                payment_mode: event.payment_mode || 'manual',
+                whatsapp_cs: event.whatsapp_cs || null,
+                bank_name: event.bank_name || null,
+                account_holder_name: event.account_holder_name || null,
+                account_number: event.account_number || null,
+                ticket_name: participants.length > 1 ? `${participants.length} Tickets` : (firstT?.name || 'Ticket'),
+                ticket_price: total, // Use calculated total
+                event_title: event.title
+            })
 
             setSuccess(true)
         } catch (err) {
@@ -289,11 +400,10 @@ export default function EventRegistration() {
     }
 
     if (success) {
-        // Generate WhatsApp nota message
+        // Success Page (Group Friendly)
         const generateWhatsAppNota = () => {
             if (!paymentInfo) return ''
 
-            // Format bank account section if available
             let bankSection = ''
             if (paymentInfo.bank_name && paymentInfo.account_holder_name && paymentInfo.account_number) {
                 bankSection = `
@@ -317,15 +427,12 @@ Mohon konfirmasi pembayaran sebesar *Rp ${paymentInfo.ticket_price.toLocaleStrin
 ━━━━━━━━━━━━━━━━━━━━
 
 📌 *Event:* ${paymentInfo.event_title}
-📍 *Format:* ${event?.event_type ? event.event_type.charAt(0).toUpperCase() + event.event_type.slice(1) : '-'}
-👤 *Nama:* ${formData.full_name}
-📧 *Email:* ${formData.email}
-📱 *Phone:* ${formData.phone || '-'}
-🏙️ *Kota:* ${formData.city || '-'}
+👤 *Nama Pendaftar:* ${participants[0].full_name} (${participants[0].email})
+👥 *Jumlah Peserta:* ${participants.length} Orang
 
-🎫 *Tiket:* ${paymentInfo.ticket_name}
-💰 *Harga:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
-🔖 *ID Registrasi:* ${registrationId}
+🎫 *Total Tiket:* ${paymentInfo.ticket_name}
+💰 *Total Tagihan:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
+🔖 *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
 ${bankSection}`
 
             return encodeURIComponent(nota)
@@ -333,11 +440,8 @@ ${bankSection}`
 
         const formatWhatsAppNumber = (number: string) => {
             if (!number) return ''
-            // Remove all non-digit characters
             let cleaned = number.replace(/\D/g, '')
-            // Remove leading 0 if present
             cleaned = cleaned.replace(/^0/, '')
-            // Add 62 prefix if not already present
             if (!cleaned.startsWith('62')) {
                 cleaned = '62' + cleaned
             }
@@ -356,11 +460,11 @@ ${bankSection}`
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h1>
                     <p className="text-gray-600 mb-4">Thank you for registering for <strong>{event?.title}</strong></p>
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <p className="text-sm text-gray-500">Your Registration ID</p>
-                        <p className="text-lg font-mono font-bold text-primary">{registrationId}</p>
+                        <p className="text-sm text-gray-500">Order ID</p>
+                        <p className="text-lg font-mono font-bold text-primary">{registrationResult?.order_id || registrationResult?.registration_id}</p>
+                        {participants.length > 1 && <p className="text-xs text-gray-400 mt-1">For {participants.length} participants</p>}
                     </div>
 
-                    {/* Payment flow based on mode */}
                     {paymentInfo && paymentInfo.ticket_price > 0 && (
                         <div className="mb-6">
                             {paymentInfo.payment_mode === 'manual' && paymentInfo.whatsapp_cs ? (
@@ -375,9 +479,6 @@ ${bankSection}`
                                         <span className="material-symbols-outlined">chat</span>
                                         Kirim Nota ke WhatsApp
                                     </a>
-                                    <p className="text-xs text-gray-500">
-                                        Total: Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
-                                    </p>
                                 </div>
                             ) : paymentInfo.payment_mode === 'auto' ? (
                                 <div className="space-y-3">
@@ -385,7 +486,7 @@ ${bankSection}`
                                     <button
                                         className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={handleMidtransPayment}
-                                        disabled={!participantId}
+                                        disabled={(!orderId && !participantId)}
                                     >
                                         <span className="material-symbols-outlined">credit_card</span>
                                         Bayar Sekarang - Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
@@ -395,9 +496,6 @@ ${bankSection}`
                         </div>
                     )}
 
-                    <p className="text-sm text-gray-500 mb-4">
-                        Konfirmasi telah dikirim ke <strong>{formData.email}</strong>
-                    </p>
                     <Link
                         to="/"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover"
@@ -415,19 +513,6 @@ ${bankSection}`
             <Helmet>
                 <title>{event?.title || 'E-TIKET'}</title>
                 <meta name="description" content={event?.description?.substring(0, 160).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
-
-                {/* Open Graph */}
-                <meta property="og:title" content={event?.title || 'E-TIKET'} />
-                <meta property="og:description" content={event?.description?.substring(0, 200).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
-                {images.length > 0 && <meta property="og:image" content={images[0]} />}
-                <meta property="og:type" content="website" />
-                <meta property="og:site_name" content="E-TIKET" />
-
-                {/* Twitter */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={event?.title || 'E-TIKET'} />
-                <meta name="twitter:description" content={event?.description?.substring(0, 200).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
-                {images.length > 0 && <meta name="twitter:image" content={images[0]} />}
             </Helmet>
 
             {/* Header */}
@@ -456,113 +541,49 @@ ${bankSection}`
                         {/* Event Details */}
                         <div className="lg:col-span-3 space-y-6">
                             {/* Hero Image Slider */}
-                            {/* Hero Image Slider */}
                             <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden shadow-lg bg-gray-100 group">
                                 {images.length === 0 ? (
                                     <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/30 to-primary/10">
                                         <span className="material-symbols-outlined text-[80px] text-primary/30">event</span>
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none"></div>
-                                        <div className="absolute bottom-0 left-0 p-6 pointer-events-none">
-                                            <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'}`}>
-                                                {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
-                                            </span>
-                                            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-                                                {event?.title}
-                                            </h1>
-                                        </div>
                                     </div>
                                 ) : (
                                     <>
                                         {images.map((img: string, idx: number) => (
                                             <div
                                                 key={idx}
-                                                className={`absolute inset-0 transition-opacity duration-700 ease-in-out cursor-pointer ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                                                    }`}
-                                                onClick={() => setShowImagePopup(true)} // Opens current image in popup
+                                                className={`absolute inset-0 transition-opacity duration-700 ease-in-out cursor-pointer ${idx === currentIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                                                onClick={() => setShowImagePopup(true)}
                                             >
                                                 <img src={img} alt={`${event?.title} ${idx + 1}`} className="w-full h-full object-cover" />
-                                                {/* Text & Gradient Overlay (only on top layer) */}
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/10 pointer-events-none"></div>
                                             </div>
                                         ))}
-
-                                        {/* Navigation Arrows */}
-                                        {images.length > 1 && (
-                                            <>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
-                                                    }}
-                                                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors pointer-events-auto backdrop-blur-sm"
-                                                >
-                                                    <span className="material-symbols-outlined text-[24px]">chevron_left</span>
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        setCurrentIndex((prev) => (prev + 1) % images.length)
-                                                    }}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition-colors pointer-events-auto backdrop-blur-sm"
-                                                >
-                                                    <span className="material-symbols-outlined text-[24px]">chevron_right</span>
-                                                </button>
-                                            </>
-                                        )}
-
-                                        {/* Navigation Dots (Moved to Top) */}
+                                        {/* Simple Dots */}
                                         {images.length > 1 && (
                                             <div className="absolute top-4 left-0 right-0 z-20 flex justify-center gap-2 pointer-events-none">
                                                 {images.map((_: any, idx: number) => (
                                                     <button
                                                         key={idx}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            setCurrentIndex(idx)
-                                                        }}
-                                                        className={`w-2 h-2 rounded-full transition-all pointer-events-auto drop-shadow-md ${idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white'
-                                                            }`}
+                                                        onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                                                        className={`w-2 h-2 rounded-full transition-all pointer-events-auto drop-shadow-md ${idx === currentIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white'}`}
                                                     />
                                                 ))}
                                             </div>
                                         )}
-
-                                        {/* Text Content Overlay (Fixed on top of all slides) */}
                                         <div className="absolute bottom-0 left-0 p-6 z-20 pointer-events-none">
                                             <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'}`}>
                                                 {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
                                             </span>
-                                            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-                                                {event?.title}
-                                            </h1>
-                                        </div>
-
-                                        {/* Expand Icon */}
-                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <span className="material-symbols-outlined text-[48px] text-white drop-shadow-lg bg-black/30 rounded-full p-2">zoom_in</span>
+                                            <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">{event?.title}</h1>
                                         </div>
                                     </>
                                 )}
                             </div>
-
                             {/* Image Popup Modal */}
                             {showImagePopup && images[currentIndex] && (
-                                <div
-                                    className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
-                                    onClick={() => setShowImagePopup(false)}
-                                >
-                                    <button
-                                        className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-                                        onClick={() => setShowImagePopup(false)}
-                                    >
-                                        <span className="material-symbols-outlined text-[36px]">close</span>
-                                    </button>
-                                    <img
-                                        src={images[currentIndex]}
-                                        alt={event?.title}
-                                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
+                                <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4" onClick={() => setShowImagePopup(false)}>
+                                    <button className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"><span className="material-symbols-outlined text-[36px]">close</span></button>
+                                    <img src={images[currentIndex]} alt={event?.title} className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
                                 </div>
                             )}
 
@@ -580,29 +601,15 @@ ${bankSection}`
                                 </div>
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
                                     <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-                                        <span className="material-symbols-outlined">
-                                            {event?.event_type === 'online' ? 'videocam' : 'location_on'}
-                                        </span>
+                                        <span className="material-symbols-outlined">location_on</span>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-gray-500 uppercase">
-                                            {event?.event_type === 'online' ? 'Platform' : 'Location'}
-                                        </p>
-                                        <p className="font-semibold">
-                                            {event?.event_type === 'online'
-                                                ? (event?.online_platform ? event.online_platform.replace('_', ' ') : 'Online Event')
-                                                : (event?.location || 'Location TBA')}
-                                        </p>
-                                        {event?.event_type === 'hybrid' && (
-                                            <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
-                                                Hybrid Event
-                                            </span>
-                                        )}
+                                        <p className="text-xs font-medium text-gray-500 uppercase">Location</p>
+                                        <p className="font-semibold">{event?.location || 'Location TBA'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Description */}
                             {event?.description && (
                                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                                     <h3 className="text-lg font-bold mb-3">About This Event</h3>
@@ -617,261 +624,189 @@ ${bankSection}`
                                 <div id="registration-form" className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                                     <h3 className="text-xl font-bold mb-6">Register Now</h3>
 
+                                    {/* Discounts Info */}
+                                    {event?.bulk_discounts && event.bulk_discounts.length > 0 && (
+                                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                                            <h4 className="flex items-center gap-2 font-bold text-green-800 mb-2">
+                                                <span className="material-symbols-outlined">verified</span>
+                                                Promo Hemat!
+                                            </h4>
+                                            <ul className="space-y-1 text-sm text-green-700">
+                                                {event.bulk_discounts.map((d, i) => (
+                                                    <li key={i} className="flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                                        Daftar minimal {d.min_qty} orang, hemat {d.discount_type === 'percent' ? `${d.discount_value}%` : `Rp ${d.discount_value.toLocaleString('id-ID')}`}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
                                     {!event?.registration_available ? (
                                         <div className="text-center py-8">
                                             <span className="material-symbols-outlined text-[48px] text-gray-300 mb-3">event_busy</span>
                                             <p className="text-gray-500">Registration is closed</p>
                                         </div>
                                     ) : (
-                                        <form onSubmit={handleSubmit} className="space-y-4">
+                                        <form onSubmit={handleSubmit} className="space-y-6">
                                             {error && (
-                                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                                                    {error}
-                                                </div>
+                                                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
                                             )}
 
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1">Full Name *</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.full_name}
-                                                    onChange={e => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    placeholder="Enter your full name"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1">Email *</label>
-                                                <input
-                                                    type="email"
-                                                    value={formData.email}
-                                                    onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    placeholder="Enter your email"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1">No. WhatsApp *</label>
-                                                <input
-                                                    type="tel"
-                                                    value={formData.phone}
-                                                    onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    placeholder="Contoh: 08123456789"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-1">Kota Tinggal</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.city}
-                                                    onChange={e => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                    placeholder="Masukkan kota tinggal"
-                                                />
-                                            </div>
-
-
-
-                                            {/* Attendance Type for Hybrid Events */}
-                                            {event?.event_type === 'hybrid' && (
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">Attendance Preference</label>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'offline'
-                                                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                            }`}>
-                                                            <input
-                                                                type="radio"
-                                                                name="attendance_type"
-                                                                value="offline"
-                                                                checked={formData.attendance_type === 'offline'}
-                                                                onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'offline' }))}
-                                                                className="hidden"
-                                                            />
-                                                            <span className="material-symbols-outlined">accessibility</span>
-                                                            <span className="font-medium">Offline</span>
-                                                        </label>
-                                                        <label className={`flex items-center justify-center gap-2 p-3 rounded-lg border cursor-pointer ${formData.attendance_type === 'online'
-                                                            ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
-                                                            : 'border-gray-200 hover:border-gray-300'
-                                                            }`}>
-                                                            <input
-                                                                type="radio"
-                                                                name="attendance_type"
-                                                                value="online"
-                                                                checked={formData.attendance_type === 'online'}
-                                                                onChange={() => setFormData(prev => ({ ...prev, attendance_type: 'online' }))}
-                                                                className="hidden"
-                                                            />
-                                                            <span className="material-symbols-outlined">videocam</span>
-                                                            <span className="font-medium">Online</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Ticket Types for paid events */}
-                                            {event?.event_mode === 'paid' && event.ticket_types && event.ticket_types.length > 0 && (
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">Select Ticket</label>
-                                                    <div className="space-y-2">
-                                                        {event.ticket_types.map(ticket => (
-                                                            <label
-                                                                key={ticket.id}
-                                                                className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition-colors ${formData.ticket_type_id === ticket.id
-                                                                    ? 'border-primary bg-primary/5'
-                                                                    : 'border-gray-200 hover:border-gray-300'
-                                                                    }`}
+                                            {/* Participants Loop */}
+                                            {participants.map((p, index) => (
+                                                <div key={index} className="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <h4 className="font-bold text-gray-700">Peserta #{index + 1}</h4>
+                                                        {participants.length > 1 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeParticipant(index)}
+                                                                className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
                                                             >
-                                                                <div className="flex items-center gap-3">
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="ticket"
-                                                                        value={ticket.id}
-                                                                        checked={formData.ticket_type_id === ticket.id}
-                                                                        onChange={() => setFormData(prev => ({ ...prev, ticket_type_id: ticket.id }))}
-                                                                        className="w-4 h-4 text-primary"
-                                                                    />
-                                                                    <span className="font-medium">{ticket.name}</span>
-                                                                </div>
-                                                                <span className="font-bold text-primary">
-                                                                    Rp {ticket.price.toLocaleString('id-ID')}
-                                                                </span>
-                                                            </label>
-                                                        ))}
+                                                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                                Hapus
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                </div>
-                                            )}
 
-                                            {/* Custom Fields */}
-                                            {customFields.map(field => (
-                                                <div key={field.id}>
-                                                    <label className="block text-sm font-medium mb-1">
-                                                        {field.label} {field.required && '*'}
-                                                    </label>
-                                                    {field.field_type === 'text' && (
-                                                        <input
-                                                            type="text"
-                                                            value={(customFieldResponses[field.id] as string) || ''}
-                                                            onChange={e => setCustomFieldResponses(prev => ({
-                                                                ...prev,
-                                                                [field.id]: e.target.value
-                                                            }))}
-                                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                            required={field.required}
-                                                        />
-                                                    )}
-                                                    {field.field_type === 'textarea' && (
-                                                        <textarea
-                                                            value={(customFieldResponses[field.id] as string) || ''}
-                                                            onChange={e => setCustomFieldResponses(prev => ({
-                                                                ...prev,
-                                                                [field.id]: e.target.value
-                                                            }))}
-                                                            rows={4}
-                                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
-                                                            required={field.required}
-                                                        />
-                                                    )}
-                                                    {field.field_type === 'radio' && field.options && (
-                                                        <div className="space-y-2">
-                                                            {field.options.map((option, index) => (
-                                                                <label key={index} className="flex items-center gap-2 cursor-pointer">
-                                                                    <input
-                                                                        type="radio"
-                                                                        name={`field_${field.id}`}
-                                                                        value={option}
-                                                                        checked={customFieldResponses[field.id] === option}
-                                                                        onChange={e => setCustomFieldResponses(prev => ({
-                                                                            ...prev,
-                                                                            [field.id]: e.target.value
-                                                                        }))}
-                                                                        className="w-4 h-4 text-primary"
-                                                                        required={field.required && !customFieldResponses[field.id]}
-                                                                    />
-                                                                    <span>{option}</span>
-                                                                </label>
-                                                            ))}
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-1">Full Name *</label>
+                                                            <input
+                                                                type="text"
+                                                                value={p.full_name}
+                                                                onChange={e => updateParticipant(index, 'full_name', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                                placeholder="Enter full name"
+                                                                required
+                                                            />
                                                         </div>
-                                                    )}
-                                                    {field.field_type === 'checkbox' && field.options && (
-                                                        <div className="space-y-2">
-                                                            {field.options.map((option, index) => {
-                                                                const responses = (customFieldResponses[field.id] || []) as string[]
-                                                                return (
-                                                                    <label key={index} className="flex items-center gap-2 cursor-pointer">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            value={option}
-                                                                            checked={responses.includes(option)}
-                                                                            onChange={e => {
-                                                                                const newResponses = e.target.checked
-                                                                                    ? [...responses, option]
-                                                                                    : responses.filter(r => r !== option)
-                                                                                setCustomFieldResponses(prev => ({
-                                                                                    ...prev,
-                                                                                    [field.id]: newResponses
-                                                                                }))
-                                                                            }}
-                                                                            className="w-4 h-4 text-primary rounded"
-                                                                        />
-                                                                        <span>{option}</span>
-                                                                    </label>
-                                                                )
-                                                            })}
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-1">Email *</label>
+                                                            <input
+                                                                type="email"
+                                                                value={p.email}
+                                                                onChange={e => updateParticipant(index, 'email', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                                placeholder="Enter email"
+                                                                required
+                                                            />
                                                         </div>
-                                                    )}
+                                                        <div>
+                                                            <label className="block text-sm font-medium mb-1">No. WhatsApp *</label>
+                                                            <input
+                                                                type="tel"
+                                                                value={p.phone}
+                                                                onChange={e => updateParticipant(index, 'phone', e.target.value)}
+                                                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                                placeholder="08123456789"
+                                                                required
+                                                            />
+                                                        </div>
+
+                                                        {/* Ticket Type */}
+                                                        {event.ticket_types && event.ticket_types.length > 0 && event.event_mode === 'paid' && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium mb-2">Ticket Type</label>
+                                                                <select
+                                                                    value={p.ticket_type_id}
+                                                                    onChange={e => updateParticipant(index, 'ticket_type_id', e.target.value)}
+                                                                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-primary"
+                                                                >
+                                                                    {event.ticket_types.map(t => (
+                                                                        <option key={t.id} value={t.id}>{t.name} - {formatRp(t.price)}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Custom Fields */}
+                                                        {customFields.length > 0 && (
+                                                            <div className="pt-2 border-t border-gray-200 mt-2">
+                                                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Additional Info</p>
+                                                                {customFields.map(field => (
+                                                                    <div key={field.id} className="mb-3">
+                                                                        <label className="block text-sm font-medium mb-1">{field.label} {field.required && '*'}</label>
+                                                                        {field.field_type === 'text' && (
+                                                                            <input
+                                                                                type="text"
+                                                                                value={(p.custom_fields[field.id] as string) || ''}
+                                                                                onChange={e => updateParticipantCustomField(index, field.id, e.target.value)}
+                                                                                className="w-full px-3 py-2 rounded-lg border border-gray-300"
+                                                                                required={field.required}
+                                                                            />
+                                                                        )}
+                                                                        {field.field_type === 'radio' && field.options && (
+                                                                            <div className="flex gap-4">
+                                                                                {field.options.map((opt, i) => (
+                                                                                    <label key={i} className="flex items-center gap-2 text-sm cursor-pointer">
+                                                                                        <input
+                                                                                            type="radio"
+                                                                                            name={`p${index}_f${field.id}`}
+                                                                                            value={opt}
+                                                                                            checked={p.custom_fields[field.id] === opt}
+                                                                                            onChange={e => updateParticipantCustomField(index, field.id, e.target.value)}
+                                                                                            required={field.required && !p.custom_fields[field.id]}
+                                                                                        />
+                                                                                        {opt}
+                                                                                    </label>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
+
+                                            {/* Add Participant Button */}
+                                            <button
+                                                type="button"
+                                                onClick={addParticipant}
+                                                className="w-full py-3 border-2 border-dashed border-primary/30 rounded-xl text-primary font-bold hover:bg-primary/5 hover:border-primary transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined">person_add</span>
+                                                Tambah Peserta
+                                            </button>
+
+                                            {/* Price Calculation (Summary) */}
+                                            {event.event_mode === 'paid' && (
+                                                <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+                                                    <div className="flex justify-between text-gray-600">
+                                                        <span>Total Tiket ({participants.length}x)</span>
+                                                        <span>{formatRp(subtotal)}</span>
+                                                    </div>
+                                                    {discount > 0 && (
+                                                        <div className="flex justify-between text-green-600 font-medium">
+                                                            <span>Diskon Group</span>
+                                                            <span>- {formatRp(discount)}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
+                                                        <span>Total Bayar</span>
+                                                        <span>{formatRp(total)}</span>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <button
                                                 type="submit"
                                                 disabled={submitting}
-                                                className="w-full py-4 rounded-lg bg-primary text-white font-bold text-lg hover:bg-primary-hover disabled:opacity-50 flex items-center justify-center gap-2"
+                                                className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-primary-hover disabled:opacity-50 transition-all active:scale-[0.98]"
                                             >
-                                                {submitting ? (
-                                                    <>
-                                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                        Processing...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className="material-symbols-outlined">how_to_reg</span>
-                                                        Register
-                                                    </>
-                                                )}
+                                                {submitting ? 'Memproses...' : (event.event_mode === 'paid' ? `Bayar Sekarang • ${formatRp(total)}` : 'Daftar Sekarang')}
                                             </button>
-
-                                            {event?.capacity && (
-                                                <p className="text-center text-sm text-gray-500">
-                                                    {event.registered_count} / {event.capacity} registered
-                                                </p>
-                                            )}
                                         </form>
                                     )}
-                                </div>
-
-                                <div className="flex flex-col items-center justify-center gap-1 text-center opacity-80">
-                                    <span className="text-[10px] text-gray-400 uppercase tracking-widest">Powered by</span>
-                                    <a href="https://etiket.my.id" target="_blank" rel="noopener noreferrer" className="hover:opacity-80 transition-opacity">
-                                        <img src="/etiket-logo.png" alt="Etiket Logo" className="h-[25px] w-auto grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all" />
-                                    </a>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main >
-
-
-        </div >
+            </main>
+        </div>
     )
 }

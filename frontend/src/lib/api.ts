@@ -213,18 +213,16 @@ export const participantsAPI = {
 
     get: (id: string) => fetchAPI<Participant>(`/api/participants/${id}`),
 
-    register: (data: {
-        event_id: string
-        ticket_type_id?: string
-        full_name: string
-        email: string
-        phone?: string
-        city?: string
-        gender?: string
-        attendance_type?: 'offline' | 'online'
-        custom_fields?: Array<{ field_id: string; response: string | string[] }>
-    }) =>
-        fetchAPI<{ id: string; registration_id: string; qr_code: string; payment_status: string; message: string }>(
+    register: (data: RegisterParticipantData | RegisterParticipantData[]) =>
+        fetchAPI<{
+            id?: string;
+            registration_id?: string;
+            order_id?: string;
+            participant_count?: number;
+            qr_code?: string;
+            payment_status: string;
+            message: string
+        }>(
             '/api/participants/register',
             { method: 'POST', body: JSON.stringify(data) }
         ),
@@ -449,6 +447,11 @@ export interface Event {
     location_map_url?: string
     capacity?: number
     event_mode: 'free' | 'paid'
+    payment_mode?: 'manual' | 'auto'
+    whatsapp_cs?: string
+    bank_name?: string
+    account_holder_name?: string
+    account_number?: string
     visibility: 'public' | 'private'
     status: 'draft' | 'open' | 'closed'
     image_url?: string
@@ -467,6 +470,7 @@ export interface Event {
     icon_type?: string
     certificate_config?: string // JSON string
     auto_close?: number
+    bulk_discounts?: BulkDiscount[]
 }
 
 export interface PublicEvent extends Event {
@@ -539,6 +543,14 @@ export interface CustomField {
     created_at: string
 }
 
+export interface BulkDiscount {
+    id: string
+    event_id: string
+    min_qty: number
+    discount_type: 'percent' | 'nominal'
+    discount_value: number
+}
+
 export interface Payment {
     id: string
     participant_id: string
@@ -555,7 +567,8 @@ export interface Payment {
 // Payments API
 export const paymentsAPI = {
     create: (data: {
-        participantId: string
+        participantId?: string
+        orderId?: string
         amount: number
         itemName?: string
         customerName?: string
@@ -626,6 +639,18 @@ export const subscriptionsAPI = {
 }
 
 // Additional Types
+
+export interface RegisterParticipantData {
+    event_id: string
+    ticket_type_id?: string
+    full_name: string
+    email: string
+    phone?: string
+    city?: string
+    gender?: string
+    attendance_type?: 'offline' | 'online'
+    custom_fields?: Array<{ field_id: string; response: string | string[] }>
+}
 
 export interface Organization {
     id: string

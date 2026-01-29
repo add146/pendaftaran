@@ -121,7 +121,7 @@ events.put('/:id', authMiddleware, async (c) => {
       certificateConfigLength: body.certificate_config ? body.certificate_config.length : 0
     })
 
-    const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close } = body
+    const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close, bulk_discounts } = body
 
     const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
     if (!existing) {
@@ -233,6 +233,19 @@ events.put('/:id', authMiddleware, async (c) => {
                     INSERT INTO ticket_types (id, event_id, name, price, quota)
                     VALUES (?, ?, ?, ?, ?)
                 `).bind(ticketId, id, ticket.name, parseInt(ticket.price) || 0, ticket.quota ? parseInt(ticket.quota) : null).run()
+      }
+    }
+
+    // Update bulk discounts
+    if (bulk_discounts && Array.isArray(bulk_discounts)) {
+      await c.env.DB.prepare('DELETE FROM event_bulk_discounts WHERE event_id = ?').bind(id).run()
+
+      for (const discount of bulk_discounts) {
+        const discountId = `disc_${crypto.randomUUID().slice(0, 8)}`
+        await c.env.DB.prepare(`
+            INSERT INTO event_bulk_discounts (id, event_id, min_qty, discount_type, discount_value)
+            VALUES (?, ?, ?, ?, ?)
+        `).bind(discountId, id, discount.min_qty, discount.discount_type, discount.discount_value).run()
       }
     }
 

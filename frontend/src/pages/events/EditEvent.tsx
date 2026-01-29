@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { eventsAPI, uploadAPI, type Event } from '../../lib/api'
+import { eventsAPI, uploadAPI, type Event, type BulkDiscount } from '../../lib/api'
 import CustomFieldsEditor from '../../components/CustomFieldsEditor'
 import CertificateEditor from '../../components/CertificateEditor'
 import IDCardEditor from '../../components/IDCardEditor'
@@ -49,6 +49,7 @@ export default function EditEvent() {
     })
 
     const [tickets, setTickets] = useState<TicketType[]>([])
+    const [bulkDiscounts, setBulkDiscounts] = useState<BulkDiscount[]>([])
     const [images, setImages] = useState<string[]>([])
     const [uploadingImage, setUploadingImage] = useState(false)
 
@@ -136,6 +137,9 @@ export default function EditEvent() {
                         setImages([data.image_url])
                     }
                 }
+                if (data.bulk_discounts) {
+                    setBulkDiscounts(data.bulk_discounts)
+                }
                 setLoading(false)
             })
             .catch(err => {
@@ -158,6 +162,19 @@ export default function EditEvent() {
 
     const removeTicket = (index: number) => {
         setTickets(tickets.filter((_, i) => i !== index))
+    }
+
+    const addDiscount = () => {
+        // @ts-ignore
+        setBulkDiscounts([...bulkDiscounts, { min_qty: 2, discount_type: 'percent', discount_value: 0 }])
+    }
+
+    const updateDiscount = (index: number, field: keyof BulkDiscount, value: any) => {
+        setBulkDiscounts(bulkDiscounts.map((d, i) => i === index ? { ...d, [field]: value } : d))
+    }
+
+    const removeDiscount = (index: number) => {
+        setBulkDiscounts(bulkDiscounts.filter((_, i) => i !== index))
     }
 
     const handleSubmit = async () => {
@@ -188,6 +205,7 @@ export default function EditEvent() {
                 status: formData.status,
                 images: images,
                 ticket_types: tickets,
+                bulk_discounts: bulkDiscounts,
                 event_type: formData.event_type,
                 online_platform: formData.event_type !== 'offline' ? formData.online_platform : undefined,
                 online_url: formData.event_type !== 'offline' ? formData.online_url : undefined,
@@ -674,6 +692,70 @@ export default function EditEvent() {
                                                                     />
                                                                 </div>
                                                             </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Bulk Discounts */}
+                                    {formData.event_mode === 'paid' && (
+                                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mt-6">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="text-lg font-bold">Bulk Discounts (Grosir)</h3>
+                                                <button
+                                                    type="button"
+                                                    onClick={addDiscount}
+                                                    className="flex items-center gap-1 text-primary text-sm font-medium hover:text-primary-hover"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">add</span>
+                                                    Add Discount
+                                                </button>
+                                            </div>
+
+                                            {bulkDiscounts.length === 0 ? (
+                                                <p className="text-sm text-gray-500">No bulk discounts configured.</p>
+                                            ) : (
+                                                <div className="space-y-4">
+                                                    {bulkDiscounts.map((discount, index) => (
+                                                        <div key={index} className="p-4 border border-gray-200 rounded-lg flex items-center gap-4">
+                                                            <div>
+                                                                <label className="block text-xs font-medium mb-1">Min Qty</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={discount.min_qty}
+                                                                    onChange={(e) => updateDiscount(index, 'min_qty', parseInt(e.target.value))}
+                                                                    className="w-24 px-3 py-2 text-sm rounded-lg border border-gray-300"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-medium mb-1">Type</label>
+                                                                <select
+                                                                    value={discount.discount_type}
+                                                                    onChange={(e) => updateDiscount(index, 'discount_type', e.target.value)}
+                                                                    className="w-32 px-3 py-2 text-sm rounded-lg border border-gray-300"
+                                                                >
+                                                                    <option value="percent">Percent (%)</option>
+                                                                    <option value="nominal">Nominal (Rp)</option>
+                                                                </select>
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <label className="block text-xs font-medium mb-1">Value</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={discount.discount_value}
+                                                                    onChange={(e) => updateDiscount(index, 'discount_value', parseFloat(e.target.value))}
+                                                                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeDiscount(index)}
+                                                                className="text-red-500 hover:text-red-700 mt-5"
+                                                            >
+                                                                <span className="material-symbols-outlined">delete</span>
+                                                            </button>
                                                         </div>
                                                     ))}
                                                 </div>
