@@ -663,19 +663,40 @@ export interface Donation {
 }
 
 export const donationsAPI = {
-    list: async (params?: { event_id?: string, limit?: number, offset?: number }) => {
+    list: async (params?: { event_id?: string, start_date?: string, end_date?: string, limit?: number, offset?: number }) => {
         const query = new URLSearchParams()
         if (params?.event_id) query.append('event_id', params.event_id)
+        if (params?.start_date) query.append('start_date', params.start_date)
+        if (params?.end_date) query.append('end_date', params.end_date)
         if (params?.limit) query.append('limit', params.limit.toString())
         if (params?.offset) query.append('offset', params.offset.toString())
         return fetchAPI<{ data: Donation[], total: number }>(`/api/donations?${query.toString()}`)
     },
-    stats: async (params?: { event_id?: string }) => {
+    stats: async (params?: { event_id?: string, start_date?: string, end_date?: string }) => {
         const query = new URLSearchParams()
         if (params?.event_id) query.append('event_id', params.event_id)
+        if (params?.start_date) query.append('start_date', params.start_date)
+        if (params?.end_date) query.append('end_date', params.end_date)
         return fetchAPI<{ total_donors: number, total_amount: number }>(`/api/donations/stats?${query.toString()}`)
+    },
+    export: async (params?: { event_id?: string, start_date?: string, end_date?: string }) => {
+        const query = new URLSearchParams()
+        if (params?.event_id) query.append('event_id', params.event_id)
+        if (params?.start_date) query.append('start_date', params.start_date)
+        if (params?.end_date) query.append('end_date', params.end_date)
+
+        const token = localStorage.getItem('auth_token')
+        const response = await fetch(`${API_BASE_URL}/api/donations/export-csv?${query.toString()}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+
+        if (!response.ok) throw new Error('Failed to export CSV')
+        return response.blob()
     }
 }
+
 
 
 // Additional Types

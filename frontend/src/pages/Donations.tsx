@@ -1,25 +1,52 @@
-
 import { useState, useEffect } from 'react'
 import { donationsAPI, type Donation } from '../lib/api'
 import { Helmet } from 'react-helmet-async'
+import { Link } from 'react-router-dom'
 
 export default function Donations() {
     const [donations, setDonations] = useState<Donation[]>([])
     const [stats, setStats] = useState({ total_donors: 0, total_amount: 0 })
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1)
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all')
     const limit = 20
 
     useEffect(() => {
         loadData()
-    }, [page])
+    }, [page, dateFilter])
+
+    const getDateParams = () => {
+        const now = new Date()
+        let start_date = undefined
+        let end_date = undefined
+
+        if (dateFilter === 'today') {
+            start_date = now.toISOString().split('T')[0]
+            end_date = now.toISOString().split('T')[0]
+        } else if (dateFilter === 'week') {
+            const first = now.getDate() - now.getDay()
+            const firstDate = new Date(now.setDate(first))
+            start_date = firstDate.toISOString().split('T')[0]
+            end_date = new Date().toISOString().split('T')[0]
+        } else if (dateFilter === 'month') {
+            const firstDate = new Date(now.getFullYear(), now.getMonth(), 1)
+            start_date = firstDate.toISOString().split('T')[0]
+            const lastDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+            end_date = lastDate.toISOString().split('T')[0]
+        }
+
+        return { start_date, end_date }
+    }
 
     const loadData = async () => {
         setLoading(true)
         try {
+            const { start_date, end_date } = getDateParams()
+            const params = { limit, offset: (page - 1) * limit, start_date, end_date }
+
             const [listData, statsData] = await Promise.all([
-                donationsAPI.list({ limit, offset: (page - 1) * limit }),
-                donationsAPI.stats()
+                donationsAPI.list(params),
+                donationsAPI.stats({ start_date, end_date })
             ])
             setDonations(listData.data)
             setStats(statsData)
@@ -27,6 +54,24 @@ export default function Donations() {
             console.error('Error loading donations:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleExport = async () => {
+        try {
+            const { start_date, end_date } = getDateParams()
+            const blob = await donationsAPI.export({ start_date, end_date })
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `donations-${dateFilter}-${new Date().toISOString().split('T')[0]}.csv`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            document.body.removeChild(a)
+        } catch (error) {
+            console.error('Error exporting CSV:', error)
+            alert('Failed to export CSV')
         }
     }
 
@@ -47,14 +92,51 @@ export default function Donations() {
                 <title>Donations - Dashboard</title>
             </Helmet>
 
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Donations</h1>
-                    <p className="text-gray-500">Manage and track event donations</p>
+            <div className="flex flex-col gap-4 mb-8">
+                <div className="flex items-center gap-4">
+                    <Link to="/dashboard" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600">
+                        <span className="material-symbols-outlined">arrow_back</span>
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Donations</h1>
+                        <p className="text-gray-500">Manage and track event donations</p>
+                    </div>
                 </div>
-                <button onClick={loadData} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                    <span className="material-symbols-outlined text-gray-600">refresh</span>
-                </button>
+
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex bg-gray-100 p-1 rounded-xl">
+                        {[
+                            { id: 'all', label: 'Semua' },
+                            { id: 'today', label: 'Hari Ini' },
+                            { id: 'week', label: 'Minggu Ini' },
+                            { id: 'month', label: 'Bulan Ini' },
+                        ].map((filter) => (
+                            <button
+                                key={filter.id}
+                                onClick={() => { setDateFilter(filter.id as any); setPage(1) }}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${dateFilter === filter.id
+                                        ? 'bg-white text-primary shadow-sm'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                            >
+                                {filter.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleExport}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">download</span>
+                            Export CSV
+                        </button>
+                        <button onClick={loadData} className="p-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors">
+                            <span className="material-symbols-outlined text-gray-600">refresh</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -64,7 +146,7 @@ export default function Donations() {
                         <span className="material-symbols-outlined text-[28px]">volunteer_activism</span>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Total Donasi Terkumpul</p>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Total Donasi {dateFilter !== 'all' ? `(${dateFilter})` : ''}</p>
                         <h3 className="text-2xl font-bold text-gray-800">{formatRp(stats.total_amount)}</h3>
                     </div>
                 </div>
@@ -73,7 +155,7 @@ export default function Donations() {
                         <span className="material-symbols-outlined text-[28px]">group</span>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Total Donatur</p>
+                        <p className="text-sm font-medium text-gray-500 mb-1">Total Donatur {dateFilter !== 'all' ? `(${dateFilter})` : ''}</p>
                         <h3 className="text-2xl font-bold text-gray-800">{stats.total_donors} Orang</h3>
                     </div>
                 </div>
@@ -99,7 +181,7 @@ export default function Donations() {
                                 </tr>
                             ) : donations.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-8 text-center text-gray-500">Belum ada donasi</td>
+                                    <td colSpan={5} className="py-8 text-center text-gray-500">Belum ada donasi pada periode ini</td>
                                 </tr>
                             ) : (
                                 donations.map((donation) => (
