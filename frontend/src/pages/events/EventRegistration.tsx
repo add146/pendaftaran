@@ -552,7 +552,7 @@ ${bankSection}`
                     <div className="size-8 text-primary">
                         <span className="material-symbols-outlined text-[32px]">confirmation_number</span>
                     </div>
-                    <h2 className="text-lg font-bold truncate">E-TIKET - {event?.title || t('common.loading')}</h2>
+                    <h2 className="text-lg font-bold whitespace-normal break-words text-left leading-tight">{event?.title || t('common.loading')}</h2>
                 </Link>
                 {/* <LanguageSwitcher /> - Disabled for public view */}
             </header>
