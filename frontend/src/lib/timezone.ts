@@ -1,22 +1,29 @@
 /**
- * Timezone utility for converting UTC to WIB (Asia/Jakarta, UTC+7)
+ * Timezone utility for converting to WIB (Asia/Jakarta, UTC+7)
+ * 
+ * IMPORTANT: Uses Intl.DateTimeFormat for correct timezone handling.
+ * This works consistently regardless of whether the input is:
+ * - True UTC (e.g., created_at from SQLite CURRENT_TIMESTAMP)
+ * - Already WIB with 'Z' suffix (legacy getNowWIB format)
  */
 
 /**
- * Convert UTC date string to WIB and format for display
- * @param utcDateString - ISO date string in UTC
+ * Format date string to WIB (Asia/Jakarta) timezone for display
+ * Uses JavaScript's built-in Intl.DateTimeFormat which handles DST and timezone correctly
+ * 
+ * @param dateString - ISO date string (can be UTC or any timezone)
  * @param options - Formatting options
  * @returns Formatted date string in WIB
  */
 export function formatDateWIB(
-    utcDateString: string | null | undefined,
+    dateString: string | null | undefined,
     options: {
         includeTime?: boolean;
         includeSeconds?: boolean;
         dateFormat?: 'DD/MM/YYYY' | 'DD MMM YYYY';
     } = {}
 ): string {
-    if (!utcDateString) return '-';
+    if (!dateString) return '-';
 
     const {
         includeTime = true,
@@ -25,36 +32,46 @@ export function formatDateWIB(
     } = options;
 
     try {
-        const utcDate = new Date(utcDateString);
-        // Add 7 hours for WIB (UTC+7)
-        const wibDate = new Date(utcDate.getTime() + 7 * 60 * 60 * 1000);
+        const date = new Date(dateString);
 
-        const day = wibDate.getUTCDate().toString().padStart(2, '0');
-        const month = wibDate.getUTCMonth() + 1;
-        const monthStr = month.toString().padStart(2, '0');
-        const year = wibDate.getUTCFullYear();
+        if (isNaN(date.getTime())) {
+            return '-';
+        }
+
+        // Use Intl.DateTimeFormat with Asia/Jakarta timezone
+        const formatter = new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            day: '2-digit',
+            month: dateFormat === 'DD MMM YYYY' ? 'short' : '2-digit',
+            year: 'numeric',
+            ...(includeTime && {
+                hour: '2-digit',
+                minute: '2-digit',
+                ...(includeSeconds && { second: '2-digit' }),
+                hour12: false
+            })
+        });
+
+        const parts = formatter.formatToParts(date);
+        const getValue = (type: string) => parts.find(p => p.type === type)?.value || '';
+
+        const day = getValue('day');
+        const month = getValue('month');
+        const year = getValue('year');
 
         let dateStr = '';
         if (dateFormat === 'DD/MM/YYYY') {
-            dateStr = `${day}/${monthStr}/${year}`;
+            dateStr = `${day}/${month}/${year}`;
         } else {
-            const monthNames = [
-                'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-                'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
-            ];
-            dateStr = `${day} ${monthNames[wibDate.getUTCMonth()]} ${year}`;
+            dateStr = `${day} ${month} ${year}`;
         }
 
         if (includeTime) {
-            const hours = wibDate.getUTCHours().toString().padStart(2, '0');
-            const minutes = wibDate.getUTCMinutes().toString().padStart(2, '0');
-            const timeStr = `${hours}:${minutes}`;
-
-            if (includeSeconds) {
-                const seconds = wibDate.getUTCSeconds().toString().padStart(2, '0');
-                return `${dateStr}, ${timeStr}:${seconds}`;
-            }
-
+            const hour = getValue('hour');
+            const minute = getValue('minute');
+            const timeStr = includeSeconds
+                ? `${hour}:${minute}:${getValue('second')}`
+                : `${hour}:${minute}`;
             return `${dateStr}, ${timeStr}`;
         }
 
@@ -66,8 +83,8 @@ export function formatDateWIB(
 }
 
 /**
- * Get current time in WIB
- * @returns ISO string in WIB timezone
+ * Get current time in WIB as ISO string
+ * @returns ISO string representing current WIB time
  */
 export function getNowWIB(): string {
     const now = new Date();

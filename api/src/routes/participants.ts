@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
 import { authMiddleware } from '../middleware/auth'
-import { getNowWIB } from '../lib/timezone'
 
 export const participants = new Hono<{ Bindings: Bindings }>()
 
@@ -432,7 +431,7 @@ participants.post('/:id/check-in', async (c) => {
         return c.json({ error: 'Pembayaran belum dikonfirmasi' }, 400)
     }
 
-    const checkInTime = getNowWIB()
+    const checkInTime = new Date().toISOString()
 
     await c.env.DB.prepare(`
     UPDATE participants SET check_in_status = 'checked_in', check_in_time = ? WHERE id = ?
