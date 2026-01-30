@@ -32,7 +32,23 @@ export function formatDateWIB(
     } = options;
 
     try {
-        const date = new Date(dateString);
+        // Normalize date string: SQLite stores timestamps without timezone info
+        // (e.g., "2026-01-30 10:21:00"), so JavaScript interprets them as local time.
+        // We need to append 'Z' to indicate UTC if no timezone info is present.
+        let normalizedDateString = dateString;
+
+        // Check if the string already has timezone info (Z, +, or -)
+        if (!dateString.endsWith('Z') &&
+            !dateString.includes('+') &&
+            !dateString.match(/\d{2}:\d{2}:\d{2}-\d{2}/)) {
+            // Replace space with 'T' for ISO format and append 'Z' for UTC
+            normalizedDateString = dateString.replace(' ', 'T');
+            if (!normalizedDateString.endsWith('Z')) {
+                normalizedDateString += 'Z';
+            }
+        }
+
+        const date = new Date(normalizedDateString);
 
         if (isNaN(date.getTime())) {
             return '-';
