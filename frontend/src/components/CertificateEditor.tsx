@@ -119,7 +119,10 @@ const DraggableItem = ({ el, handleDragStop }: DraggableItemProps) => {
     )
 }
 
+import { useTranslation } from 'react-i18next'
+
 export default function CertificateEditor({ config, onChange, onSave, isSaving = false }: CertificateEditorProps) {
+    const { t } = useTranslation()
     const [localConfig, setLocalConfig] = useState<CertificateConfig>(() => {
         if (config) {
             return {
@@ -192,7 +195,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
         const newElement: CertificateElement = {
             id: newId,
             type: 'text',
-            label: 'New Text',
+            label: t('certificate.defaults.new_text'),
             x: 50,
             y: 50,
             fontSize: 24,
@@ -222,13 +225,13 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
             {/* Header / Top Bar */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Certificate Designer</h2>
-                    <p className="text-gray-500 text-sm">Customize the look and feel of your event certificate.</p>
+                    <h2 className="text-2xl font-bold text-gray-900">{t('certificate.designer')}</h2>
+                    <p className="text-gray-500 text-sm">{t('certificate.customize')}</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="px-3 py-1 rounded-full bg-gray-100 flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full ${localConfig.enabled ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                        <span className="text-sm font-medium text-gray-600">{localConfig.enabled ? 'Active' : 'Draft'}</span>
+                        <span className="text-sm font-medium text-gray-600">{localConfig.enabled ? t('certificate.active') : t('certificate.draft')}</span>
                     </div>
                 </div>
             </div>
@@ -237,10 +240,10 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                 {/* Main Preview Area */}
                 <div className="lg:col-span-9">
                     <div className="flex items-center justify-between mb-2 px-2">
-                        <h3 className="font-semibold text-gray-700">Live Preview</h3>
+                        <h3 className="font-semibold text-gray-700">{t('certificate.live_preview')}</h3>
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                             <span className="material-symbols-outlined text-[16px]">aspect_ratio</span>
-                            <span>A4 Landscape (297mm x 210mm)</span>
+                            <span>{t('certificate.a4_landscape')}</span>
                         </div>
                     </div>
 
@@ -270,7 +273,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                         <div className="w-full h-full border-[12px] border-primary/20 absolute top-0 left-0"></div>
                                         <div className="w-[calc(100%-16px)] h-[calc(100%-16px)] border-[2px] border-yellow-500/30 absolute top-2 left-2"></div>
                                         <span className="material-symbols-outlined text-9xl text-gray-200">workspace_premium</span>
-                                        <p className="text-gray-400 font-serif mt-4">Upload your certificate background designed in Canva/Figma</p>
+                                        <p className="text-gray-400 font-serif mt-4">{t('certificate.upload_bg')}</p>
                                     </div>
                                 )}
 
@@ -299,12 +302,12 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                             {isSaving ? (
                                 <>
                                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                    Saving...
+                                    {t('common.saving')}
                                 </>
                             ) : (
                                 <>
                                     <span className="material-symbols-outlined text-[20px]">save</span>
-                                    Save Design
+                                    {t('id_card.save_design')}
                                 </>
                             )}
                         </button>
@@ -312,10 +315,10 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
 
                     {/* Status & General */}
                     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
-                        <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Configuration</h3>
+                        <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">{t('id_card.configuration')}</h3>
 
                         <label className="flex items-center justify-between cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                            <span className="text-sm font-medium text-gray-700">Enable Certificate</span>
+                            <span className="text-sm font-medium text-gray-700">{t('certificate.enable')}</span>
                             <div className="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" className="sr-only peer" checked={localConfig.enabled} onChange={toggleEnabled} />
                                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
@@ -323,7 +326,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                         </label>
 
                         <div>
-                            <label className="block text-xs font-medium text-gray-500 mb-2">Background Image</label>
+                            <label className="block text-sm font-medium text-gray-500 mb-2">{t('certificate.background_image')}</label>
                             {localConfig.backgroundUrl ? (
                                 <div className="relative w-full h-32 border-2 border-gray-200 rounded-lg overflow-hidden group">
                                     <img
@@ -335,7 +338,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                         <button
                                             onClick={() => updateConfig({ ...localConfig, backgroundUrl: '' })}
                                             className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg transform hover:scale-110"
-                                            title="Remove Image"
+                                            title={t('certificate.remove_image')}
                                         >
                                             <span className="material-symbols-outlined text-[20px]">close</span>
                                         </button>
@@ -345,7 +348,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
                                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                         <span className="material-symbols-outlined text-gray-400 text-3xl mb-2">upload_file</span>
-                                        <p className="text-xs text-gray-500">{uploading ? 'Uploading...' : 'Click to upload'}</p>
+                                        <p className="text-xs text-gray-500">{uploading ? t('common.loading') : t('certificate.click_upload')}</p>
                                     </div>
                                     <input type="file" className="hidden" accept="image/*" onChange={handleBackgroundUpload} />
                                 </label>
@@ -359,14 +362,14 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                 className="flex-1 flex items-center justify-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded-lg transition-colors"
                             >
                                 <span className="material-symbols-outlined text-[16px]">add_box</span>
-                                Add Text
+                                {t('certificate.add_text')}
                             </button>
                         </div>
                     </div>
 
                     {/* Text Elements */}
                     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4 max-h-[600px] overflow-y-auto">
-                        <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Elements</h3>
+                        <h3 className="font-bold text-gray-800 text-sm uppercase tracking-wider">{t('certificate.elements')}</h3>
 
                         {(localConfig.elements || []).map(el => (
                             <div key={el.id} className="p-3 bg-gray-50 rounded-lg space-y-3 border border-transparent hover:border-primary/20">
@@ -382,12 +385,12 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                             />
                                             {/* Placeholder Helper */}
                                             <div className="flex gap-1">
-                                                {['{Nama Peserta}', '{ID Registrasi}', '{Judul Event}'].map(ph => (
+                                                {[t('certificate.defaults.participant_name'), t('certificate.defaults.registration_id'), t('certificate.defaults.event_title')].map(ph => (
                                                     <button
                                                         key={ph}
                                                         onClick={() => updateElementStyle(el.id, 'label', ph)}
                                                         className="text-[9px] bg-gray-200 px-1 rounded hover:bg-gray-300"
-                                                        title={`Set to ${ph}`}
+                                                        title={`${t('certificate.tooltips.set_to')} ${ph}`}
                                                     >
                                                         {ph}
                                                     </button>
@@ -400,7 +403,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                     <button
                                         onClick={() => removeElement(el.id)}
                                         className="text-gray-400 hover:text-red-500 transition-colors"
-                                        title="Remove Element"
+                                        title={t('common.delete')}
                                     >
                                         <span className="material-symbols-outlined text-[16px]">delete</span>
                                     </button>
@@ -410,7 +413,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                     <>
                                         <div className="grid grid-cols-2 gap-2">
                                             <div>
-                                                <label className="block text-[10px] text-gray-400 mb-1">Font Family</label>
+                                                <label className="block text-[10px] text-gray-400 mb-1">{t('certificate.font_family')}</label>
                                                 <select
                                                     value={el.fontFamily}
                                                     onChange={(e) => updateElementStyle(el.id, 'fontFamily', e.target.value)}
@@ -420,7 +423,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                                 </select>
                                             </div>
                                             <div>
-                                                <label className="block text-[10px] text-gray-400 mb-1">Size (px)</label>
+                                                <label className="block text-[10px] text-gray-400 mb-1">{t('certificate.size')}</label>
                                                 <div className="flex items-center">
                                                     <input
                                                         type="number"
@@ -435,7 +438,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
 
                                         <div className="flex items-center gap-2">
                                             <div className="flex-1">
-                                                <label className="block text-[10px] text-gray-400 mb-1">Color</label>
+                                                <label className="block text-[10px] text-gray-400 mb-1">{t('certificate.color')}</label>
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="color"
@@ -447,7 +450,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                                 </div>
                                             </div>
                                             <div className="flex-1">
-                                                <label className="block text-[10px] text-gray-400 mb-1">Align</label>
+                                                <label className="block text-[10px] text-gray-400 mb-1">{t('certificate.align')}</label>
                                                 <div className="flex bg-white rounded border border-gray-200 p-1">
                                                     {['left', 'center', 'right'].map((align) => (
                                                         <button
@@ -467,7 +470,7 @@ export default function CertificateEditor({ config, onChange, onSave, isSaving =
                                 {el.type === 'qr' && (
                                     <div className="grid grid-cols-2 gap-2">
                                         <div>
-                                            <label className="block text-[10px] text-gray-400 mb-1">Size (px)</label>
+                                            <label className="block text-[10px] text-gray-400 mb-1">{t('certificate.size')}</label>
                                             <div className="flex items-center">
                                                 <input
                                                     type="number"

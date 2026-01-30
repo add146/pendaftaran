@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { participantsAPI, eventsAPI, type Participant as ParticipantType, type Event } from '../../lib/api'
+import { formatDateWIB } from '../../lib/timezone'
 import QRScanner from '../../components/QRScanner'
 import QRCodeModal from '../../components/QRCodeModal'
 import AdminLayout from '../../components/layout/AdminLayout'
+import { useTranslation } from 'react-i18next'
 
 // Stat card component
 function StatCard({ icon, label, value, subValue, iconColor }: {
@@ -49,6 +51,8 @@ function ParticipantRow({
     eventDate?: string
     eventTime?: string
 }) {
+    const { t } = useTranslation()
+
     // Check if check-in is open (1 hour before event)
     const isCheckInOpen = () => {
         if (!eventDate) return true // If no date, allow check-in
@@ -118,42 +122,24 @@ function ParticipantRow({
             </td>
             <td className="p-4 text-center">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${paymentStyles[participant.payment_status]}`}>
-                    {participant.payment_status.charAt(0).toUpperCase() + participant.payment_status.slice(1)}
+                    {t(`admin.participants.payment_status.${participant.payment_status}`)}
                 </span>
             </td>
             <td className="p-4 text-center">
                 {participant.check_in_status === 'checked_in' ? (
                     <>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                            Checked In
+                            {t('admin.participants.status.checked_in')}
                         </span>
                         {participant.check_in_time && (
                             <div className="text-[10px] text-gray-400 mt-1">
-                                {(() => {
-                                    try {
-                                        // Try to parse as date (ISO string)
-                                        const date = new Date(participant.check_in_time)
-                                        if (isNaN(date.getTime())) throw new Error('Invalid date')
-
-                                        // Check if it's a legacy string like "03:53 AM"
-                                        const legacyMatch = participant.check_in_time.match(/(\d{1,2}):(\d{2})\s?([AP]M)/i)
-                                        if (legacyMatch) {
-                                            const offset = date.getTimezoneOffset()
-                                            date.setMinutes(date.getMinutes() - offset)
-                                        }
-
-                                        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-                                    } catch {
-                                        // Fallback
-                                        return participant.check_in_time
-                                    }
-                                })()}
+                                {formatDateWIB(participant.check_in_time, { includeSeconds: false, dateFormat: 'DD/MM/YYYY' })}
                             </div>
                         )}
                     </>
                 ) : (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                        Not Arrived
+                        {t('admin.participants.status.not_arrived')}
                     </span>
                 )}
             </td>
@@ -163,10 +149,10 @@ function ParticipantRow({
                     {participant.payment_status === 'pending' && (
                         <button
                             onClick={() => onApprove(participant.registration_id)}
-                            className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-lg hover:bg-green-600 flex items-center gap-1"
+                            className="px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-lg hover:bg-blue-600 flex items-center gap-1"
                         >
                             <span className="material-symbols-outlined text-[16px]">check</span>
-                            Approve
+                            {t('admin.participants.actions.approve')}
                         </button>
                     )}
 
@@ -182,7 +168,7 @@ function ParticipantRow({
                             title={!checkInAvailable ? 'Check-in dibuka 1 jam sebelum acara' : ''}
                         >
                             <span className="material-symbols-outlined text-[16px]">qr_code_scanner</span>
-                            Check In
+                            {t('admin.participants.actions.check_in')}
                         </button>
                     )}
 
@@ -193,7 +179,7 @@ function ParticipantRow({
                             className="px-3 py-1 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-hover flex items-center gap-1"
                         >
                             <span className="material-symbols-outlined text-[16px]">badge</span>
-                            Show ID
+                            {t('admin.participants.actions.show_id')}
                         </button>
                     )}
 
@@ -204,7 +190,7 @@ function ParticipantRow({
                             {participant.whatsapp_status === 'sent' ? (
                                 <span
                                     className="material-symbols-outlined text-green-500 text-[18px]"
-                                    title={`WhatsApp terkirim ${participant.whatsapp_sent_at ? new Date(participant.whatsapp_sent_at).toLocaleString('id-ID') : ''}`}
+                                    title={`WhatsApp terkirim ${participant.whatsapp_sent_at ? formatDateWIB(participant.whatsapp_sent_at) : ''}`}
                                 >
                                     check_circle
                                 </span>
@@ -248,6 +234,7 @@ function ParticipantRow({
 }
 
 export default function Participants() {
+    const { t } = useTranslation()
     const { id } = useParams()
     const [isScannerOpen, setIsScannerOpen] = useState(false)
     const [isQRModalOpen, setIsQRModalOpen] = useState(false)
@@ -353,8 +340,18 @@ export default function Participants() {
         try {
             setLoading(true)
             const result = await eventsAPI.getBroadcastTargets(id)
-            setBroadcastTargets(result.targets)
-            setBroadcastProgress({ current: 0, total: result.targets.length, success: 0, failed: 0 })
+
+            // Filter only online participants
+            const onlineTargets = result.targets.filter(t => t.attendance_type === 'online')
+
+            if (onlineTargets.length === 0) {
+                alert('Tidak ada peserta online yang ditemukan untuk dibroadcast.')
+                setLoading(false)
+                return
+            }
+
+            setBroadcastTargets(onlineTargets)
+            setBroadcastProgress({ current: 0, total: onlineTargets.length, success: 0, failed: 0 })
             setBroadcastLogs(['Siap memulai broadcast safe mode...'])
             setBroadcastModalOpen(true)
             setBroadcastStatus('idle')
@@ -511,20 +508,20 @@ export default function Participants() {
                 <div className="w-full flex flex-col gap-6">
                     {/* Breadcrumbs */}
                     <div className="flex flex-wrap gap-2 text-sm">
-                        <Link className="text-primary/70 hover:text-primary font-medium" to="/dashboard">Events</Link>
+                        <Link className="text-primary/70 hover:text-primary font-medium" to="/dashboard">{t('sidebar.events')}</Link>
                         <span className="text-gray-400">/</span>
                         <span className="text-text-main font-medium">{event?.title || 'Loading...'}</span>
                         <span className="text-gray-400">/</span>
-                        <span className="text-text-main font-medium">Participants</span>
+                        <span className="text-text-main font-medium">{t('admin.participants.breadcrumb_title')}</span>
                     </div>
 
                     {/* Page Heading & Actions */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h1 className="text-3xl md:text-4xl font-black leading-tight tracking-tight text-text-main">
-                                {event?.title || 'Event'} - Participant List
+                                {event ? t('admin.participants.list_title', { event: event.title }) : 'Loading...'}
                             </h1>
-                            <p className="text-gray-500 mt-1">Manage registrations, payments, and check-in attendees.</p>
+                            <p className="text-gray-500 mt-1">{t('admin.participants.subtitle')}</p>
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                             <button
@@ -535,7 +532,7 @@ export default function Participants() {
                                 <span className="material-symbols-outlined text-[20px]">
                                     {exportLoading ? 'hourglass_empty' : 'download'}
                                 </span>
-                                <span>{exportLoading ? 'Exporting...' : 'Export to CSV'}</span>
+                                <span>{exportLoading ? 'Exporting...' : t('admin.participants.buttons.export')}</span>
                             </button>
 
                             {/* Broadcast Button (Online/Hybrid only) */}
@@ -548,7 +545,7 @@ export default function Participants() {
                                         broadcast_on_personal
                                     </span>
                                     <span>
-                                        Safe Broadcast
+                                        {t('admin.participants.buttons.broadcast')}
                                     </span>
                                 </button>
                             )}
@@ -558,17 +555,17 @@ export default function Participants() {
                                 className="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-lg h-12 px-6 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-[1.02]"
                             >
                                 <span className="material-symbols-outlined text-[20px]">qr_code_scanner</span>
-                                <span>Scanner</span>
+                                <span>{t('admin.participants.buttons.scanner')}</span>
                             </button>
                         </div>
                     </div>
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <StatCard icon="group" label="Total Registered" value={String(stats.total)} />
-                        <StatCard icon="check_circle" label="Checked In" value={String(stats.checked_in)} subValue={`/ ${stats.total}`} iconColor="text-primary" />
-                        <StatCard icon="pending" label="Pending Check-in" value={String(stats.pending)} iconColor="text-yellow-600" />
-                        <StatCard icon="payments" label="Revenue" value={formatCurrency(stats.revenue)} iconColor="text-emerald-600" />
+                        <StatCard icon="group" label={t('admin.participants.stats.total')} value={String(stats.total)} />
+                        <StatCard icon="check_circle" label={t('admin.participants.stats.checked_in')} value={String(stats.checked_in)} subValue={`/ ${stats.total}`} iconColor="text-primary" />
+                        <StatCard icon="pending" label={t('admin.participants.stats.pending')} value={String(stats.pending)} iconColor="text-yellow-600" />
+                        <StatCard icon="payments" label={t('admin.participants.stats.revenue')} value={formatCurrency(stats.revenue)} iconColor="text-emerald-600" />
                     </div>
 
                     {/* Hybrid Event Stats */}
@@ -576,14 +573,14 @@ export default function Participants() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                             <StatCard
                                 icon="accessibility"
-                                label="Offline Attendance"
+                                label={t('admin.participants.stats.offline')}
                                 value={String(stats.attendance_offline_checked_in || 0)}
                                 subValue={`/ ${stats.attendance_offline_total || 0}`}
                                 iconColor="text-blue-600"
                             />
                             <StatCard
                                 icon="videocam"
-                                label="Online Attendance"
+                                label={t('admin.participants.stats.online')}
                                 value={String(stats.attendance_online_checked_in || 0)}
                                 subValue={`/ ${stats.attendance_online_total || 0}`}
                                 iconColor="text-purple-600"
@@ -599,23 +596,29 @@ export default function Participants() {
                             </div>
                             <input
                                 className="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg bg-background-light text-sm placeholder-gray-500 focus:ring-2 focus:ring-primary/20 transition-all text-text-main"
-                                placeholder="Search by name, ID, or email..."
+                                placeholder={t('admin.participants.search_placeholder')}
                                 type="text"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                         <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto">
-                            {['All', 'Paid', 'Pending', 'Checked In', 'Not Arrived'].map((label) => (
+                            {[
+                                { key: 'all', label: t('admin.participants.filter.all') },
+                                { key: 'paid', label: t('admin.participants.filter.paid') },
+                                { key: 'pending', label: t('admin.participants.filter.pending') },
+                                { key: 'checked_in', label: t('admin.participants.filter.checked_in') },
+                                { key: 'not_arrived', label: t('admin.participants.filter.not_arrived') },
+                            ].map((f) => (
                                 <button
-                                    key={label}
-                                    onClick={() => setFilter(label.toLowerCase().replace(' ', '_'))}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium border whitespace-nowrap transition-colors ${filter === label.toLowerCase().replace(' ', '_')
+                                    key={f.key}
+                                    onClick={() => setFilter(f.key)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border whitespace-nowrap transition-colors ${filter === f.key
                                         ? 'bg-primary/10 text-primary border-primary/20'
                                         : 'bg-transparent hover:bg-gray-50 text-gray-600 border-gray-200'
                                         }`}
                                 >
-                                    {label}
+                                    {f.label}
                                 </button>
                             ))}
                         </div>
@@ -632,12 +635,12 @@ export default function Participants() {
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-gray-50/50 border-b border-gray-100">
-                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Participant</th>
-                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Reg ID</th>
-                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Contact</th>
-                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500 text-center">Payment</th>
-                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500 text-center">Status</th>
-                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500 text-right">Actions</th>
+                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('admin.participants.table.participant')}</th>
+                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('admin.participants.table.reg_id')}</th>
+                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500">{t('admin.participants.table.contact')}</th>
+                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500 text-center">{t('admin.participants.table.payment')}</th>
+                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500 text-center">{t('admin.participants.table.checkin')}</th>
+                                            <th className="p-4 text-xs font-semibold uppercase tracking-wider text-gray-500 text-right">{t('admin.participants.table.action')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">

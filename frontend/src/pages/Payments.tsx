@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import AdminLayout from '../components/layout/AdminLayout'
 import { paymentsAPI, type Payment } from '../lib/api'
+import { formatDateWIB } from '../lib/timezone'
 
 export default function Payments() {
+    const { t } = useTranslation()
     const [payments, setPayments] = useState<Payment[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -15,7 +18,7 @@ export default function Payments() {
             })
             .catch(err => {
                 console.error(err)
-                setError('Failed to load payments')
+                setError(t('admin.payments.error_loading'))
                 setLoading(false)
             })
     }, [])
@@ -28,11 +31,7 @@ export default function Payments() {
         }).format(amount)
     }
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-        })
-    }
+
 
     const getStatusBadge = (status: string) => {
         const styles: Record<string, string> = {
@@ -48,7 +47,7 @@ export default function Payments() {
     const pendingPayments = payments.filter(p => p.status === 'pending').length
 
     return (
-        <AdminLayout title="Payments" currentPage="payments" showCreateButton={false}>
+        <AdminLayout title={t('admin.payments.title')} currentPage="payments" showCreateButton={false}>
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -58,7 +57,7 @@ export default function Payments() {
                                 <span className="material-symbols-outlined text-green-600">payments</span>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Total Revenue</p>
+                                <p className="text-sm text-gray-500">{t('admin.payments.stats.total_revenue')}</p>
                                 <p className="text-xl font-bold text-text-main">{formatCurrency(totalRevenue)}</p>
                             </div>
                         </div>
@@ -69,7 +68,7 @@ export default function Payments() {
                                 <span className="material-symbols-outlined text-yellow-600">pending</span>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Pending Payments</p>
+                                <p className="text-sm text-gray-500">{t('admin.payments.stats.pending_payments')}</p>
                                 <p className="text-xl font-bold text-text-main">{pendingPayments}</p>
                             </div>
                         </div>
@@ -80,7 +79,7 @@ export default function Payments() {
                                 <span className="material-symbols-outlined text-blue-600">receipt_long</span>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Total Transactions</p>
+                                <p className="text-sm text-gray-500">{t('admin.payments.stats.total_transactions')}</p>
                                 <p className="text-xl font-bold text-text-main">{payments.length}</p>
                             </div>
                         </div>
@@ -95,8 +94,8 @@ export default function Payments() {
                                 <span className="material-symbols-outlined text-primary">credit_card</span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-text-main">Midtrans Integration</h3>
-                                <p className="text-sm text-gray-600">Accept payments for paid events</p>
+                                <h3 className="font-bold text-text-main">{t('admin.payments.midtrans.title')}</h3>
+                                <p className="text-sm text-gray-600">{t('admin.payments.midtrans.desc')}</p>
                             </div>
                         </div>
                         <a
@@ -106,7 +105,7 @@ export default function Payments() {
                             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
                         >
                             <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                            Open Midtrans Dashboard
+                            {t('admin.payments.midtrans.button')}
                         </a>
                     </div>
                 </div>
@@ -114,7 +113,7 @@ export default function Payments() {
                 {/* Transactions Table */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="px-6 py-4 border-b border-gray-100">
-                        <h3 className="font-bold text-text-main">Recent Transactions</h3>
+                        <h3 className="font-bold text-text-main">{t('admin.payments.table.recent_title')}</h3>
                     </div>
 
                     {loading ? (
@@ -131,12 +130,12 @@ export default function Payments() {
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Order ID</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Customer</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Event</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Amount</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Status</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Date</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.payments.table.order_id')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.payments.table.customer')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.payments.table.event')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.payments.table.amount')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.payments.table.status')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.payments.table.date')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -158,7 +157,7 @@ export default function Payments() {
                                                     {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">{formatDate(payment.created_at)}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">{formatDateWIB(payment.created_at)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -167,8 +166,8 @@ export default function Payments() {
                     ) : (
                         <div className="p-12 text-center text-gray-500">
                             <span className="material-symbols-outlined text-[48px] mb-4 opacity-50">receipt_long</span>
-                            <p className="font-medium">No transactions yet</p>
-                            <p className="text-sm mt-1">Transactions will appear here when participants pay for events.</p>
+                            <p className="font-medium">{t('admin.payments.no_data.title')}</p>
+                            <p className="text-sm mt-1">{t('admin.payments.no_data.desc')}</p>
                         </div>
                     )}
                 </div>

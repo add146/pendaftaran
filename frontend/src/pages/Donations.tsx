@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { donationsAPI, type Donation } from '../lib/api'
+import { formatDateWIB } from '../lib/timezone'
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 export default function Donations() {
+    const { t } = useTranslation()
     const [donations, setDonations] = useState<Donation[]>([])
     const [stats, setStats] = useState({ total_donors: 0, total_amount: 0 })
     const [loading, setLoading] = useState(true)
@@ -71,25 +74,17 @@ export default function Donations() {
             document.body.removeChild(a)
         } catch (error) {
             console.error('Error exporting CSV:', error)
-            alert('Failed to export CSV')
+            alert(t('admin.donations.export_error'))
         }
     }
 
     const formatRp = (val: number) => `Rp ${val.toLocaleString('id-ID')}`
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
-    }
+
 
     return (
         <div className="p-6 max-w-[1600px] mx-auto">
             <Helmet>
-                <title>Donations - Dashboard</title>
+                <title>{t('admin.donations.title')} - Dashboard</title>
             </Helmet>
 
             <div className="flex flex-col gap-4 mb-8">
@@ -98,25 +93,25 @@ export default function Donations() {
                         <span className="material-symbols-outlined">arrow_back</span>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Donations</h1>
-                        <p className="text-gray-500">Manage and track event donations</p>
+                        <h1 className="text-2xl font-bold text-gray-800">{t('admin.donations.title')}</h1>
+                        <p className="text-gray-500">{t('admin.donations.subtitle')}</p>
                     </div>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex bg-gray-100 p-1 rounded-xl">
                         {[
-                            { id: 'all', label: 'Semua' },
-                            { id: 'today', label: 'Hari Ini' },
-                            { id: 'week', label: 'Minggu Ini' },
-                            { id: 'month', label: 'Bulan Ini' },
+                            { id: 'all', label: t('admin.donations.filter.all') },
+                            { id: 'today', label: t('admin.donations.filter.today') },
+                            { id: 'week', label: t('admin.donations.filter.week') },
+                            { id: 'month', label: t('admin.donations.filter.month') },
                         ].map((filter) => (
                             <button
                                 key={filter.id}
                                 onClick={() => { setDateFilter(filter.id as any); setPage(1) }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${dateFilter === filter.id
-                                        ? 'bg-white text-primary shadow-sm'
-                                        : 'text-gray-600 hover:text-gray-900'
+                                    ? 'bg-white text-primary shadow-sm'
+                                    : 'text-gray-600 hover:text-gray-900'
                                     }`}
                             >
                                 {filter.label}
@@ -130,7 +125,7 @@ export default function Donations() {
                             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-700 font-medium transition-colors"
                         >
                             <span className="material-symbols-outlined text-[20px]">download</span>
-                            Export CSV
+                            {t('common.export_csv')}
                         </button>
                         <button onClick={loadData} className="p-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors">
                             <span className="material-symbols-outlined text-gray-600">refresh</span>
@@ -146,7 +141,7 @@ export default function Donations() {
                         <span className="material-symbols-outlined text-[28px]">volunteer_activism</span>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Total Donasi {dateFilter !== 'all' ? `(${dateFilter})` : ''}</p>
+                        <p className="text-sm font-medium text-gray-500 mb-1">{t('admin.donations.stats.total_amount')} {dateFilter !== 'all' ? `(${t(`admin.donations.filter.${dateFilter}`)})` : ''}</p>
                         <h3 className="text-2xl font-bold text-gray-800">{formatRp(stats.total_amount)}</h3>
                     </div>
                 </div>
@@ -155,8 +150,8 @@ export default function Donations() {
                         <span className="material-symbols-outlined text-[28px]">group</span>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Total Donatur {dateFilter !== 'all' ? `(${dateFilter})` : ''}</p>
-                        <h3 className="text-2xl font-bold text-gray-800">{stats.total_donors} Orang</h3>
+                        <p className="text-sm font-medium text-gray-500 mb-1">{t('admin.donations.stats.total_donors')} {dateFilter !== 'all' ? `(${t(`admin.donations.filter.${dateFilter}`)})` : ''}</p>
+                        <h3 className="text-2xl font-bold text-gray-800">{stats.total_donors} {t('common.people')}</h3>
                     </div>
                 </div>
             </div>
@@ -167,21 +162,21 @@ export default function Donations() {
                     <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-100">
                             <tr>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">Donatur</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">Event</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">Jumlah</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">Tanggal</th>
+                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">{t('admin.donations.table.donor')}</th>
+                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">{t('admin.donations.table.event')}</th>
+                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">{t('admin.donations.table.amount')}</th>
+                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">{t('admin.donations.table.status')}</th>
+                                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-500 uppercase">{t('admin.donations.table.date')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="py-8 text-center text-gray-500">Loading data...</td>
+                                    <td colSpan={5} className="py-8 text-center text-gray-500">{t('common.loading')}</td>
                                 </tr>
                             ) : donations.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-8 text-center text-gray-500">Belum ada donasi pada periode ini</td>
+                                    <td colSpan={5} className="py-8 text-center text-gray-500">{t('admin.donations.no_data')}</td>
                                 </tr>
                             ) : (
                                 donations.map((donation) => (
@@ -194,13 +189,13 @@ export default function Donations() {
                                         <td className="py-4 px-6 font-medium text-gray-900">{formatRp(donation.amount)}</td>
                                         <td className="py-4 px-6">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${donation.status === 'paid' ? 'bg-green-100 text-green-800' :
-                                                    donation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                        'bg-gray-100 text-gray-800'
+                                                donation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                    'bg-gray-100 text-gray-800'
                                                 }`}>
                                                 {donation.status}
                                             </span>
                                         </td>
-                                        <td className="py-4 px-6 text-sm text-gray-500">{formatDate(donation.created_at)}</td>
+                                        <td className="py-4 px-6 text-sm text-gray-500">{formatDateWIB(donation.created_at)}</td>
                                     </tr>
                                 ))
                             )}
@@ -215,15 +210,15 @@ export default function Donations() {
                         onClick={() => setPage(p => Math.max(1, p - 1))}
                         className="px-4 py-2 border border-gray-200 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50"
                     >
-                        Previous
+                        {t('common.previous')}
                     </button>
-                    <span className="text-sm text-gray-600">Page {page}</span>
+                    <span className="text-sm text-gray-600">{t('common.page')} {page}</span>
                     <button
                         disabled={donations.length < limit}
                         onClick={() => setPage(p => p + 1)}
                         className="px-4 py-2 border border-gray-200 rounded-lg text-sm disabled:opacity-50 hover:bg-gray-50"
                     >
-                        Next
+                        {t('common.next')}
                     </button>
                 </div>
             </div>

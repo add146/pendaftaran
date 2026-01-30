@@ -18,7 +18,7 @@ export default function AdminLayout({
     showCreateButton = true
 }: AdminLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false)
-    const [organization, setOrganization] = useState<{ name: string; logo_url?: string } | null>(null)
+    const [organization, setOrganization] = useState<{ id: string; name: string; logo_url?: string } | null>(null)
 
     useEffect(() => {
         const loadOrg = async () => {
@@ -37,7 +37,7 @@ export default function AdminLayout({
 
                 if (orgId) {
                     const data = await organizationsAPI.get(orgId)
-                    setOrganization(data)
+                    setOrganization({ ...data, id: orgId })
                 }
             } catch (err) {
                 console.error('Failed to load organization info for sidebar:', err)

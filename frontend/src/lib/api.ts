@@ -101,6 +101,12 @@ export const superAdminAPI = {
             { method: 'PUT', body: JSON.stringify(data) }
         ),
 
+    deleteOrganization: (id: string) =>
+        fetchAPI<{ message: string }>(
+            `/api/admin/organizations/${id}`,
+            { method: 'DELETE' }
+        ),
+
     getUsers: (orgId?: string, limit = 100, offset = 0) =>
         fetchAPI<{ users: any[] }>(
             `/api/admin/users?${orgId ? `organization_id=${orgId}&` : ''}limit=${limit}&offset=${offset}`
@@ -189,7 +195,7 @@ export const eventsAPI = {
     getBroadcastTargets: (id: string) =>
         fetchAPI<{
             event: { title: string; date: string; time?: string; online_platform?: string; online_url?: string; meeting_link_sent?: number }
-            targets: { id: string; registration_id: string; full_name: string; phone: string; whatsapp_status?: string }[]
+            targets: { id: string; registration_id: string; full_name: string; phone: string; whatsapp_status?: string; attendance_type?: 'offline' | 'online' }[]
         }>(`/api/events/${id}/broadcast-targets`),
 
     broadcastSingle: (id: string, registrationId: string) =>
@@ -538,6 +544,11 @@ export interface Participant {
     whatsapp_sent_at?: string
     created_at: string
     attendance_type?: 'offline' | 'online'
+    event_type?: 'offline' | 'online' | 'hybrid'
+    online_platform?: 'google_meet' | 'zoom' | 'youtube' | 'custom'
+    online_url?: string
+    online_password?: string
+    online_instructions?: string
     custom_fields?: Array<{ label: string; response: string; show_on_id: boolean }>
 }
 
@@ -712,6 +723,7 @@ export interface RegisterParticipantData {
     gender?: string
     attendance_type?: 'offline' | 'online'
     custom_fields?: Array<{ field_id: string; response: string | string[] }>
+    has_donation?: boolean
 }
 
 export interface Organization {

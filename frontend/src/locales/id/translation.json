@@ -1,0 +1,563 @@
+{
+    "common": {
+        "save": "Simpan",
+        "saving": "Menyimpan...",
+        "cancel": "Batal",
+        "delete": "Hapus",
+        "edit": "Edit",
+        "add": "Tambah",
+        "back": "Kembali",
+        "close": "Tutup",
+        "retry": "Coba Lagi",
+        "loading": "Memuat...",
+        "download": "Unduh",
+        "reset": "Atur Ulang",
+        "event_not_found": "Event Tidak Ditemukan",
+        "back_home": "Kembali ke Beranda",
+        "people": "Orang",
+        "locale_date": "id-ID",
+        "name": "Nama",
+        "saved_success": "Semua konfigurasi berhasil disimpan!",
+        "save_error": "Gagal menyimpan: ",
+        "upload_success": "Logo berhasil diupload!",
+        "upload_error": "Gagal upload logo: ",
+        "profile_updated": "Profil berhasil diperbarui!",
+        "profile_error": "Gagal menyimpan profil: ",
+        "export_csv": "Export CSV",
+        "previous": "Sebelumnya",
+        "next": "Selanjutnya",
+        "page": "Halaman",
+        "page_of": "dari"
+    },
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "events": "Event",
+        "participants": "Peserta",
+        "payments": "Pembayaran",
+        "organization": "Organisasi",
+        "donations": "Donasi",
+        "settings": "Pengaturan",
+        "sign_out": "Keluar",
+        "super_admin": "SUPER ADMIN",
+        "super_dashboard": "Dashboard",
+        "super_orgs": "Organisasi",
+        "super_users": "Pengguna",
+        "landing_page": "Landing Page"
+    },
+    "id_card": {
+        "configuration": "Konfigurasi ID Card",
+        "settings": "Pengaturan Desain",
+        "primary_color": "Warna Utama",
+        "background_color": "Warna Latar",
+        "sponsor_logo": "Logo Sponsor",
+        "upload_logo": "Unggah Logo Sponsor",
+        "logo_uploaded": "Logo terunggah",
+        "max_size": "Maks 20MB (otomatis dikompres), muncul di bawah ID card",
+        "reset_default": "Kembalikan ke awal",
+        "save_design": "Simpan",
+        "scan_checkin": "Scan untuk Check-in",
+        "participant": "Peserta",
+        "ticket": "Tiket",
+        "registration_id": "ID Registrasi",
+        "download_id_card": "Download ID Card",
+        "send_wa": "Kirim WA",
+        "download_cert": "Download Sertifikat",
+        "generating": "Memproses...",
+        "messages": {
+            "file_too_large": "File terlalu besar. Maks 20MB.",
+            "upload_success": "Logo berhasil diunggah dan dikompres!",
+            "upload_error": "Gagal mengunggah logo",
+            "save_success": "Desain berhasil disimpan!",
+            "save_error": "Gagal menyimpan desain",
+            "reset_success": "Desain dikembalikan ke default"
+        }
+    },
+    "custom_fields": {
+        "title": "Field Formulir Kustom",
+        "add_field": "Tambah Field",
+        "no_fields": "Belum ada field kustom",
+        "no_fields_desc": "Tambahkan field untuk mengumpulkan informasi tambahan dari peserta",
+        "field_type": "Tipe Field",
+        "field_label": "Label Field",
+        "required_field": "Wajib diisi",
+        "show_on_id": "Tampilkan di ID Card",
+        "options": "Opsi",
+        "add_option": "Tambah Opsi",
+        "text_input": "Input Teks",
+        "text_box": "Kotak Teks",
+        "radio_buttons": "Pilihan Ganda (Satu)",
+        "checkboxes": "Pilihan Ganda (Banyak)"
+    },
+    "certificate": {
+        "designer": "Desainer Sertifikat",
+        "customize": "Sesuaikan tampilan sertifikat event Anda.",
+        "active": "Aktif",
+        "draft": "Draft",
+        "live_preview": "Pratinjau Langsung",
+        "a4_landscape": "A4 Landscape (297mm x 210mm)",
+        "upload_bg": "Unggah latar belakang sertifikat Anda (Canva/Figma)",
+        "enable": "Aktifkan Sertifikat",
+        "background_image": "Gambar Latar Belakang",
+        "remove_image": "Hapus Gambar",
+        "click_upload": "Klik untuk unggah",
+        "add_text": "Tambah Teks",
+        "elements": "Elemen",
+        "font_family": "Font",
+        "size": "Ukuran (px)",
+        "color": "Warna",
+        "align": "Perataan",
+        "messages": {
+            "upload_error": "Gagal mengunggah gambar latar belakang"
+        },
+        "defaults": {
+            "new_text": "Teks Baru",
+            "participant_name": "{Nama Peserta}",
+            "registration_id": "{ID Registrasi}",
+            "event_title": "{Judul Event}"
+        },
+        "tooltips": {
+            "set_to": "Ubah menjadi"
+        }
+    },
+    "registration": {
+        "register_now": "Daftar Sekarang",
+        "closed": "Pendaftaran Ditutup",
+        "full_name": "Nama Lengkap",
+        "email": "Email",
+        "wa_number": "No. WhatsApp",
+        "city": "Kota Tinggal",
+        "attendance": "Preferensi Kehadiran",
+        "offline": "Offline",
+        "online": "Online",
+        "select_ticket": "Pilih Tiket",
+        "success_title": "Pendaftaran Berhasil!",
+        "success_desc": "Terima kasih telah mendaftar untuk",
+        "reg_id": "ID Registrasi Anda",
+        "payment_manual": "Silakan lanjutkan pembayaran via WhatsApp",
+        "send_nota": "Kirim Nota ke WhatsApp",
+        "payment_auto": "Lanjutkan pembayaran online",
+        "pay_now": "Bayar Sekarang",
+        "confirmation_sent": "Konfirmasi telah dikirim ke",
+        "success": "Pendaftaran Berhasil!",
+        "thank_you": "Terima kasih telah mendaftar untuk",
+        "continue_whatsapp": "Klik tombol dibawah ini untuk melanjutkan ke Whatsapp Customer Service kami",
+        "continue_online": "Lanjutkan pembayaran online:",
+        "registrasi": "REGISTRASI",
+        "participant": "Peserta",
+        "additional_info": "Informasi Tambahan",
+        "ticket_type": "Tipe Tiket",
+        "phone": "No. WhatsApp",
+        "attendance_type": "Kehadiran",
+        "offline_desc": "Datang ke lokasi acara",
+        "online_desc": "via Zoom / Google Meet"
+    },
+    "payment": {
+        "loading_system": "Sistem pembayaran sedang dimuat. Harap tunggu sebentar dan coba lagi.",
+        "success_alert": "Pembayaran berhasil!",
+        "pending_alert": "Menunggu konfirmasi pembayaran...",
+        "failed_alert": "Pembayaran gagal! Silakan coba lagi."
+    },
+    "nota": {
+        "transfer_info": "INFORMASI TRANSFER",
+        "bank": "Bank",
+        "account_name": "Atas Nama",
+        "account_number": "No. Rekening",
+        "amount": "Nominal",
+        "transfer_instruction": "Mohon transfer sesuai nominal dan kirim bukti transfer ke nomor ini",
+        "confirm_payment": "Mohon konfirmasi pembayaran sebesar",
+        "registration_success": "PENDAFTARAN BERHASIL",
+        "registrant_name": "Nama Pendaftar",
+        "participant_count": "Jumlah Peserta",
+        "participant_list": "Daftar Peserta",
+        "total_tickets": "Total Tiket",
+        "total_bill": "Total Tagihan"
+    },
+    "event": {
+        "paid_event": "Event Berbayar",
+        "free_event": "Event Gratis",
+        "date_time": "Tanggal & Waktu",
+        "time_tba": "Waktu segera diumumkan",
+        "location": "Lokasi",
+        "location_tba": "Lokasi segera diumumkan",
+        "about": "Tentang Event Ini"
+    },
+    "ticket": {
+        "not_found": "Tiket tidak ditemukan",
+        "not_found_title": "Tiket Tidak Ditemukan",
+        "invalid_id": "Registration ID tidak valid",
+        "certificate_failed": "Gagal mengunduh sertifikat. Silakan coba lagi.",
+        "payment_pending": "Pembayaran Pending",
+        "payment_pending_desc": "Tiket akan aktif setelah pembayaran dikonfirmasi.",
+        "online_event_details": "Detail Event Online",
+        "instructions": "Instruksi",
+        "download_certificate": "Download Sertifikat",
+        "save_page_online": "Simpan halaman ini untuk akses link meeting",
+        "show_qr_checkin": "Tunjukkan QR Code ini saat check-in di lokasi event",
+        "no_phone": "Nomor tidak ditemukan untuk peserta ini",
+        "registration_successful_title": "PENDAFTARAN BERHASIL",
+        "thank_you_register": "Terima kasih telah mendaftar untuk",
+        "registration_id": "ID Registrasi",
+        "see_you": "Sampai jumpa di acara!",
+        "send_wa": "Kirim tiket via WhatsApp",
+        "send_wa_button": "Kirim WA"
+    },
+    "dashboard": {
+        "overview": "Ringkasan Dashboard",
+        "active_events": "Event Aktif",
+        "total_participants": "Total Peserta",
+        "total_revenue": "Total Pendapatan",
+        "recent_events": "Event Terbaru",
+        "event_name": "Nama Event",
+        "date": "Tanggal",
+        "status": "Status",
+        "quota": "Kuota",
+        "actions": "Aksi",
+        "view_details": "Lihat Detail",
+        "no_events": "Belum ada event",
+        "create_first": "Buat event pertama Anda",
+        "create_event": "Buat Event"
+    },
+    "admin": {
+        "participants": {
+            "title": "Semua Peserta",
+            "page_title": "Peserta Event",
+            "breadcrumb_title": "Peserta",
+            "list_title": "Peserta - {{event}}",
+            "subtitle": "Kelola pendaftaran, pembayaran, dan kehadiran peserta.",
+            "total": "Total Peserta",
+            "checked_in": "Sdh Datang",
+            "search_placeholder": "Cari nama, email, atau ID registrasi...",
+            "all_events": "Semua Event",
+            "export_csv": "Export CSV",
+            "stats": {
+                "total": "Total Terdaftar",
+                "checked_in": "Sdh Datang",
+                "pending": "Blm Datang",
+                "revenue": "Pendapatan",
+                "offline": "Kehadiran Offline",
+                "online": "Kehadiran Online"
+            },
+            "buttons": {
+                "export": "Export CSV",
+                "broadcast": "Kirim Link",
+                "scanner": "Scanner"
+            },
+            "filter": {
+                "all": "Semua",
+                "paid": "Lunas",
+                "pending": "Belum",
+                "checked_in": "Sdh Datang",
+                "not_arrived": "Blm Datang"
+            },
+            "payment_status": {
+                "paid": "Lunas",
+                "pending": "Belum",
+                "failed": "Gagal"
+            },
+            "status": {
+                "checked_in": "Sdh Datang",
+                "not_arrived": "Blm Datang"
+            },
+            "actions": {
+                "approve": "Disetujui",
+                "check_in": "Hadir",
+                "show_id": "ID",
+                "resend_wa": "Kirim WA"
+            },
+            "table": {
+                "participant": "Peserta",
+                "reg_id": "ID Registrasi",
+                "contact": "Kontak",
+                "event": "Event",
+                "payment": "Status",
+                "checkin": "Kehadiran",
+                "date": "Tanggal",
+                "action": "Aksi"
+            },
+            "no_data": "Peserta tidak ditemukan",
+            "delete_confirm": "Apakah Anda yakin ingin menghapus peserta ini?"
+        },
+        "events": {
+            "title": "Event",
+            "create": "Buat Event",
+            "filter": {
+                "all": "Semua",
+                "open": "Buka",
+                "draft": "Draft",
+                "closed": "Tutup"
+            },
+            "table": {
+                "participants": "Peserta",
+                "edit": "Edit",
+                "share": "Bagikan",
+                "delete": "Hapus"
+            },
+            "delete_confirm": "Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan.",
+            "delete_confirm_title": "Apakah Anda yakin ingin menghapus event \"{{title}}\"?",
+            "status_confirm": "Apakah Anda yakin ingin mengubah status event ini?",
+            "confirm_open": "membuka",
+            "confirm_close": "menutup",
+            "confirm_status_title": "Apakah Anda yakin ingin {{action}} event \"{{title}}\"?",
+            "share_success": "Link berhasil disalin: ",
+            "delete_error": "Gagal menghapus event",
+            "status_error": "Gagal mengubah status event"
+        },
+        "donations": {
+            "title": "Donasi",
+            "subtitle": "Kelola dan pantau donasi event",
+            "stats": {
+                "total_amount": "Total Donasi",
+                "total_donors": "Total Donatur"
+            },
+            "table": {
+                "donor": "Donatur",
+                "event": "Event",
+                "amount": "Jumlah",
+                "status": "Status",
+                "date": "Tanggal"
+            },
+            "filter": {
+                "all": "Semua",
+                "today": "Hari Ini",
+                "week": "Minggu Ini",
+                "month": "Bulan Ini"
+            },
+            "export_error": "Gagal export CSV",
+            "no_data": "Belum ada donasi pada periode ini"
+        },
+        "payments": {
+            "title": "Pembayaran",
+            "subtitle": "Kelola pembayaran dan transaksi",
+            "stats": {
+                "total_revenue": "Total Pendapatan",
+                "pending_payments": "Menunggu Pembayaran",
+                "pending": "Belum",
+                "total_transactions": "Total Transaksi"
+            },
+            "midtrans": {
+                "title": "Integrasi Midtrans",
+                "desc": "Terima pembayaran untuk event berbayar",
+                "button": "Buka Dashboard Midtrans"
+            },
+            "table": {
+                "recent_title": "Transaksi Terbaru",
+                "order_id": "Order ID",
+                "customer": "Pelanggan",
+                "event": "Event",
+                "amount": "Jumlah",
+                "status": "Status",
+                "date": "Tanggal"
+            },
+            "error_loading": "Gagal memuat pembayaran",
+            "no_data": {
+                "title": "Belum ada transaksi",
+                "desc": "Transaksi akan muncul di sini setelah peserta melakukan pembayaran."
+            }
+        },
+        "event_form": {
+            "title": "Edit Event",
+            "tabs": {
+                "general": "Detail Umum",
+                "certificate": "E-Sertifikat",
+                "id_card": "ID Card"
+            },
+            "sections": {
+                "details": "Detail Event",
+                "online": "Detail Event Online",
+                "images": "Gambar Event (Slider)",
+                "additional": "Informasi Tambahan",
+                "payment": "Pengaturan Pembayaran",
+                "tickets": "Harga Tiket",
+                "discounts": "Diskon Grosir",
+                "marketing": "Pemasaran",
+                "donations": "Donasi",
+                "settings": "Pengaturan"
+            },
+            "labels": {
+                "title": "Judul Event",
+                "description": "Deskripsi",
+                "date": "Tanggal Event",
+                "time": "Waktu Mulai",
+                "location": "Lokasi",
+                "capacity": "Kapasitas",
+                "platform": "Platform",
+                "url": "URL Meeting (Opsional)",
+                "password": "Password (Opsional)",
+                "instructions": "Instruksi Bergabung",
+                "note": "Catatan (Opsional)",
+                "icon_type": "Tipe Ikon",
+                "payment_mode": "Mode Pembayaran",
+                "whatsapp_cs": "Nomor WhatsApp CS",
+                "bank_name": "Nama Bank",
+                "account_holder": "Atas Nama",
+                "account_number": "Nomor Rekening",
+                "ticket_name": "Nama Tiket",
+                "price": "Harga",
+                "quota": "Kuota",
+                "min_qty": "Min Qty",
+                "type": "Tipe",
+                "value": "Nilai",
+                "status": "Status",
+                "event_mode": "Mode Event",
+                "event_format": "Format Event",
+                "pricing_model": "Model",
+                "visibility": "Visibilitas",
+                "enable_donations": "Aktifkan Donasi",
+                "min_amount": "Jumlah Min",
+                "donation_desc": "Deskripsi Donasi"
+            },
+            "placeholders": {
+                "description": "Jelaskan detail event Anda...",
+                "leave_empty": "Kosongkan untuk tak terbatas",
+                "url": "https://meet.google.com/...",
+                "password": "Kode akses meeting",
+                "instructions": "Cth: Harap bergabung 10 menit lebih awal...",
+                "note": "Tambahkan catatan untuk ditampilkan di ID Card...",
+                "whatsapp": "81234567890",
+                "bank_name": "Cth: BCA, Mandiri, BRI",
+                "account_holder": "Nama pemilik rekening",
+                "account_number": "1234567890",
+                "ticket_name": "Cth: Reguler",
+                "donation_desc": "Cth: Infaq shodaqoh"
+            },
+            "buttons": {
+                "next": "Lanjut",
+                "back": "Kembali",
+                "save_draft": "Simpan Draft",
+                "publish": "Publikasikan Event",
+                "publishing": "Mempublikasikan...",
+                "add_image": "Tambah Gambar",
+                "add_ticket": "Tambah Tiket",
+                "add_first_ticket": "Tambahkan jenis tiket pertama",
+                "add_discount": "Tambah Diskon",
+                "save": "Simpan",
+                "saving": "Menyimpan...",
+                "open_midtrans": "Buka Dashboard Midtrans"
+            },
+            "messages": {
+                "success": "Event berhasil diperbarui!",
+                "error": "Gagal memperbarui event",
+                "upload_error": "Gagal mengunggah gambar",
+                "max_images": "Maksimal 3 gambar diizinkan",
+                "no_tickets": "Belum ada tiket ditambahkan",
+                "no_discounts": "Belum ada diskon grosir dikonfigurasi",
+                "production_keys_required": "Kunci Produksi diperlukan"
+            },
+            "hints": {
+                "upload_size": "Unggah hingga 3 gambar untuk slider event. Ukuran yang disarankan: 1080 x 1350 px (rasio 4:5)",
+                "manual_payment": "Kirim nota ke WhatsApp CS",
+                "auto_payment": "Pembayaran online langsung",
+                "whatsapp_cs": "Nomor ini akan menerima nota pembayaran dari pendaftar",
+                "midtrans_warning": "Kunci Produksi Midtrans diperlukan. Buka Pengaturan untuk mengonfigurasi."
+            },
+            "options": {
+                "manual": "Manual (WhatsApp)",
+                "auto": "Otomatis (Midtrans)",
+                "free": "Gratis",
+                "paid": "Berbayar",
+                "public": "Publik",
+                "private": "Pribadi",
+                "draft": "Draft",
+                "open": "Buka",
+                "closed": "Tutup",
+                "offline": "Offline",
+                "online": "Online",
+                "hybrid": "Hybrid"
+            },
+            "steps": {
+                "details": "Detail",
+                "settings": "Pengaturan",
+                "review": "Tinjauan"
+            },
+            "review": {
+                "title": "Tinjauan & Publikasi"
+            }
+        }
+    },
+    "settings": {
+        "title": "Pengaturan",
+        "subtitle": "Kelola pengaturan akun dan aplikasi Anda",
+        "tabs": {
+            "general": "Umum",
+            "organization": "Organisasi",
+            "notifications": "Notifikasi",
+            "integrations": "Integrasi"
+        },
+        "profile": {
+            "title": "Profil Pengguna",
+            "full_name": "Nama Lengkap",
+            "email": "Email",
+            "role": "Role",
+            "change_password": "Ganti Password",
+            "current_password": "Password Saat Ini",
+            "new_password": "Password Baru",
+            "confirm_password": "Konfirmasi Password Baru"
+        },
+        "organization": {
+            "title": "Profil Organisasi",
+            "name": "Nama Organisasi",
+            "logo": "Logo Organisasi",
+            "upload_logo": "Unggah Logo",
+            "phone": "Nomor Telepon",
+            "address": "Alamat",
+            "website": "Website",
+            "description": "Deskripsi"
+        },
+        "integrations": {
+            "wa_title": "WhatsApp Gateway (WAHA)",
+            "wa_desc": "Konfigurasi koneksi WAHA untuk notifikasi WhatsApp",
+            "api_url": "API URL",
+            "session_name": "Session Name",
+            "test_connection": "Tes Koneksi",
+            "connected": "Terhubung",
+            "disconnected": "Terputus",
+            "midtrans_title": "Midtrans Payment Gateway",
+            "midtrans_desc": "Konfigurasi kunci API Midtrans untuk pembayaran otomatis",
+            "server_key": "Server Key",
+            "client_key": "Client Key",
+            "is_production": "Production Mode"
+        }
+    },
+    "edit_event": {
+        "title": "Edit Event",
+        "create_title": "Buat Event Baru",
+        "tabs": {
+            "general": "Detail Umum",
+            "certificate": "E-Sertifikat",
+            "id_card": "ID Card",
+            "tickets": "Tiket",
+            "discounts": "Diskon Grosir"
+        },
+        "form": {
+            "title": "Judul Event",
+            "description": "Deskripsi",
+            "date": "Tanggal Event",
+            "time": "Waktu Mulai",
+            "location": "Lokasi",
+            "capacity": "Kapasitas (Kosongkan jika tidak terbatas)",
+            "images": "Gambar Event (Slider)",
+            "upload_image": "Tambah Gambar",
+            "max_images": "Maks 3 gambar",
+            "note": "Catatan Tambahan (Opsional)",
+            "icon_type": "Tipe Ikon",
+            "payment_mode": "Mode Pembayaran",
+            "manual": "Manual (WhatsApp)",
+            "manual_desc": "Kirim nota ke WhatsApp CS",
+            "auto": "Otomatis (Midtrans)",
+            "auto_desc": "Pembayaran online langsung",
+            "production_key_warning": "Production Keys diperlukan",
+            "wa_cs": "Nomor WhatsApp CS",
+            "bank_info": "Informasi Rekening Bank",
+            "bank_name": "Nama Bank",
+            "account_holder": "Atas Nama",
+            "account_number": "No. Rekening"
+        },
+        "online": {
+            "title": "Detail Event Online",
+            "platform": "Platform",
+            "url": "Meeting URL",
+            "password": "Password",
+            "instructions": "Instruksi Bergabung"
+        }
+    }
+}

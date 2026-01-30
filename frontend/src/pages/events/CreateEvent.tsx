@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { eventsAPI, uploadAPI, settingsAPI } from '../../lib/api'
+import { useTranslation } from 'react-i18next'
 
 interface EventFormData {
     title: string
@@ -26,6 +27,7 @@ interface EventFormData {
 }
 
 export default function CreateEvent() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [currentStep, setCurrentStep] = useState(1)
     const [loading, setLoading] = useState(false)
@@ -159,7 +161,7 @@ export default function CreateEvent() {
                     <Link to="/events" className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                         <span className="material-symbols-outlined">arrow_back</span>
                     </Link>
-                    <h2 className="text-xl font-bold tracking-tight text-text-main">Create New Event</h2>
+                    <h2 className="text-xl font-bold tracking-tight text-text-main">{t('edit_event.create_title')}</h2>
                 </div>
             </header>
 
@@ -189,7 +191,7 @@ export default function CreateEvent() {
                                     {currentStep > step ? '✓' : step}
                                 </button>
                                 <span className={`text-sm font-medium ${currentStep === step ? 'text-primary' : 'text-gray-400'}`}>
-                                    {step === 1 ? 'Details' : step === 2 ? 'Settings' : 'Review'}
+                                    {step === 1 ? t('admin.event_form.steps.details') : step === 2 ? t('admin.event_form.steps.settings') : t('admin.event_form.steps.review')}
                                 </span>
                                 {step < 3 && <div className="w-12 h-px bg-gray-200 mx-2"></div>}
                             </div>
@@ -200,11 +202,11 @@ export default function CreateEvent() {
                     {currentStep === 1 && (
                         <div className="space-y-6">
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-bold mb-4">Event Details</h3>
+                                <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.details')}</h3>
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Event Title *</label>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.title')} *</label>
                                         <input
                                             type="text"
                                             value={formData.title}
@@ -215,11 +217,11 @@ export default function CreateEvent() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Description</label>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.description')}</label>
                                         <textarea
                                             value={formData.description}
                                             onChange={(e) => updateField('description', e.target.value)}
-                                            placeholder="Describe your event..."
+                                            placeholder={t('admin.event_form.placeholders.description') || "Describe your event..."}
                                             rows={4}
                                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-white text-gray-900"
                                         />
@@ -227,7 +229,7 @@ export default function CreateEvent() {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium mb-2">Event Date *</label>
+                                            <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.date')} *</label>
                                             <input
                                                 type="date"
                                                 value={formData.event_date}
@@ -236,7 +238,7 @@ export default function CreateEvent() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-2">Start Time</label>
+                                            <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.time')}</label>
                                             <input
                                                 type="time"
                                                 value={formData.event_time}
@@ -247,7 +249,7 @@ export default function CreateEvent() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Location</label>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.location')}</label>
                                         <input
                                             type="text"
                                             value={formData.location}
@@ -258,12 +260,12 @@ export default function CreateEvent() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Capacity (Optional)</label>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.capacity')}</label>
                                         <input
                                             type="number"
                                             value={formData.capacity}
                                             onChange={(e) => updateField('capacity', e.target.value)}
-                                            placeholder="Leave empty for unlimited"
+                                            placeholder={t('admin.event_form.placeholders.leave_empty')}
                                             min="1"
                                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                         />
@@ -277,12 +279,12 @@ export default function CreateEvent() {
                     {currentStep === 2 && (
                         <div className="space-y-6">
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-bold mb-4">Event Settings</h3>
+                                <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.settings')}</h3>
 
                                 <div className="space-y-6">
                                     {/* Event Format */}
                                     <div>
-                                        <label className="block text-sm font-medium mb-3">Event Format</label>
+                                        <label className="block text-sm font-medium mb-3">{t('admin.event_form.labels.event_format')}</label>
                                         <div className="grid grid-cols-3 gap-4">
                                             <button
                                                 type="button"
@@ -305,8 +307,8 @@ export default function CreateEvent() {
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-primary mb-2">videocam</span>
-                                                <p className="font-bold">Online</p>
-                                                <p className="text-xs text-gray-500">Virtual meeting</p>
+                                                <p className="font-bold">{t('admin.event_form.options.online')}</p>
+                                                <p className="text-xs text-gray-500">{t('registration.online_desc')}</p>
                                             </button>
                                             <button
                                                 type="button"
@@ -317,8 +319,8 @@ export default function CreateEvent() {
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-primary mb-2">hub</span>
-                                                <p className="font-bold">Hybrid</p>
-                                                <p className="text-xs text-gray-500">Both in-person & virtual</p>
+                                                <p className="font-bold">{t('admin.event_form.options.hybrid')}</p>
+                                                <p className="text-xs text-gray-500">{t('admin.event_form.options.hybrid')}</p>
                                             </button>
                                         </div>
                                     </div>
@@ -328,11 +330,11 @@ export default function CreateEvent() {
                                         <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 space-y-4">
                                             <h4 className="font-bold text-blue-900 flex items-center gap-2">
                                                 <span className="material-symbols-outlined">videocam</span>
-                                                Online Event Details
+                                                {t('admin.event_form.sections.online')}
                                             </h4>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2 text-blue-900">Platform</label>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.platform')}</label>
                                                 <select
                                                     value={formData.online_platform}
                                                     onChange={(e) => updateField('online_platform', e.target.value)}
@@ -346,36 +348,36 @@ export default function CreateEvent() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2 text-blue-900">Meeting URL (Optional)</label>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.url')}</label>
                                                 <input
                                                     type="url"
                                                     value={formData.online_url || ''}
                                                     onChange={(e) => updateField('online_url', e.target.value)}
-                                                    placeholder="https://meet.google.com/..."
+                                                    placeholder={t('admin.event_form.placeholders.url')}
                                                     className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
                                                 />
-                                                <p className="text-xs text-blue-700 mt-1">You can add this later if not available yet.</p>
+                                                <p className="text-xs text-blue-700 mt-1">{t('ticket.save_page_online')}</p>
                                             </div>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2 text-blue-900">Password (Optional)</label>
+                                                    <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.password')}</label>
                                                     <input
                                                         type="text"
                                                         value={formData.online_password || ''}
                                                         onChange={(e) => updateField('online_password', e.target.value)}
-                                                        placeholder="Meeting passcode"
+                                                        placeholder={t('admin.event_form.placeholders.password')}
                                                         className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2 text-blue-900">Joining Instructions</label>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.instructions')}</label>
                                                 <textarea
                                                     value={formData.online_instructions || ''}
                                                     onChange={(e) => updateField('online_instructions', e.target.value)}
-                                                    placeholder="e.g. Please join 10 minutes early..."
+                                                    placeholder={t('admin.event_form.placeholders.instructions')}
                                                     rows={2}
                                                     className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
                                                 />
@@ -384,7 +386,7 @@ export default function CreateEvent() {
                                     )}
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-3">Pricing Model</label>
+                                        <label className="block text-sm font-medium mb-3">{t('admin.event_form.labels.pricing_model')}</label>
                                         <div className="grid grid-cols-2 gap-4">
                                             <button
                                                 type="button"
@@ -395,8 +397,8 @@ export default function CreateEvent() {
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-primary mb-2">volunteer_activism</span>
-                                                <p className="font-bold">Free Event</p>
-                                                <p className="text-sm text-gray-500">No payment required</p>
+                                                <p className="font-bold">{t('admin.event_form.options.free')}</p>
+                                                <p className="text-sm text-gray-500">{t('event.free_event')}</p>
                                             </button>
                                             <button
                                                 type="button"
@@ -407,41 +409,33 @@ export default function CreateEvent() {
                                                     }`}
                                             >
                                                 <span className="material-symbols-outlined text-primary mb-2">payments</span>
-                                                <p className="font-bold">Paid Event</p>
-                                                <p className="text-sm text-gray-500">Requires Midtrans payment</p>
+                                                <p className="font-bold">{t('admin.event_form.options.paid')}</p>
+                                                <p className="text-sm text-gray-500">{t('event.paid_event')}</p>
                                             </button>
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium mb-3">Visibility</label>
-                                        <div className="space-y-3">
-                                            <label className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                                <input
-                                                    type="radio"
-                                                    name="visibility"
-                                                    checked={formData.visibility === 'public'}
-                                                    onChange={() => updateField('visibility', 'public')}
-                                                    className="mt-1"
-                                                />
-                                                <div>
-                                                    <p className="font-medium">Public</p>
-                                                    <p className="text-sm text-gray-500">Anyone can find and register</p>
-                                                </div>
-                                            </label>
-                                            <label className="flex items-start gap-3 p-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-                                                <input
-                                                    type="radio"
-                                                    name="visibility"
-                                                    checked={formData.visibility === 'private'}
-                                                    onChange={() => updateField('visibility', 'private')}
-                                                    className="mt-1"
-                                                />
-                                                <div>
-                                                    <p className="font-medium">Private</p>
-                                                    <p className="text-sm text-gray-500">Only accessible via direct link</p>
-                                                </div>
-                                            </label>
+                                        <label className="block text-sm font-medium mb-3">{t('admin.event_form.labels.visibility')}</label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('visibility', 'public')}
+                                                className={`p-4 rounded-lg border-2 text-left transition-all ${formData.visibility === 'public' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}
+                                            >
+                                                <span className="material-symbols-outlined text-primary mb-2">public</span>
+                                                <p className="font-bold">{t('admin.event_form.options.public')}</p>
+                                                <p className="text-sm text-gray-500">Anyone can find and register</p>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateField('visibility', 'private')}
+                                                className={`p-4 rounded-lg border-2 text-left transition-all ${formData.visibility === 'private' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}
+                                            >
+                                                <span className="material-symbols-outlined text-primary mb-2">lock</span>
+                                                <p className="font-bold">{t('admin.event_form.options.private')}</p>
+                                                <p className="text-sm text-gray-500">Only accessible via direct link</p>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -450,13 +444,13 @@ export default function CreateEvent() {
                             {/* Event Images */}
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-bold">Event Images (Slider)</h3>
+                                    <h3 className="text-lg font-bold">{t('admin.event_form.sections.images')}</h3>
                                     <span className="text-sm text-gray-500">{images.length}/3</span>
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-4 mb-4">
                                     {images.map((img, index) => (
-                                        <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
+                                        <div key={index} className="relative aspect-[4/5] rounded-lg overflow-hidden border border-gray-200">
                                             <img src={img} alt={`Event ${index + 1}`} className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
@@ -468,39 +462,39 @@ export default function CreateEvent() {
                                         </div>
                                     ))}
                                     {images.length < 3 && (
-                                        <label className="aspect-video rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                                        <label className="aspect-[4/5] rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                                             <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                             {uploadingImage ? (
                                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                                             ) : (
                                                 <>
                                                     <span className="material-symbols-outlined text-gray-400">add_photo_alternate</span>
-                                                    <span className="text-xs text-gray-500 mt-1">Add Image</span>
+                                                    <span className="text-xs text-gray-500 mt-1">{t('admin.event_form.buttons.add_image')}</span>
                                                 </>
                                             )}
                                         </label>
                                     )}
                                 </div>
-                                <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Images will be compressed automatically.</p>
-                                <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Images will be compressed automatically.</p>
+                                <p className="text-xs text-gray-500">{t('admin.event_form.hints.upload_size')}</p>
+
                             </div>
 
                             {/* Additional Info (Note & Icon) */}
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-bold mb-4">Additional Information</h3>
+                                <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.additional')}</h3>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Note (Optional)</label>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.note')}</label>
                                         <textarea
                                             value={formData.note || ''}
                                             onChange={(e) => updateField('note', e.target.value)}
-                                            placeholder="Add a note to be displayed on the ID Card..."
+                                            placeholder={t('admin.event_form.placeholders.note')}
                                             rows={2}
                                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-white text-gray-900"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Icon Type</label>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.icon_type')}</label>
                                         <div className="flex gap-4">
                                             {['info', 'warning', 'danger'].map((type) => (
                                                 <label key={type} className={`flex-1 p-3 rounded-lg border-2 cursor-pointer transition-colors ${formData.icon_type === type
@@ -532,11 +526,11 @@ export default function CreateEvent() {
                             {/* Payment Settings (for paid events) */}
                             {formData.event_mode === 'paid' && (
                                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                    <h3 className="text-lg font-bold mb-4">Payment Settings</h3>
+                                    <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.payment')}</h3>
 
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium mb-2">Payment Mode</label>
+                                            <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.payment_mode')}</label>
                                             <div className="flex gap-4">
                                                 <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'manual' ? 'border-primary bg-primary/5' : 'border-gray-200'
                                                     }`}>
@@ -551,8 +545,8 @@ export default function CreateEvent() {
                                                     <div className="flex items-center gap-3">
                                                         <span className="material-symbols-outlined text-primary">chat</span>
                                                         <div>
-                                                            <p className="font-medium">Manual (WhatsApp)</p>
-                                                            <p className="text-xs text-gray-500">Kirim nota ke WhatsApp CS</p>
+                                                            <p className="font-medium">{t('admin.event_form.options.manual')}</p>
+                                                            <p className="text-xs text-gray-500">{t('admin.event_form.hints.manual_payment')}</p>
                                                         </div>
                                                     </div>
                                                 </label>
@@ -570,7 +564,7 @@ export default function CreateEvent() {
                                                         <span className="material-symbols-outlined text-primary">credit_card</span>
                                                         <div>
                                                             <div className="flex items-center gap-2">
-                                                                <p className="font-medium">Otomatis (Midtrans)</p>
+                                                                <p className="font-medium">{t('admin.event_form.options.auto')}</p>
                                                                 {!hasMidtransProdKeys && (
                                                                     <span className="material-symbols-outlined text-amber-500 text-[16px] animate-pulse" title="Production Keys Required">warning</span>
                                                                 )}
@@ -583,7 +577,7 @@ export default function CreateEvent() {
                                             {!hasMidtransProdKeys && (
                                                 <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
                                                     <span className="material-symbols-outlined text-[14px]">info</span>
-                                                    Midtrans Production Keys are not configured. Go to Settings to enable.
+                                                    {t('admin.event_form.messages.production_keys_required')} (Go to Settings to enable)
                                                 </p>
                                             )}
                                         </div>
@@ -591,7 +585,7 @@ export default function CreateEvent() {
                                         {formData.payment_mode === 'manual' && (
                                             <>
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
+                                                    <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.whatsapp_cs')} *</label>
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-gray-500">+62</span>
                                                         <input
@@ -602,17 +596,17 @@ export default function CreateEvent() {
                                                             className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                         />
                                                     </div>
-                                                    <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
                                                 </div>
+                                                <p className="text-xs text-gray-500 mt-1">{t('admin.event_form.hints.whatsapp_cs')}</p>
 
                                                 <div className="pt-4 border-t border-gray-200">
                                                     <h4 className="font-medium mb-3 flex items-center gap-2">
                                                         <span className="material-symbols-outlined text-[20px]">account_balance</span>
-                                                        Informasi Rekening Bank
+                                                        {t('admin.event_form.form.bank_info')}
                                                     </h4>
                                                     <div className="space-y-3">
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-1">Nama Bank *</label>
+                                                            <label className="block text-sm font-medium mb-1">{t('admin.event_form.labels.bank_name')} *</label>
                                                             <input
                                                                 type="text"
                                                                 value={formData.bank_name}
@@ -622,22 +616,22 @@ export default function CreateEvent() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-1">Nama Pemilik Rekening *</label>
+                                                            <label className="block text-sm font-medium mb-1">{t('admin.event_form.labels.account_holder')} *</label>
                                                             <input
                                                                 type="text"
                                                                 value={formData.account_holder_name}
                                                                 onChange={(e) => updateField('account_holder_name', e.target.value)}
-                                                                placeholder="Nama sesuai rekening bank"
+                                                                placeholder={t('admin.event_form.placeholders.account_holder')}
                                                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-1">Nomor Rekening *</label>
+                                                            <label className="block text-sm font-medium mb-1">{t('admin.event_form.labels.account_number')} *</label>
                                                             <input
                                                                 type="text"
                                                                 value={formData.account_number}
                                                                 onChange={(e) => updateField('account_number', e.target.value)}
-                                                                placeholder="1234567890"
+                                                                placeholder={t('admin.event_form.placeholders.account_number')}
                                                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary font-mono"
                                                             />
                                                         </div>
@@ -656,31 +650,31 @@ export default function CreateEvent() {
                     {currentStep === 3 && (
                         <div className="space-y-6">
                             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                <h3 className="text-lg font-bold mb-4">Review & Publish</h3>
+                                <h3 className="text-lg font-bold mb-4">{t('admin.event_form.review.title')}</h3>
 
                                 <div className="space-y-4">
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Title</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.title')}</span>
                                         <span className="font-medium">{formData.title || '-'}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Date</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.date')}</span>
                                         <span className="font-medium">{formData.event_date || '-'}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Time</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.time')}</span>
                                         <span className="font-medium">{formData.event_time || '-'}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Location</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.location')}</span>
                                         <span className="font-medium">{formData.location || '-'}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Capacity</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.capacity')}</span>
                                         <span className="font-medium">{formData.capacity || 'Unlimited'}</span>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Format</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.event_format')}</span>
                                         <div className="text-right">
                                             <span className="font-medium capitalize block">{formData.event_type}</span>
                                             {formData.event_type !== 'offline' && (
@@ -689,11 +683,11 @@ export default function CreateEvent() {
                                         </div>
                                     </div>
                                     <div className="flex justify-between py-3 border-b border-gray-100">
-                                        <span className="text-gray-500">Pricing Model</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.pricing_model')}</span>
                                         <span className="font-medium capitalize">{formData.event_mode}</span>
                                     </div>
                                     <div className="flex justify-between py-3">
-                                        <span className="text-gray-500">Visibility</span>
+                                        <span className="text-gray-500">{t('admin.event_form.labels.visibility')}</span>
                                         <span className="font-medium capitalize">{formData.visibility}</span>
                                     </div>
                                 </div>
@@ -709,7 +703,7 @@ export default function CreateEvent() {
                                     onClick={() => setCurrentStep(currentStep - 1)}
                                     className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
                                 >
-                                    Back
+                                    {t('admin.event_form.buttons.back')}
                                 </button>
                             )}
                         </div>
@@ -719,14 +713,14 @@ export default function CreateEvent() {
                                 disabled={loading}
                                 className="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
                             >
-                                Save as Draft
+                                {t('admin.event_form.buttons.save_draft')}
                             </button>
                             {currentStep < 3 ? (
                                 <button
                                     onClick={() => setCurrentStep(currentStep + 1)}
                                     className="px-8 py-3 rounded-lg bg-primary text-white font-bold hover:bg-primary-hover flex items-center gap-2"
                                 >
-                                    Next
+                                    {t('admin.event_form.buttons.next')}
                                     <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
                                 </button>
                             ) : (
@@ -738,11 +732,11 @@ export default function CreateEvent() {
                                     {loading ? (
                                         <>
                                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                            Publishing...
+                                            {t('admin.event_form.buttons.publishing')}
                                         </>
                                     ) : (
                                         <>
-                                            Publish Event
+                                            {t('admin.event_form.buttons.publish')}
                                             <span className="material-symbols-outlined text-[18px]">check</span>
                                         </>
                                     )}
@@ -751,7 +745,7 @@ export default function CreateEvent() {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     )
 }

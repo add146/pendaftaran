@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
 import { authMiddleware } from '../middleware/auth'
+import { getNowWIB } from '../lib/timezone'
 
 export const participants = new Hono<{ Bindings: Bindings }>()
 
@@ -99,7 +100,8 @@ participants.get('/:id', authMiddleware, async (c) => {
     const { id } = c.req.param()
 
     const participant = await c.env.DB.prepare(`
-    SELECT p.*, t.name as ticket_name, t.price as ticket_price, e.title as event_title
+    SELECT p.*, t.name as ticket_name, t.price as ticket_price, e.title as event_title,
+           e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions
     FROM participants p 
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     LEFT JOIN events e ON p.event_id = e.id
@@ -203,7 +205,15 @@ participants.post('/register', async (c) => {
 
     // Determine shared Order ID and Payment Status
     const orderId = `ord_${crypto.randomUUID().slice(0, 8)}`
-    const paymentStatus = event.event_mode === 'free' ? 'paid' : 'pending'
+
+    // Check if donation is involved (passed from frontend)
+    const hasDonation = body.has_donation === true || (participantsList.length > 0 && participantsList[0].has_donation === true)
+
+    // For FREE events: 
+    // - If NO donation: status is 'paid' (immediate WA)
+    // - If HAS donation: status is 'pending' (wait for payment, suppress immediate WA)
+    // For PAID events: status is 'pending'
+    const paymentStatus = (event.event_mode === 'free' && !hasDonation) ? 'paid' : 'pending'
 
     const insertedParticipants: any[] = []
     const messagesToSend: { phone: string, message: string }[] = []
@@ -422,7 +432,7 @@ participants.post('/:id/check-in', async (c) => {
         return c.json({ error: 'Pembayaran belum dikonfirmasi' }, 400)
     }
 
-    const checkInTime = new Date().toISOString()
+    const checkInTime = getNowWIB()
 
     await c.env.DB.prepare(`
     UPDATE participants SET check_in_status = 'checked_in', check_in_time = ? WHERE id = ?

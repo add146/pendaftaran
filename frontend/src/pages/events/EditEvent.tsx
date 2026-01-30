@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { eventsAPI, uploadAPI, settingsAPI, type Event, type BulkDiscount } from '../../lib/api'
 import CustomFieldsEditor from '../../components/CustomFieldsEditor'
 import CertificateEditor from '../../components/CertificateEditor'
@@ -13,6 +14,7 @@ interface TicketType {
 }
 
 export default function EditEvent() {
+    const { t } = useTranslation()
     const { id } = useParams<{ id: string }>()
     // const navigate = useNavigate()
     const [searchParams] = useSearchParams()
@@ -61,7 +63,7 @@ export default function EditEvent() {
         const files = e.target.files
         if (!files || files.length === 0) return
         if (images.length >= 3) {
-            setError('Maximum 3 images allowed')
+            setError(t('admin.event_form.messages.max_images'))
             return
         }
 
@@ -74,7 +76,7 @@ export default function EditEvent() {
             setUploadingImage(false)
         } catch (err: any) {
             console.error('Upload error:', err)
-            setError('Failed to upload image')
+            setError(t('admin.event_form.messages.upload_error'))
             setUploadingImage(false)
         }
 
@@ -208,7 +210,7 @@ export default function EditEvent() {
 
     const handleSubmit = async () => {
         if (!formData.title || !formData.event_date) {
-            setError('Title and date are required')
+            setError(t('admin.event_form.messages.error')) // Basic validation
             return
         }
 
@@ -256,7 +258,7 @@ export default function EditEvent() {
             // But since we updated local state, it might be fine. 
             // We do NOT navigate away.
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to update event')
+            setError(err instanceof Error ? err.message : t('admin.event_form.messages.error'))
         } finally {
             setSaving(false)
         }
@@ -278,7 +280,7 @@ export default function EditEvent() {
                     <Link to="/events" className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
                         <span className="material-symbols-outlined">arrow_back</span>
                     </Link>
-                    <h2 className="text-xl font-bold">Edit Event</h2>
+                    <h2 className="text-xl font-bold">{t('admin.event_form.title')}</h2>
                 </div>
             </header>
 
@@ -296,19 +298,19 @@ export default function EditEvent() {
                             onClick={() => setActiveTab('general')}
                             className={`pb-3 px-4 font-medium transition-colors border-b-2 ${activeTab === 'general' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                         >
-                            General Details
+                            {t('admin.event_form.tabs.general')}
                         </button>
                         <button
                             onClick={() => setActiveTab('certificate')}
                             className={`pb-3 px-4 font-medium transition-colors border-b-2 ${activeTab === 'certificate' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                         >
-                            E-Certificate
+                            {t('admin.event_form.tabs.certificate')}
                         </button>
                         <button
                             onClick={() => setActiveTab('id-card')}
                             className={`pb-3 px-4 font-medium transition-colors border-b-2 ${activeTab === 'id-card' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
                         >
-                            ID Card
+                            {t('admin.event_form.tabs.id_card')}
                         </button>
                     </div>
 
@@ -320,15 +322,15 @@ export default function EditEvent() {
                                     {showSuccess && (
                                         <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2 animate-fadeIn">
                                             <span className="material-symbols-outlined">check_circle</span>
-                                            Event updated successfully!
+                                            {t('admin.event_form.messages.success')}
                                         </div>
                                     )}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="text-lg font-bold mb-4">Event Details</h3>
+                                        <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.details')}</h3>
 
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Event Title *</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.title')} *</label>
                                                 <input
                                                     type="text"
                                                     value={formData.title}
@@ -338,7 +340,7 @@ export default function EditEvent() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Description</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.description')}</label>
                                                 <textarea
                                                     value={formData.description}
                                                     onChange={(e) => updateField('description', e.target.value)}
@@ -349,7 +351,7 @@ export default function EditEvent() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2">Event Date *</label>
+                                                    <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.date')} *</label>
                                                     <input
                                                         type="date"
                                                         value={formData.event_date}
@@ -358,7 +360,7 @@ export default function EditEvent() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2">Start Time</label>
+                                                    <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.time')}</label>
                                                     <input
                                                         type="time"
                                                         value={formData.event_time}
@@ -369,7 +371,7 @@ export default function EditEvent() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Location</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.location')}</label>
                                                 <input
                                                     type="text"
                                                     value={formData.location}
@@ -379,12 +381,12 @@ export default function EditEvent() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Capacity</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.capacity')}</label>
                                                 <input
                                                     type="number"
                                                     value={formData.capacity}
                                                     onChange={(e) => updateField('capacity', e.target.value)}
-                                                    placeholder="Leave empty for unlimited"
+                                                    placeholder={t('admin.event_form.placeholders.leave_empty')}
                                                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                                 />
                                             </div>
@@ -396,11 +398,11 @@ export default function EditEvent() {
                                         <div className="bg-blue-50 rounded-xl p-6 shadow-sm border border-blue-100 space-y-4">
                                             <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2">
                                                 <span className="material-symbols-outlined">videocam</span>
-                                                Online Event Details
+                                                {t('admin.event_form.sections.online')}
                                             </h3>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2 text-blue-900">Platform</label>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.platform')}</label>
                                                 <select
                                                     value={formData.online_platform}
                                                     onChange={(e) => updateField('online_platform', e.target.value)}
@@ -414,35 +416,35 @@ export default function EditEvent() {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2 text-blue-900">Meeting URL (Optional)</label>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.url')}</label>
                                                 <input
                                                     type="url"
                                                     value={formData.online_url || ''}
                                                     onChange={(e) => updateField('online_url', e.target.value)}
-                                                    placeholder="https://meet.google.com/..."
+                                                    placeholder={t('admin.event_form.placeholders.url')}
                                                     className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
                                                 />
                                             </div>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2 text-blue-900">Password (Optional)</label>
+                                                    <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.password')}</label>
                                                     <input
                                                         type="text"
                                                         value={formData.online_password || ''}
                                                         onChange={(e) => updateField('online_password', e.target.value)}
-                                                        placeholder="Meeting passcode"
+                                                        placeholder={t('admin.event_form.placeholders.password')}
                                                         className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary"
                                                     />
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2 text-blue-900">Joining Instructions</label>
+                                                <label className="block text-sm font-medium mb-2 text-blue-900">{t('admin.event_form.labels.instructions')}</label>
                                                 <textarea
                                                     value={formData.online_instructions || ''}
                                                     onChange={(e) => updateField('online_instructions', e.target.value)}
-                                                    placeholder="e.g. Please join 10 minutes early..."
+                                                    placeholder={t('admin.event_form.placeholders.instructions')}
                                                     rows={2}
                                                     className="w-full px-4 py-3 rounded-lg border border-blue-200 focus:border-primary focus:ring-1 focus:ring-primary resize-none"
                                                 />
@@ -453,13 +455,13 @@ export default function EditEvent() {
                                     {/* Event Images Slider */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                         <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-lg font-bold">Event Images (Slider)</h3>
+                                            <h3 className="text-lg font-bold">{t('admin.event_form.sections.images')}</h3>
                                             <span className="text-sm text-gray-500">{images.length}/3</span>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-4 mb-4">
                                             {images.map((img, index) => (
-                                                <div key={index} className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 group">
+                                                <div key={index} className="relative aspect-[4/5] rounded-lg overflow-hidden bg-gray-100 group">
                                                     <img src={img} alt={`Event ${index + 1}`} className="w-full h-full object-cover" />
                                                     <button
                                                         type="button"
@@ -475,13 +477,13 @@ export default function EditEvent() {
                                             ))}
 
                                             {images.length < 3 && (
-                                                <label className="aspect-video rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
+                                                <label className="aspect-[4/5] rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors">
                                                     {uploadingImage ? (
                                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                                                     ) : (
                                                         <>
                                                             <span className="material-symbols-outlined text-gray-400 text-[32px]">add_photo_alternate</span>
-                                                            <span className="text-xs text-gray-500 mt-1">Add Image</span>
+                                                            <span className="text-xs text-gray-500 mt-1">{t('admin.event_form.buttons.add_image')}</span>
                                                         </>
                                                     )}
                                                     <input
@@ -494,26 +496,26 @@ export default function EditEvent() {
                                             )}
                                         </div>
 
-                                        <p className="text-xs text-gray-500">Upload up to 3 images for the event slider. Recommended size: 1200x600px</p>
+                                        <p className="text-xs text-gray-500">{t('admin.event_form.hints.upload_size')}</p>
                                     </div>
 
                                     {/* Additional Info (Note & Icon) */}
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="text-lg font-bold mb-4">Additional Information</h3>
+                                        <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.additional')}</h3>
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Note (Optional)</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.note')}</label>
                                                 <textarea
                                                     value={formData.note || ''}
                                                     onChange={(e) => updateField('note', e.target.value)}
-                                                    placeholder="Add a note to be displayed on the ID Card..."
+                                                    placeholder={t('admin.event_form.placeholders.note')}
                                                     rows={2}
                                                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-white text-gray-900"
                                                 />
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Icon Type</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.icon_type')}</label>
                                                 <div className="flex gap-4">
                                                     {['info', 'warning', 'danger'].map((type) => (
                                                         <label key={type} className={`flex-1 p-3 rounded-lg border-2 cursor-pointer transition-colors ${formData.icon_type === type
@@ -548,11 +550,11 @@ export default function EditEvent() {
                                     {/* Payment Settings (for paid events) */}
                                     {formData.event_mode === 'paid' && (
                                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                            <h3 className="text-lg font-bold mb-4">Payment Settings</h3>
+                                            <h3 className="text-lg font-bold mb-4">{t('admin.event_form.sections.payment')}</h3>
 
                                             <div className="space-y-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium mb-2">Payment Mode</label>
+                                                    <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.payment_mode')}</label>
                                                     <div className="flex gap-4">
                                                         <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'manual' ? 'border-primary bg-primary/5' : 'border-gray-200'
                                                             }`}>
@@ -567,14 +569,14 @@ export default function EditEvent() {
                                                             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
                                                                 <span className="material-symbols-outlined text-primary text-[28px] md:text-[24px]">chat</span>
                                                                 <div>
-                                                                    <p className="font-medium text-sm md:text-base">Manual (WhatsApp)</p>
-                                                                    <p className="text-[10px] md:text-xs text-gray-500">Kirim nota ke WhatsApp CS</p>
+                                                                    <p className="font-medium text-sm md:text-base">{t('admin.event_form.options.manual')}</p>
+                                                                    <p className="text-[10px] md:text-xs text-gray-500">{t('admin.event_form.hints.manual_payment')}</p>
                                                                 </div>
                                                             </div>
                                                         </label>
                                                         <label className={`flex-1 p-4 rounded-lg border-2 cursor-pointer ${formData.payment_mode === 'auto'
-                                                                ? (!hasMidtransProdKeys ? 'border-amber-500 bg-amber-50' : 'border-primary bg-primary/5')
-                                                                : 'border-gray-200'
+                                                            ? (!hasMidtransProdKeys ? 'border-amber-500 bg-amber-50' : 'border-primary bg-primary/5')
+                                                            : 'border-gray-200'
                                                             } ${!hasMidtransProdKeys ? 'cursor-not-allowed opacity-80' : ''}`}>
                                                             <input
                                                                 type="radio"
@@ -588,14 +590,14 @@ export default function EditEvent() {
                                                             <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-center md:text-left">
                                                                 <span className={`material-symbols-outlined text-[28px] md:text-[24px] ${formData.payment_mode === 'auto' ? 'text-primary' : 'text-gray-400'}`}>credit_card</span>
                                                                 <div>
-                                                                    <p className={`font-medium text-sm md:text-base ${formData.payment_mode === 'auto' ? '' : 'text-gray-500'}`}>Otomatis (Midtrans)</p>
+                                                                    <p className={`font-medium text-sm md:text-base ${formData.payment_mode === 'auto' ? '' : 'text-gray-500'}`}>{t('admin.event_form.options.auto')}</p>
                                                                     {!hasMidtransProdKeys ? (
                                                                         <p className="text-[10px] md:text-xs text-amber-600 flex items-center gap-1 justify-center md:justify-start">
                                                                             <span className="material-symbols-outlined text-[10px]">warning</span>
-                                                                            Production Keys required
+                                                                            {t('admin.event_form.messages.production_keys_required')}
                                                                         </p>
                                                                     ) : (
-                                                                        <p className="text-[10px] md:text-xs text-gray-500">Pembayaran online langsung</p>
+                                                                        <p className="text-[10px] md:text-xs text-gray-500">{t('admin.event_form.hints.auto_payment')}</p>
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -606,50 +608,50 @@ export default function EditEvent() {
                                                 {formData.payment_mode === 'manual' && (
                                                     <div className="space-y-4">
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-2">WhatsApp CS Number *</label>
+                                                            <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.whatsapp_cs')} *</label>
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-gray-500">+62</span>
                                                                 <input
                                                                     type="tel"
                                                                     value={formData.whatsapp_cs}
                                                                     onChange={(e) => updateField('whatsapp_cs', e.target.value)}
-                                                                    placeholder="81234567890"
+                                                                    placeholder={t('admin.event_form.placeholders.whatsapp')}
                                                                     className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                                 />
                                                             </div>
-                                                            <p className="text-xs text-gray-500 mt-1">Nomor ini akan menerima nota pembayaran dari pendaftar</p>
+                                                            <p className="text-xs text-gray-500 mt-1">{t('admin.event_form.hints.whatsapp_cs')}</p>
                                                         </div>
 
                                                         <div className="border-t border-gray-200 pt-4">
                                                             <h4 className="font-medium text-sm mb-3">Informasi Rekening Bank</h4>
                                                             <div className="space-y-3">
                                                                 <div>
-                                                                    <label className="block text-xs font-medium mb-1">Nama Bank *</label>
+                                                                    <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.bank_name')} *</label>
                                                                     <input
                                                                         type="text"
                                                                         value={formData.bank_name}
                                                                         onChange={(e) => updateField('bank_name', e.target.value)}
-                                                                        placeholder="e.g., BCA, Mandiri, BRI"
+                                                                        placeholder={t('admin.event_form.placeholders.bank_name')}
                                                                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                                     />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="block text-xs font-medium mb-1">Atas Nama *</label>
+                                                                    <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.account_holder')} *</label>
                                                                     <input
                                                                         type="text"
                                                                         value={formData.account_holder_name}
                                                                         onChange={(e) => updateField('account_holder_name', e.target.value)}
-                                                                        placeholder="Nama pemilik rekening"
+                                                                        placeholder={t('admin.event_form.placeholders.account_holder')}
                                                                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                                     />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="block text-xs font-medium mb-1">Nomor Rekening *</label>
+                                                                    <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.account_number')} *</label>
                                                                     <input
                                                                         type="text"
                                                                         value={formData.account_number}
                                                                         onChange={(e) => updateField('account_number', e.target.value)}
-                                                                        placeholder="1234567890"
+                                                                        placeholder={t('admin.event_form.placeholders.account_number')}
                                                                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                                     />
                                                                 </div>
@@ -666,27 +668,27 @@ export default function EditEvent() {
                                     {formData.event_mode === 'paid' && (
                                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h3 className="text-lg font-bold">Ticket Types (HTM)</h3>
+                                                <h3 className="text-lg font-bold">{t('admin.event_form.sections.tickets')}</h3>
                                                 <button
                                                     type="button"
                                                     onClick={addTicket}
                                                     className="flex items-center gap-1 text-primary text-sm font-medium hover:text-primary-hover"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
-                                                    Add Ticket
+                                                    {t('admin.event_form.buttons.add_ticket')}
                                                 </button>
                                             </div>
 
                                             {tickets.length === 0 ? (
                                                 <div className="text-center py-8 text-gray-500">
                                                     <span className="material-symbols-outlined text-[40px] mb-2 opacity-50">confirmation_number</span>
-                                                    <p>No tickets added yet</p>
+                                                    <p>{t('admin.event_form.messages.no_tickets')}</p>
                                                     <button
                                                         type="button"
                                                         onClick={addTicket}
                                                         className="mt-2 text-primary text-sm font-medium"
                                                     >
-                                                        Add your first ticket type
+                                                        {t('admin.event_form.buttons.add_first_ticket')}
                                                     </button>
                                                 </div>
                                             ) : (
@@ -705,17 +707,17 @@ export default function EditEvent() {
                                                             </div>
                                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                                                                 <div>
-                                                                    <label className="block text-xs font-medium mb-1">Ticket Name</label>
+                                                                    <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.ticket_name')}</label>
                                                                     <input
                                                                         type="text"
                                                                         value={ticket.name}
                                                                         onChange={(e) => updateTicket(index, 'name', e.target.value)}
-                                                                        placeholder="e.g., Regular"
+                                                                        placeholder={t('admin.event_form.placeholders.ticket_name')}
                                                                         className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                                     />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="block text-xs font-medium mb-1">Price (Rp)</label>
+                                                                    <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.price')} (Rp)</label>
                                                                     <input
                                                                         type="number"
                                                                         value={ticket.price}
@@ -725,7 +727,7 @@ export default function EditEvent() {
                                                                     />
                                                                 </div>
                                                                 <div>
-                                                                    <label className="block text-xs font-medium mb-1">Quota (optional)</label>
+                                                                    <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.quota')} (optional)</label>
                                                                     <input
                                                                         type="number"
                                                                         value={ticket.quota}
@@ -746,25 +748,25 @@ export default function EditEvent() {
                                     {formData.event_mode === 'paid' && (
                                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mt-6">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h3 className="text-lg font-bold">Bulk Discounts (Grosir)</h3>
+                                                <h3 className="text-lg font-bold">{t('admin.event_form.sections.discounts')}</h3>
                                                 <button
                                                     type="button"
                                                     onClick={addDiscount}
                                                     className="flex items-center gap-1 text-primary text-sm font-medium hover:text-primary-hover"
                                                 >
                                                     <span className="material-symbols-outlined text-[18px]">add</span>
-                                                    Add Discount
+                                                    {t('admin.event_form.buttons.add_discount')}
                                                 </button>
                                             </div>
 
                                             {bulkDiscounts.length === 0 ? (
-                                                <p className="text-sm text-gray-500">No bulk discounts configured.</p>
+                                                <p className="text-sm text-gray-500">{t('admin.event_form.messages.no_discounts')}</p>
                                             ) : (
                                                 <div className="space-y-4">
                                                     {bulkDiscounts.map((discount, index) => (
                                                         <div key={index} className="p-4 border border-gray-200 rounded-lg flex items-center gap-4">
                                                             <div>
-                                                                <label className="block text-xs font-medium mb-1">Min Qty</label>
+                                                                <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.min_qty')}</label>
                                                                 <input
                                                                     type="number"
                                                                     value={discount.min_qty}
@@ -773,7 +775,7 @@ export default function EditEvent() {
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="block text-xs font-medium mb-1">Type</label>
+                                                                <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.type')}</label>
                                                                 <select
                                                                     value={discount.discount_type}
                                                                     onChange={(e) => updateDiscount(index, 'discount_type', e.target.value)}
@@ -784,7 +786,7 @@ export default function EditEvent() {
                                                                 </select>
                                                             </div>
                                                             <div className="flex-1">
-                                                                <label className="block text-xs font-medium mb-1">Value</label>
+                                                                <label className="block text-xs font-medium mb-1">{t('admin.event_form.labels.value')}</label>
                                                                 <input
                                                                     type="number"
                                                                     value={discount.discount_value}
@@ -810,24 +812,24 @@ export default function EditEvent() {
                                 {/* Sidebar */}
                                 <div className="space-y-6">
                                     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                                        <h3 className="font-bold mb-4">Settings</h3>
+                                        <h3 className="font-bold mb-4">{t('admin.event_form.sections.settings')}</h3>
 
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Status</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.status')}</label>
                                                 <select
                                                     value={formData.status}
                                                     onChange={(e) => updateField('status', e.target.value)}
                                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                 >
-                                                    <option value="draft">Draft</option>
-                                                    <option value="open">Open</option>
-                                                    <option value="closed">Closed</option>
+                                                    <option value="draft">{t('admin.event_form.options.draft')}</option>
+                                                    <option value="open">{t('admin.event_form.options.open')}</option>
+                                                    <option value="closed">{t('admin.event_form.options.closed')}</option>
                                                 </select>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-3">Event Mode</label>
+                                                <label className="block text-sm font-medium mb-3">{t('admin.event_form.labels.pricing_model')}</label>
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <label className={`p-3 rounded-lg border cursor-pointer text-center transition-all ${formData.event_mode === 'free'
                                                         ? 'border-primary bg-primary/5 ring-1 ring-primary'
@@ -841,7 +843,7 @@ export default function EditEvent() {
                                                             onChange={() => updateField('event_mode', 'free')}
                                                             className="hidden"
                                                         />
-                                                        <span className="font-medium text-sm">Free</span>
+                                                        <span className="font-medium text-sm">{t('admin.event_form.options.free')}</span>
                                                     </label>
                                                     <label className={`p-3 rounded-lg border cursor-pointer text-center transition-all ${formData.event_mode === 'paid'
                                                         ? 'border-primary bg-primary/5 ring-1 ring-primary'
@@ -855,13 +857,13 @@ export default function EditEvent() {
                                                             onChange={() => updateField('event_mode', 'paid')}
                                                             className="hidden"
                                                         />
-                                                        <span className="font-medium text-sm">Paid</span>
+                                                        <span className="font-medium text-sm">{t('admin.event_form.options.paid')}</span>
                                                     </label>
                                                 </div>
                                             </div>
 
                                             <div className="border-t border-gray-100 pt-4">
-                                                <label className="block text-sm font-medium mb-2">Donations</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.sections.donations')}</label>
                                                 <label className="flex items-center gap-2 mb-2">
                                                     <input
                                                         type="checkbox"
@@ -870,18 +872,18 @@ export default function EditEvent() {
                                                         disabled={!hasMidtransProdKeys}
                                                         className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     />
-                                                    <span className={`text-sm font-medium ${!hasMidtransProdKeys ? 'text-gray-400' : ''}`}>Enable Donations</span>
+                                                    <span className={`text-sm font-medium ${!hasMidtransProdKeys ? 'text-gray-400' : ''}`}>{t('admin.event_form.labels.enable_donations')}</span>
                                                 </label>
                                                 {!hasMidtransProdKeys && (
                                                     <p className="text-xs text-amber-600 mb-2 flex items-center gap-1">
                                                         <span className="material-symbols-outlined text-[14px]">warning</span>
-                                                        Midtrans Production Keys required. Go to Settings to configure.
+                                                        {t('admin.event_form.hints.midtrans_warning')}
                                                     </p>
                                                 )}
                                                 {formData.donation_enabled === 1 && (
                                                     <div className="space-y-3 pl-6 mt-3 animate-fadeIn">
                                                         <div>
-                                                            <label className="block text-xs font-medium mb-1 text-gray-500">Min Amount (Rp)</label>
+                                                            <label className="block text-xs font-medium mb-1 text-gray-500">{t('admin.event_form.labels.min_amount')} (Rp)</label>
                                                             <input
                                                                 type="number"
                                                                 value={formData.donation_min_amount}
@@ -891,12 +893,12 @@ export default function EditEvent() {
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-xs font-medium mb-1 text-gray-500">Description</label>
+                                                            <label className="block text-xs font-medium mb-1 text-gray-500">{t('admin.event_form.labels.donation_desc')}</label>
                                                             <input
                                                                 type="text"
                                                                 value={formData.donation_description}
                                                                 onChange={(e) => updateField('donation_description', e.target.value)}
-                                                                placeholder="e.g. Infaq shodaqoh"
+                                                                placeholder={t('admin.event_form.placeholders.donation_desc')}
                                                                 className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
                                                             />
                                                         </div>
@@ -906,46 +908,20 @@ export default function EditEvent() {
 
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Event Format</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.event_format')}</label>
                                                 <select
                                                     value={formData.event_type}
                                                     onChange={(e) => updateField('event_type', e.target.value)}
                                                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary mb-3"
                                                 >
-                                                    <option value="offline">Offline</option>
-                                                    <option value="online">Online</option>
-                                                    <option value="hybrid">Hybrid</option>
+                                                    <option value="offline">{t('admin.event_form.options.offline')}</option>
+                                                    <option value="online">{t('admin.event_form.options.online')}</option>
+                                                    <option value="hybrid">{t('admin.event_form.options.hybrid')}</option>
                                                 </select>
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium mb-2">Pricing Model</label>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => updateField('event_mode', 'free')}
-                                                        className={`py-2 rounded-lg text-sm font-medium border ${formData.event_mode === 'free'
-                                                            ? 'border-primary bg-primary/5 text-primary'
-                                                            : 'border-gray-200 text-gray-600'
-                                                            }`}
-                                                    >
-                                                        Free
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => updateField('event_mode', 'paid')}
-                                                        className={`py-2 rounded-lg text-sm font-medium border ${formData.event_mode === 'paid'
-                                                            ? 'border-primary bg-primary/5 text-primary'
-                                                            : 'border-gray-200 text-gray-600'
-                                                            }`}
-                                                    >
-                                                        Paid
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Visibility</label>
+                                                <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.visibility')}</label>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <button
                                                         type="button"
@@ -955,7 +931,7 @@ export default function EditEvent() {
                                                             : 'border-gray-200 text-gray-600'
                                                             }`}
                                                     >
-                                                        Public
+                                                        {t('admin.event_form.options.public')}
                                                     </button>
                                                     <button
                                                         type="button"
@@ -965,7 +941,7 @@ export default function EditEvent() {
                                                             : 'border-gray-200 text-gray-600'
                                                             }`}
                                                     >
-                                                        Private
+                                                        {t('admin.event_form.options.private')}
                                                     </button>
                                                 </div>
                                             </div>
@@ -980,12 +956,12 @@ export default function EditEvent() {
                                         {saving ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                                Saving...
+                                                {t('admin.event_form.buttons.saving')}
                                             </>
                                         ) : (
                                             <>
                                                 <span className="material-symbols-outlined text-[20px]">save</span>
-                                                Save Changes
+                                                {t('admin.event_form.buttons.save')}
                                             </>
                                         )}
                                     </button>

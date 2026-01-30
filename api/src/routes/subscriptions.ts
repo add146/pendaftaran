@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Bindings } from '../index'
 import { authMiddleware } from '../middleware/auth'
+import { getNowWIB } from '../lib/timezone'
 
 export const subscriptions = new Hono<{ Bindings: Bindings }>()
 
@@ -39,7 +40,7 @@ subscriptions.post('/upgrade', authMiddleware, async (c) => {
     }
 
     // Update subscription to profit with pending payment
-    const expiresAt = new Date()
+    const expiresAt = new Date(getNowWIB())
     expiresAt.setFullYear(expiresAt.getFullYear() + 1)
 
     await c.env.DB.prepare(`
@@ -54,7 +55,7 @@ subscriptions.post('/upgrade', authMiddleware, async (c) => {
 
     // Create payment record
     const paymentId = `pay_${crypto.randomUUID().slice(0, 8)}`
-    const now = new Date().toISOString()
+    const now = getNowWIB()
     const periodEnd = expiresAt.toISOString()
 
     await c.env.DB.prepare(`

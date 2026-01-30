@@ -10,6 +10,7 @@ import midtransWebhookGuideImg from '../assets/midtrans-webhook-guide.png'
     className="w-full rounded-lg border border-gray-200 shadow-sm"
 />
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import AdminLayout from '../components/layout/AdminLayout'
 import { authAPI, settingsAPI, uploadAPI } from '../lib/api'
 
@@ -21,6 +22,7 @@ interface UserProfile {
 }
 
 export default function Settings() {
+    const { t } = useTranslation()
     const [activeTab, setActiveTab] = useState('general')
     const [_profile, setProfile] = useState<UserProfile | null>(null)
     const [loading, setLoading] = useState(true)
@@ -198,10 +200,10 @@ export default function Settings() {
                 await settingsAPI.save('organization_logo', orgLogo)
             }
 
-            setMessage('Semua konfigurasi berhasil disimpan!')
+            setMessage(t('common.saved_success'))
         } catch (err: any) {
             console.error('Save error:', err)
-            setMessage('Gagal menyimpan: ' + (err.message || 'Unknown error'))
+            setMessage(t('common.save_error') + (err.message || 'Unknown error'))
         }
 
         setSaving(false)
@@ -219,10 +221,10 @@ export default function Settings() {
 
             const result = await uploadAPI.uploadImage(file)
             setOrgLogo(result.url)
-            setMessage('Logo berhasil diupload!')
+            setMessage(t('common.upload_success'))
         } catch (err: any) {
             console.error('Upload error:', err)
-            setMessage('Gagal upload logo: ' + (err.message || 'Unknown error'))
+            setMessage(t('common.upload_error') + (err.message || 'Unknown error'))
         } finally {
             setSaving(false)
             setTimeout(() => setMessage(''), 5000)
@@ -243,10 +245,10 @@ export default function Settings() {
             user.email = email
             localStorage.setItem('user', JSON.stringify(user))
 
-            setMessage('Profil berhasil diperbarui!')
+            setMessage(t('common.profile_updated'))
         } catch (err: any) {
             console.error('Profile save error:', err)
-            setMessage('Gagal menyimpan profil: ' + (err.message || 'Unknown error'))
+            setMessage(t('common.profile_error') + (err.message || 'Unknown error'))
         }
 
         setSaving(false)
@@ -268,10 +270,10 @@ export default function Settings() {
     const isSuperAdmin = userRole === 'super_admin'
 
     const allTabs = [
-        { id: 'general', label: 'General', icon: 'settings' },
-        { id: 'organization', label: 'Organization', icon: 'business' },
-        { id: 'notifications', label: 'Notifications', icon: 'notifications' },
-        { id: 'integrations', label: 'Integrations', icon: 'extension' },
+        { id: 'general', label: t('settings.tabs.general'), icon: 'settings' },
+        { id: 'organization', label: t('settings.tabs.organization'), icon: 'business' },
+        { id: 'notifications', label: t('settings.tabs.notifications'), icon: 'notifications' },
+        { id: 'integrations', label: t('settings.tabs.integrations'), icon: 'extension' },
     ]
 
     // Filter tabs based on role:
@@ -280,7 +282,7 @@ export default function Settings() {
     const tabs = isAdmin ? allTabs : allTabs.filter(tab => tab.id === 'general')
 
     return (
-        <AdminLayout title="Settings" currentPage="settings" showCreateButton={false}>
+        <AdminLayout title={t('settings.title')} currentPage="settings" showCreateButton={false}>
             <div className="p-4 md:p-6 lg:p-8 w-full max-w-5xl mx-auto">
                 {/* Success Message */}
                 {message && (
@@ -318,10 +320,10 @@ export default function Settings() {
                             {activeTab === 'general' && (
                                 <div className="space-y-6">
                                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                        <h3 className="font-bold text-text-main mb-4">Profile Settings</h3>
+                                        <h3 className="font-bold text-text-main mb-4">{t('settings.profile.title')}</h3>
                                         <div className="space-y-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.profile.full_name')}</label>
                                                 <input
                                                     type="text"
                                                     value={name}
@@ -330,7 +332,7 @@ export default function Settings() {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.profile.email')}</label>
                                                 <input
                                                     type="email"
                                                     value={email}
@@ -344,17 +346,17 @@ export default function Settings() {
                                             disabled={saving}
                                             className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
                                         >
-                                            {saving ? 'Saving...' : 'Save Profile'}
+                                            {saving ? t('common.saving') : t('common.save')}
                                         </button>
                                     </div>
 
                                     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                        <h3 className="font-bold text-text-main mb-4">Security</h3>
+                                        <h3 className="font-bold text-text-main mb-4">{t('settings.profile.change_password')}</h3>
                                         <Link
                                             to="/profile"
                                             className="inline-block px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50"
                                         >
-                                            Change Password
+                                            {t('settings.profile.change_password')}
                                         </Link>
                                     </div>
                                 </div>
@@ -363,10 +365,10 @@ export default function Settings() {
                             {/* Organization Settings */}
                             {activeTab === 'organization' && (
                                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                    <h3 className="font-bold text-text-main mb-4">Organization Details</h3>
+                                    <h3 className="font-bold text-text-main mb-4">{t('settings.organization.title')}</h3>
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Organization Name</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.organization.name')}</label>
                                             <input
                                                 type="text"
                                                 value={orgName}
@@ -375,17 +377,17 @@ export default function Settings() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.organization.address')}</label>
                                             <textarea
                                                 rows={3}
                                                 value={orgAddress}
                                                 onChange={(e) => setOrgAddress(e.target.value)}
-                                                placeholder="Enter organization address"
+                                                placeholder={t('settings.organization.address')}
                                                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.organization.logo')}</label>
                                             <div className="flex items-center gap-4">
                                                 <div className="size-20 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
                                                     {orgLogo ? (
@@ -405,7 +407,7 @@ export default function Settings() {
                                                     htmlFor="logo-upload"
                                                     className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50 cursor-pointer"
                                                 >
-                                                    Upload Logo
+                                                    {t('settings.organization.upload_logo')}
                                                 </label>
                                             </div>
                                         </div>
@@ -415,7 +417,7 @@ export default function Settings() {
                                         disabled={saving}
                                         className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
                                     >
-                                        {saving ? 'Saving...' : 'Save Changes'}
+                                        {saving ? t('common.saving') : t('common.save')}
                                     </button>
                                 </div>
                             )}
@@ -423,7 +425,7 @@ export default function Settings() {
                             {/* Notifications Settings */}
                             {activeTab === 'notifications' && (
                                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                                    <h3 className="font-bold text-text-main mb-4">Notification Preferences</h3>
+                                    <h3 className="font-bold text-text-main mb-4">{t('settings.tabs.notifications')}</h3>
                                     <div className="space-y-4">
                                         {[
                                             { key: 'email', label: 'Email notifications for new registrations', checked: notifications.email, superAdminOnly: true },
@@ -448,7 +450,7 @@ export default function Settings() {
                                         disabled={saving}
                                         className="mt-4 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg font-medium text-sm disabled:opacity-50"
                                     >
-                                        {saving ? 'Saving...' : 'Save Preferences'}
+                                        {saving ? t('common.saving') : t('common.save')}
                                     </button>
                                 </div>
                             )}
@@ -463,8 +465,8 @@ export default function Settings() {
                                                 <span className="material-symbols-outlined text-blue-600">payments</span>
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-text-main">Midtrans Payment Gateway</h3>
-                                                <p className="text-sm text-gray-500">Configure online payments for your events</p>
+                                                <h3 className="font-bold text-text-main">{t('settings.integrations.midtrans_title')}</h3>
+                                                <p className="text-sm text-gray-500">{t('settings.integrations.midtrans_desc')}</p>
                                             </div>
                                         </div>
 
@@ -501,7 +503,7 @@ export default function Settings() {
                                             <div className="space-y-4">
                                                 <h4 className="font-bold text-sm text-gray-900 uppercase tracking-wide border-b border-gray-100 pb-2">Sandbox Keys</h4>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.server_key')}</label>
                                                     <input
                                                         type="password"
                                                         placeholder="SB-Mid-server-..."
@@ -511,7 +513,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.client_key')}</label>
                                                     <input
                                                         type="text"
                                                         placeholder="SB-Mid-client-..."
@@ -525,7 +527,7 @@ export default function Settings() {
                                             <div className="space-y-4">
                                                 <h4 className="font-bold text-sm text-gray-900 uppercase tracking-wide border-b border-gray-100 pb-2">Production Keys</h4>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Server Key</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.server_key')}</label>
                                                     <input
                                                         type="password"
                                                         placeholder="Mid-server-..."
@@ -535,7 +537,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Client Key</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.client_key')}</label>
                                                     <input
                                                         type="text"
                                                         placeholder="Mid-client-..."
@@ -580,14 +582,14 @@ export default function Settings() {
                                                     <span className="material-symbols-outlined text-orange-600">account_balance</span>
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-text-main">Manual Transfer (Bank Account)</h3>
+                                                    <h3 className="font-bold text-text-main">{t('edit_event.form.bank_info')}</h3>
                                                     <p className="text-sm text-gray-500">Configure bank account for manual transfers</p>
                                                 </div>
                                             </div>
 
                                             <div className="grid md:grid-cols-2 gap-6">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('edit_event.form.bank_name')}</label>
                                                     <input
                                                         type="text"
                                                         placeholder="contoh: BCA, Mandiri, BRI"
@@ -597,7 +599,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('edit_event.form.account_holder')}</label>
                                                     <input
                                                         type="text"
                                                         placeholder="Nama sesuai rekening"
@@ -607,7 +609,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('edit_event.form.account_number')}</label>
                                                     <input
                                                         type="text"
                                                         placeholder="1234567890"
@@ -628,8 +630,8 @@ export default function Settings() {
                                                     <span className="material-symbols-outlined text-green-600">chat</span>
                                                 </div>
                                                 <div>
-                                                    <h3 className="font-bold text-text-main">WhatsApp Gateway (WAHA)</h3>
-                                                    <p className="text-sm text-gray-500">Auto-send QR code links via WhatsApp</p>
+                                                    <h3 className="font-bold text-text-main">{t('settings.integrations.wa_title')}</h3>
+                                                    <p className="text-sm text-gray-500">{t('settings.integrations.wa_desc')}</p>
                                                 </div>
                                             </div>
 
@@ -649,7 +651,7 @@ export default function Settings() {
                                             {/* Configuration Fields */}
                                             <div className="space-y-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">WAHA API URL</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.api_url')}</label>
                                                     <input
                                                         type="url"
                                                         placeholder="https://your-waha-instance.com"
@@ -669,7 +671,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.session_name')}</label>
                                                     <input
                                                         type="text"
                                                         placeholder="default"
@@ -696,12 +698,12 @@ export default function Settings() {
                                         {saving ? (
                                             <>
                                                 <span className="animate-spin material-symbols-outlined text-[20px]">refresh</span>
-                                                Menyimpan...
+                                                {t('common.saving')}
                                             </>
                                         ) : (
                                             <>
                                                 <span className="material-symbols-outlined text-[20px]">save</span>
-                                                Simpan Semua Konfigurasi
+                                                {t('common.save')}
                                             </>
                                         )}
                                     </button>

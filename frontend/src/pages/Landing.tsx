@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { publicAPI, type LandingPageConfig } from '../lib/api'
 
 // Feature card component
@@ -72,6 +73,7 @@ function PricingCard({
 }
 
 export default function Landing() {
+    const { t } = useTranslation()
     const [config, setConfig] = useState<LandingPageConfig>({})
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -139,20 +141,23 @@ export default function Landing() {
                             ))
                         ) : (
                             <>
-                                <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#features">Fitur</a>
-                                <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#pricing">Harga</a>
-                                <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#contact">Kontak</a>
+                                <>
+                                    <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#features">{t('sidebar.landing_page')}</a>
+                                    <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#pricing">{t('common.download')}</a>
+                                    <a className="text-sm font-medium text-gray-600 hover:text-primary transition-colors" href="#contact">{t('common.close')}</a>
+                                </>
                             </>
                         )}
                     </nav>
 
                     {/* Desktop Actions */}
                     <div className="hidden md:flex items-center gap-3">
+                        {/* <LanguageSwitcher /> - Disabled for public view */}
                         <Link to={config.header?.authButtons?.loginLink || "/login"} className="hidden sm:flex h-10 px-5 items-center justify-center rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition-colors">
-                            {config.header?.authButtons?.loginLabel || "Masuk"}
+                            {config.header?.authButtons?.loginLabel || t('registration.pay_now')}
                         </Link>
                         <Link to={config.header?.authButtons?.ctaLink || "/login"} className="flex h-10 px-5 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm hover:bg-primary-hover transition-all hover:shadow-md">
-                            {config.header?.authButtons?.ctaLabel || "Mulai Gratis"}
+                            {config.header?.authButtons?.ctaLabel || t('registration.register_now')}
                         </Link>
                     </div>
 

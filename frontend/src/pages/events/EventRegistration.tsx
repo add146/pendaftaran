@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField, type RegisterParticipantData } from '../../lib/api'
+import { useTranslation } from 'react-i18next'
 
 interface ParticipantFormData {
     full_name: string
@@ -14,6 +15,7 @@ interface ParticipantFormData {
 }
 
 export default function EventRegistration() {
+    const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
     const [event, setEvent] = useState<(PublicEvent & { ticket_types: TicketType[]; registration_available: boolean; payment_mode?: string; whatsapp_cs?: string }) | null>(null)
     const [loading, setLoading] = useState(true)
@@ -116,7 +118,11 @@ export default function EventRegistration() {
 
         return () => {
             if (document.body.contains(script)) {
-                document.body.removeChild(script)
+                try {
+                    document.body.removeChild(script)
+                } catch (e) {
+                    console.error('Error removing script', e)
+                }
             }
         }
     }, [event])
@@ -212,12 +218,6 @@ export default function EventRegistration() {
 
         try {
             // @ts-ignore
-            if (!window.snap) {
-                alert('Payment system is loading. Please wait a moment and try again.')
-                return
-            }
-
-            // Determine if using orderId or participantId
             const payLoad: any = {
                 amount: registrationResult ? registrationResult.amount : paymentInfo.ticket_price, // Use calculated amount
                 itemName: `${paymentInfo.ticket_name} - ${paymentInfo.event_title}`,
@@ -240,14 +240,14 @@ export default function EventRegistration() {
             // @ts-ignore
             window.snap.pay(result.token, {
                 onSuccess: function (_result: any) {
-                    alert('Payment success!')
+                    alert(t('payment.success_alert'))
                     window.location.reload()
                 },
                 onPending: function (_result: any) {
-                    alert('Waiting for payment confirmation...')
+                    alert(t('payment.pending_alert'))
                 },
                 onError: function (_result: any) {
-                    alert('Payment failed! Please try again.')
+                    alert(t('payment.failed_alert'))
                 },
                 onClose: function () {
                     console.log('Payment popup closed')
@@ -306,7 +306,8 @@ export default function EventRegistration() {
                     phone: p.phone,
                     city: p.city || undefined,
                     attendance_type: p.attendance_type as 'offline' | 'online',
-                    custom_fields: customFieldsData
+                    custom_fields: customFieldsData,
+                    has_donation: typeof donation === 'number' && donation > 0
                 }
             })
 
@@ -412,9 +413,9 @@ export default function EventRegistration() {
         return (
             <div className="min-h-screen bg-background-light flex flex-col items-center justify-center p-4">
                 <span className="material-symbols-outlined text-[64px] text-gray-300 mb-4">event_busy</span>
-                <h1 className="text-2xl font-bold text-gray-700 mb-2">Event Not Found</h1>
+                <h1 className="text-2xl font-bold text-gray-700 mb-2">{t('common.event_not_found')}</h1>
                 <p className="text-gray-500 mb-4">{error}</p>
-                <Link to="/" className="text-primary hover:underline">Back to Home</Link>
+                <Link to="/" className="text-primary hover:underline">{t('common.back_home')}</Link>
             </div>
         )
     }
@@ -428,33 +429,33 @@ export default function EventRegistration() {
             if (paymentInfo.bank_name && paymentInfo.account_holder_name && paymentInfo.account_number) {
                 bankSection = `
 ━━━━━━━━━━━━━━━━━━━━
-💳 *INFORMASI TRANSFER*
+💳 *${t('nota.transfer_info').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
-Bank: *${paymentInfo.bank_name}*
-Atas Nama: *${paymentInfo.account_holder_name}*
-No. Rekening: *${paymentInfo.account_number}*
-Nominal: *Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}*
+${t('nota.bank')}: *${paymentInfo.bank_name}*
+${t('nota.account_name')}: *${paymentInfo.account_holder_name}*
+${t('nota.account_number')}: *${paymentInfo.account_number}*
+${t('nota.amount')}: *Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}*
 
-_Mohon transfer sesuai nominal dan kirim bukti transfer ke nomor ini_`
+_${t('nota.transfer_instruction')}_`
             } else {
                 bankSection = `
-Mohon konfirmasi pembayaran sebesar *Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}*`
+${t('nota.confirm_payment')} *Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}*`
             }
 
             const nota = `━━━━━━━━━━━━━━━━━━━━
-✅ *PENDAFTARAN BERHASIL*
+✅ *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PEMBAYARAN' : t('nota.registration_success').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
 📌 *Event:* ${paymentInfo.event_title}
-👤 *Nama Pendaftar:* ${participants[0].full_name} (${participants[0].email})
-👥 *Jumlah Peserta:* ${participants.length} Orang
+👤 *${t('nota.registrant_name')}:* ${participants[0].full_name} (${participants[0].email})
+👥 *${t('nota.participant_count')}:* ${participants.length} ${t('common.people')}
 
-${registrationResult?.participants && registrationResult.participants.length > 0 ? `👥 *Daftar Peserta:*
+${registrationResult?.participants && registrationResult.participants.length > 0 ? `👥 *${t('nota.participant_list')}:*
 ${registrationResult.participants.map((p, i) => `${i + 1}. ${p.full_name} (${p.registration_id})`).join('\n')}
 
-` : ''}🎫 *Total Tiket:* ${paymentInfo.ticket_name}
-💰 *Total Tagihan:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
+` : ''}🎫 *${t('nota.total_tickets')}:* ${paymentInfo.ticket_name}
+💰 *${t('nota.total_bill')}:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
 🔖 *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
 ${bankSection}`
 
@@ -480,8 +481,12 @@ ${bankSection}`
                     <div className="size-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                         <span className="material-symbols-outlined text-[40px] text-green-600">check_circle</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Registration Successful!</h1>
-                    <p className="text-gray-600 mb-4">Thank you for registering for <strong>{event?.title}</strong></p>
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                        {paymentInfo && paymentInfo.ticket_price > 0 && paymentInfo.payment_mode === 'manual'
+                            ? 'Lanjutkan Pembayaran'
+                            : t('registration.success')}
+                    </h1>
+                    <p className="text-gray-600 mb-4">{t('registration.thank_you')} <strong>{event?.title}</strong></p>
                     <div className="bg-gray-50 rounded-lg p-4 mb-4">
                         <p className="text-sm text-gray-500">Order ID</p>
                         <p className="text-lg font-mono font-bold text-primary">{registrationResult?.order_id || registrationResult?.registration_id}</p>
@@ -492,7 +497,7 @@ ${bankSection}`
                         <div className="mb-6">
                             {paymentInfo.payment_mode === 'manual' && paymentInfo.whatsapp_cs ? (
                                 <div className="space-y-3">
-                                    <p className="text-sm text-gray-600">Silakan lanjutkan pembayaran via WhatsApp:</p>
+                                    <p className="text-sm text-gray-600">{t('registration.continue_whatsapp')}</p>
                                     <a
                                         href={waLink}
                                         target="_blank"
@@ -500,32 +505,35 @@ ${bankSection}`
                                         className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600"
                                     >
                                         <span className="material-symbols-outlined">chat</span>
-                                        Kirim Nota ke WhatsApp
+                                        {t('registration.send_nota')}
                                     </a>
                                 </div>
                             ) : paymentInfo.payment_mode === 'auto' ? (
                                 <div className="space-y-3">
-                                    <p className="text-sm text-gray-600">Lanjutkan pembayaran online:</p>
+                                    <p className="text-sm text-gray-600">{t('registration.continue_online')}</p>
                                     <button
                                         className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={handleMidtransPayment}
                                         disabled={(!orderId && !participantId)}
                                     >
                                         <span className="material-symbols-outlined">credit_card</span>
-                                        Bayar Sekarang - Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
+                                        {t('registration.pay_now')} - Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
                                     </button>
                                 </div>
                             ) : null}
                         </div>
                     )}
 
-                    <Link
-                        to="/"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">home</span>
-                        Back to Home
-                    </Link>
+                    {/* Only show home button if NOT manual payment */}
+                    {!(paymentInfo && paymentInfo.ticket_price > 0 && paymentInfo.payment_mode === 'manual') && (
+                        <Link
+                            to="/"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">home</span>
+                            {t('common.back_home')}
+                        </Link>
+                    )}
                 </div>
             </div>
         )
@@ -544,8 +552,9 @@ ${bankSection}`
                     <div className="size-8 text-primary">
                         <span className="material-symbols-outlined text-[32px]">confirmation_number</span>
                     </div>
-                    <h2 className="text-lg font-bold truncate">E-TIKET - {event?.title || 'Loading...'}</h2>
+                    <h2 className="text-lg font-bold truncate">E-TIKET - {event?.title || t('common.loading')}</h2>
                 </Link>
+                {/* <LanguageSwitcher /> - Disabled for public view */}
             </header>
 
             <main className="flex-grow">
@@ -556,7 +565,7 @@ ${bankSection}`
                         className="lg:hidden w-full bg-orange-500 text-white font-bold py-3 rounded-xl mb-6 flex items-center justify-center gap-2 shadow-sm hover:bg-orange-600 transition-colors"
                     >
                         <span className="material-symbols-outlined">keyboard_arrow_down</span>
-                        REGISTRASI
+                        {t('registration.registrasi')}
                         <span className="material-symbols-outlined">keyboard_arrow_down</span>
                     </button>
 
@@ -595,7 +604,7 @@ ${bankSection}`
                                         )}
                                         <div className="absolute bottom-0 left-0 p-6 z-20 pointer-events-none">
                                             <span className={`inline-block px-3 py-1 text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3 ${event?.event_mode === 'paid' ? 'bg-amber-500' : 'bg-green-500'}`}>
-                                                {event?.event_mode === 'paid' ? 'Paid Event' : 'Free Event'}
+                                                {event?.event_mode === 'paid' ? t('event.paid_event') : t('event.free_event')}
                                             </span>
                                             <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">{event?.title}</h1>
                                         </div>
@@ -617,9 +626,9 @@ ${bankSection}`
                                         <span className="material-symbols-outlined">calendar_month</span>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-gray-500 uppercase">Date & Time</p>
+                                        <p className="text-xs font-medium text-gray-500 uppercase">{t('event.date_time')}</p>
                                         <p className="font-semibold">{event?.event_date ? formatDate(event.event_date) : '-'}</p>
-                                        <p className="text-sm text-gray-500">{event?.event_time || 'Time TBA'}</p>
+                                        <p className="text-sm text-gray-500">{event?.event_time || t('event.time_tba')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-4 p-4 rounded-xl bg-white border border-gray-100 shadow-sm">
@@ -627,15 +636,15 @@ ${bankSection}`
                                         <span className="material-symbols-outlined">location_on</span>
                                     </div>
                                     <div>
-                                        <p className="text-xs font-medium text-gray-500 uppercase">Location</p>
-                                        <p className="font-semibold">{event?.location || 'Location TBA'}</p>
+                                        <p className="text-xs font-medium text-gray-500 uppercase">{t('event.location')}</p>
+                                        <p className="font-semibold">{event?.location || t('event.location_tba')}</p>
                                     </div>
                                 </div>
                             </div>
 
                             {event?.description && (
                                 <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                                    <h3 className="text-lg font-bold mb-3">About This Event</h3>
+                                    <h3 className="text-lg font-bold mb-3">{t('event.about')}</h3>
                                     <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
                                 </div>
                             )}
@@ -645,7 +654,7 @@ ${bankSection}`
                         <div className="lg:col-span-2">
                             <div className="lg:sticky lg:top-24 space-y-6">
                                 <div id="registration-form" className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-                                    <h3 className="text-xl font-bold mb-6">Register Now</h3>
+                                    <h3 className="text-xl font-bold mb-6">{t('registration.register_now')}</h3>
 
                                     {/* Discounts Info */}
                                     {event?.bulk_discounts && event.bulk_discounts.length > 0 && (
@@ -668,7 +677,7 @@ ${bankSection}`
                                     {!event?.registration_available ? (
                                         <div className="text-center py-8">
                                             <span className="material-symbols-outlined text-[48px] text-gray-300 mb-3">event_busy</span>
-                                            <p className="text-gray-500">Registration is closed</p>
+                                            <p className="text-gray-500">{t('registration.closed')}</p>
                                         </div>
                                     ) : (
                                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -680,7 +689,7 @@ ${bankSection}`
                                             {participants.map((p, index) => (
                                                 <div key={index} className="p-4 border border-gray-200 rounded-xl bg-gray-50/50">
                                                     <div className="flex justify-between items-center mb-4">
-                                                        <h4 className="font-bold text-gray-700">Peserta #{index + 1}</h4>
+                                                        <h4 className="font-bold text-gray-700">{t('registration.participant')} #{index + 1}</h4>
                                                         {participants.length > 1 && (
                                                             <button
                                                                 type="button"
@@ -688,14 +697,14 @@ ${bankSection}`
                                                                 className="text-red-500 hover:text-red-700 text-sm font-medium flex items-center gap-1"
                                                             >
                                                                 <span className="material-symbols-outlined text-[18px]">delete</span>
-                                                                Hapus
+                                                                {t('common.delete')}
                                                             </button>
                                                         )}
                                                     </div>
 
                                                     <div className="space-y-4">
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-1">Full Name *</label>
+                                                            <label className="block text-sm font-medium mb-1">{t('registration.full_name')} *</label>
                                                             <input
                                                                 type="text"
                                                                 value={p.full_name}
@@ -706,7 +715,7 @@ ${bankSection}`
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-1">Email *</label>
+                                                            <label className="block text-sm font-medium mb-1">{t('registration.email')} *</label>
                                                             <input
                                                                 type="email"
                                                                 value={p.email}
@@ -717,7 +726,7 @@ ${bankSection}`
                                                             />
                                                         </div>
                                                         <div>
-                                                            <label className="block text-sm font-medium mb-1">No. WhatsApp *</label>
+                                                            <label className="block text-sm font-medium mb-1">{t('registration.phone')} *</label>
                                                             <input
                                                                 type="tel"
                                                                 value={p.phone}
@@ -730,34 +739,40 @@ ${bankSection}`
                                                         {/* Attendance Type (For Hybrid Events) */}
                                                         {event.event_type === 'hybrid' && (
                                                             <div>
-                                                                <label className="block text-sm font-medium mb-2">Attendance Type</label>
+                                                                <label className="block text-sm font-medium mb-2">{t('registration.attendance_type')}</label>
                                                                 <div className="flex gap-4">
-                                                                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg bg-white hover:bg-gray-50 flex-1">
+                                                                    <label className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all ${p.attendance_type === 'offline' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
                                                                         <input
                                                                             type="radio"
                                                                             name={`attendance_${index}`}
                                                                             value="offline"
                                                                             checked={p.attendance_type === 'offline'}
                                                                             onChange={e => updateParticipant(index, 'attendance_type', e.target.value)}
-                                                                            className="w-4 h-4 text-primary"
+                                                                            className="hidden"
                                                                         />
-                                                                        <div>
-                                                                            <span className="block font-medium">Hadir Langsung (Offline)</span>
-                                                                            <span className="text-xs text-gray-500">Datang ke lokasi acara</span>
+                                                                        <div className="flex flex-col items-center text-center gap-2">
+                                                                            <span className="material-symbols-outlined text-[32px] text-primary">store</span>
+                                                                            <div>
+                                                                                <p className="font-bold text-gray-800">{t('registration.offline')}</p>
+                                                                                <p className="text-xs text-gray-500">{t('registration.offline_desc')}</p>
+                                                                            </div>
                                                                         </div>
                                                                     </label>
-                                                                    <label className="flex items-center gap-2 cursor-pointer p-3 border rounded-lg bg-white hover:bg-gray-50 flex-1">
+                                                                    <label className={`flex-1 p-4 rounded-xl border-2 cursor-pointer transition-all ${p.attendance_type === 'online' ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
                                                                         <input
                                                                             type="radio"
                                                                             name={`attendance_${index}`}
                                                                             value="online"
                                                                             checked={p.attendance_type === 'online'}
                                                                             onChange={e => updateParticipant(index, 'attendance_type', e.target.value)}
-                                                                            className="w-4 h-4 text-primary"
+                                                                            className="hidden"
                                                                         />
-                                                                        <div>
-                                                                            <span className="block font-medium">Hadir Online</span>
-                                                                            <span className="text-xs text-gray-500">via Zoom / Google Meet</span>
+                                                                        <div className="flex flex-col items-center text-center gap-2">
+                                                                            <span className="material-symbols-outlined text-[32px] text-primary">videocam</span>
+                                                                            <div>
+                                                                                <p className="font-bold text-gray-800">{t('registration.online')}</p>
+                                                                                <p className="text-xs text-gray-500">{t('registration.online_desc')}</p>
+                                                                            </div>
                                                                         </div>
                                                                     </label>
                                                                 </div>
@@ -767,7 +782,7 @@ ${bankSection}`
                                                         {/* Ticket Type */}
                                                         {event.ticket_types && event.ticket_types.length > 0 && event.event_mode === 'paid' && (
                                                             <div>
-                                                                <label className="block text-sm font-medium mb-2">Ticket Type</label>
+                                                                <label className="block text-sm font-medium mb-2">{t('registration.ticket_type')}</label>
                                                                 <select
                                                                     value={p.ticket_type_id}
                                                                     onChange={e => updateParticipant(index, 'ticket_type_id', e.target.value)}
@@ -783,7 +798,7 @@ ${bankSection}`
                                                         {/* Custom Fields */}
                                                         {customFields.length > 0 && (
                                                             <div className="pt-2 border-t border-gray-200 mt-2">
-                                                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">Additional Info</p>
+                                                                <p className="text-xs font-bold text-gray-500 uppercase mb-2">{t('registration.additional_info')}</p>
                                                                 {customFields.map(field => (
                                                                     <div key={field.id} className="mb-3">
                                                                         <label className="block text-sm font-medium mb-1">{field.label} {field.required && '*'}</label>
@@ -871,7 +886,7 @@ ${bankSection}`
 
                                             {/* Donation Section */}
                                             {event.donation_enabled === 1 && (
-                                                <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mt-6">
+                                                <div className="bg-pink-500/5 rounded-xl p-6 shadow-sm border border-pink-200 mt-6">
                                                     <h3 className="font-bold flex items-center gap-2 mb-2 text-gray-800">
                                                         <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
                                                         Donasi (Sukarela)
@@ -929,13 +944,24 @@ ${bankSection}`
                                                 </div>
                                             </div>
 
+                                            {/* Payment Method Notes */}
+                                            {total > 0 && event.payment_mode === 'manual' && (
+                                                <p className="text-xs text-gray-500 text-center italic">
+                                                    *transfer antar rekening
+                                                </p>
+                                            )}
+                                            {total > 0 && event.payment_mode === 'auto' && (
+                                                <p className="text-xs text-gray-500 text-center italic">
+                                                    *menggunakan QRIS / Virtual Account
+                                                </p>
+                                            )}
 
                                             <button
                                                 type="submit"
                                                 disabled={submitting}
                                                 className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/30 hover:bg-primary-hover disabled:opacity-50 transition-all active:scale-[0.98]"
                                             >
-                                                {submitting ? 'Memproses...' : (total > 0 ? `Bayar Sekarang • ${formatRp(total)}` : 'Daftar Sekarang')}
+                                                {submitting ? 'Memproses...' : (total > 0 ? 'Bayar Sekarang' : 'Daftar Sekarang')}
 
                                             </button>
                                         </form>

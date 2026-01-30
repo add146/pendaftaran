@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { publicAPI } from '../../lib/api'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
+import { useTranslation } from 'react-i18next'
 
 interface IdCardDesign {
     primaryColor: string
@@ -32,10 +33,12 @@ interface TicketData {
     note?: string
     icon_type?: 'info' | 'warning' | 'danger'
     certificate_config?: string
+    attendance_type?: 'offline' | 'online'
     custom_fields?: Array<{ label: string; response: string; show_on_id: boolean }>
 }
 
 export default function PublicTicket() {
+    const { t } = useTranslation()
     const { registrationId } = useParams()
     const [ticket, setTicket] = useState<TicketData | null>(null)
     const [loading, setLoading] = useState(true)
@@ -76,7 +79,7 @@ export default function PublicTicket() {
             const data = await publicAPI.ticket(registrationId!)
             setTicket(data)
         } catch (err: any) {
-            setError(err.message || 'Tiket tidak ditemukan')
+            setError(err.message || t('ticket.not_found'))
         } finally {
             setLoading(false)
         }
@@ -191,7 +194,7 @@ export default function PublicTicket() {
 
         } catch (err) {
             console.error('Certificate generation failed:', err)
-            alert('Gagal mengunduh sertifikat. Silakan coba lagi.')
+            alert(t('ticket.certificate_failed'))
         } finally {
             setDownloadingCertificate(false)
         }
@@ -201,7 +204,7 @@ export default function PublicTicket() {
         if (!dateStr) return ''
         try {
             const date = new Date(dateStr)
-            return date.toLocaleDateString('id-ID', {
+            return date.toLocaleDateString(t('common.locale_date'), {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'short',
@@ -228,10 +231,10 @@ export default function PublicTicket() {
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full shadow-lg">
                     <span className="material-symbols-outlined text-red-500 text-6xl mb-4">error</span>
-                    <h2 className="text-xl font-bold text-gray-800 mb-2">Tiket Tidak Ditemukan</h2>
-                    <p className="text-gray-500 mb-6">{error || 'Registration ID tidak valid'}</p>
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">{t('ticket.not_found_title')}</h2>
+                    <p className="text-gray-500 mb-6">{error || t('ticket.invalid_id')}</p>
                     <Link to="/" className="text-primary font-bold hover:underline">
-                        Kembali ke Beranda
+                        {t('common.back_home')}
                     </Link>
                 </div>
             </div>
@@ -243,8 +246,8 @@ export default function PublicTicket() {
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full shadow-lg">
                     <span className="material-symbols-outlined text-yellow-500 text-6xl mb-4">pending</span>
-                    <h2 className="text-xl font-bold text-gray-800 mb-2">Pembayaran Pending</h2>
-                    <p className="text-gray-500 mb-6">Tiket akan aktif setelah pembayaran dikonfirmasi.</p>
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">{t('ticket.payment_pending')}</h2>
+                    <p className="text-gray-500 mb-6">{t('ticket.payment_pending_desc')}</p>
                     <div className="bg-yellow-50 p-4 rounded-lg">
                         <p className="text-sm text-yellow-800">
                             <strong>{ticket.full_name}</strong><br />
@@ -319,7 +322,7 @@ export default function PublicTicket() {
                                 className="font-bold text-sm uppercase tracking-wider mt-1"
                                 style={{ color: design.primaryColor }}
                             >
-                                {ticket.ticket_name || 'PARTICIPANT'}
+                                {ticket.ticket_name || t('id_card.participant').toUpperCase()}
                             </p>
                         </div>
 
@@ -398,7 +401,7 @@ export default function PublicTicket() {
                             <div className="mt-6 pt-6 border-t border-gray-100">
                                 <h4 className="font-bold text-gray-800 text-center mb-3 flex items-center justify-center gap-1">
                                     <span className="material-symbols-outlined text-[20px]">videocam</span>
-                                    Detail Event Online
+                                    {t('ticket.online_event_details')}
                                 </h4>
 
                                 <div className="space-y-3 text-center">
@@ -432,7 +435,7 @@ export default function PublicTicket() {
 
                                     {ticket.online_instructions && (
                                         <div className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg text-left">
-                                            <p className="font-bold text-xs text-yellow-800 mb-1">Instruksi:</p>
+                                            <p className="font-bold text-xs text-yellow-800 mb-1">{t('ticket.instructions')}:</p>
                                             <p className="whitespace-pre-wrap">{ticket.online_instructions}</p>
                                         </div>
                                     )}
@@ -469,7 +472,7 @@ export default function PublicTicket() {
                                         <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
                                     )}
                                     <span className="text-sm md:text-base uppercase tracking-wider">
-                                        {downloadingCertificate ? 'Generating...' : 'Download Sertifikat'}
+                                        {downloadingCertificate ? t('common.generating') : t('ticket.download_certificate')}
                                     </span>
                                 </button>
                             )}
@@ -485,8 +488,8 @@ export default function PublicTicket() {
                     <div className="px-6 pb-6 pt-4 text-center" style={{ backgroundColor: design.backgroundColor }}>
                         <p className="text-xs text-gray-400">
                             {(ticket as any).attendance_type === 'online'
-                                ? 'Simpan halaman ini untuk akses link meeting'
-                                : 'Tunjukkan QR Code ini saat check-in di lokasi event'}
+                                ? t('ticket.save_page_online')
+                                : t('ticket.show_qr_checkin')}
                         </p>
                     </div>
                 </div>

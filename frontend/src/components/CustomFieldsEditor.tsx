@@ -5,7 +5,10 @@ interface CustomFieldsEditorProps {
     eventId: string
 }
 
+import { useTranslation } from 'react-i18next'
+
 export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps) {
+    const { t } = useTranslation()
     const [fields, setFields] = useState<CustomField[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string>('')
@@ -89,14 +92,14 @@ export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps)
     if (error) {
         return (
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <h3 className="text-lg font-bold mb-2">Custom Form Fields</h3>
+                <h3 className="text-lg font-bold mb-2">{t('custom_fields.title')}</h3>
                 <p className="text-sm text-red-600">{error}</p>
                 <button
                     type="button"
                     onClick={() => loadFields()}
                     className="mt-2 text-sm text-primary hover:underline"
                 >
-                    Retry
+                    {t('common.retry')}
                 </button>
             </div>
         )
@@ -105,22 +108,22 @@ export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps)
     return (
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Custom Form Fields</h3>
+                <h3 className="text-lg font-bold">{t('custom_fields.title')}</h3>
                 <button
                     type="button"
                     onClick={() => setShowAddModal(true)}
                     className="flex items-center gap-1 text-primary text-sm font-medium hover:text-primary-hover"
                 >
                     <span className="material-symbols-outlined text-[18px]">add</span>
-                    Add Field
+                    {t('custom_fields.add_field')}
                 </button>
             </div>
 
             {fields.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                     <span className="material-symbols-outlined text-[40px] mb-2 opacity-50">text_fields</span>
-                    <p>No custom fields added yet</p>
-                    <p className="text-xs mt-1">Add fields to collect additional information from participants</p>
+                    <p>{t('custom_fields.no_fields')}</p>
+                    <p className="text-xs mt-1">{t('custom_fields.no_fields_desc')}</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -131,21 +134,21 @@ export default function CustomFieldsEditor({ eventId }: CustomFieldsEditorProps)
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-sm font-medium">{field.label}</span>
                                         {field.required && (
-                                            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Required</span>
+                                            <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">{t('custom_fields.required_field')}</span>
                                         )}
                                         {field.show_on_id && (
-                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Show on ID</span>
+                                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{t('custom_fields.show_on_id')}</span>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-gray-500">
                                         <span className="px-2 py-1 bg-gray-100 rounded">
-                                            {field.field_type === 'text' && 'Text Input'}
-                                            {field.field_type === 'textarea' && 'Text Box'}
-                                            {field.field_type === 'radio' && 'Radio Buttons'}
-                                            {field.field_type === 'checkbox' && 'Checkboxes'}
+                                            {field.field_type === 'text' && t('custom_fields.text_input')}
+                                            {field.field_type === 'textarea' && t('custom_fields.text_box')}
+                                            {field.field_type === 'radio' && t('custom_fields.radio_buttons')}
+                                            {field.field_type === 'checkbox' && t('custom_fields.checkboxes')}
                                         </span>
                                         {field.options && field.options.length > 0 && (
-                                            <span className="text-gray-400">• {field.options.length} options</span>
+                                            <span className="text-gray-400">• {field.options.length} {t('custom_fields.options')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -216,6 +219,7 @@ interface FieldFormModalProps {
 }
 
 function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: FieldFormModalProps) {
+    const { t } = useTranslation()
     const [fieldType, setFieldType] = useState<'text' | 'textarea' | 'radio' | 'checkbox'>(field?.field_type || 'text')
     const [label, setLabel] = useState(field?.label || '')
     const [required, setRequired] = useState(field?.required || false)
@@ -282,7 +286,7 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
             <div className="bg-white rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold">{field ? 'Edit Field' : 'Add Custom Field'}</h3>
+                    <h3 className="text-xl font-bold">{field ? t('common.edit') : t('custom_fields.add_field')}</h3>
                     <button onClick={onClose} type="button" className="text-gray-400 hover:text-gray-600">
                         <span className="material-symbols-outlined">close</span>
                     </button>
@@ -296,13 +300,13 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-2">Field Type</label>
+                        <label className="block text-sm font-medium mb-2">{t('custom_fields.field_type')}</label>
                         <div className="grid grid-cols-2 gap-2">
                             {[
-                                { value: 'text', label: 'Text Input', icon: 'text_fields' },
-                                { value: 'textarea', label: 'Text Box', icon: 'notes' },
-                                { value: 'radio', label: 'Radio Buttons', icon: 'radio_button_checked' },
-                                { value: 'checkbox', label: 'Checkboxes', icon: 'check_box' }
+                                { value: 'text', label: t('custom_fields.text_input'), icon: 'text_fields' },
+                                { value: 'textarea', label: t('custom_fields.text_box'), icon: 'notes' },
+                                { value: 'radio', label: t('custom_fields.radio_buttons'), icon: 'radio_button_checked' },
+                                { value: 'checkbox', label: t('custom_fields.checkboxes'), icon: 'check_box' }
                             ].map((type) => (
                                 <button
                                     key={type.value}
@@ -321,7 +325,7 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-2">Field Label *</label>
+                        <label className="block text-sm font-medium mb-2">{t('custom_fields.field_label')} *</label>
                         <input
                             type="text"
                             value={label}
@@ -339,7 +343,7 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                                 onChange={(e) => setRequired(e.target.checked)}
                                 className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                             />
-                            <span className="text-sm font-medium">Required field</span>
+                            <span className="text-sm font-medium">{t('custom_fields.required_field')}</span>
                         </label>
                     </div>
 
@@ -351,13 +355,13 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                                 onChange={(e) => setShowOnId(e.target.checked)}
                                 className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                             />
-                            <span className="text-sm font-medium">Show on ID Card (Public)</span>
+                            <span className="text-sm font-medium">{t('custom_fields.show_on_id')} (Public)</span>
                         </label>
                     </div>
 
                     {(fieldType === 'radio' || fieldType === 'checkbox') && (
                         <div>
-                            <label className="block text-sm font-medium mb-2">Options *</label>
+                            <label className="block text-sm font-medium mb-2">{t('custom_fields.options')} *</label>
                             <div className="space-y-2">
                                 {options.map((option, index) => (
                                     <div key={index} className="flex gap-2">
@@ -385,7 +389,7 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                                     className="text-primary text-sm font-medium hover:text-primary-hover flex items-center gap-1"
                                 >
                                     <span className="material-symbols-outlined text-[16px]">add</span>
-                                    Add Option
+                                    {t('custom_fields.add_option')}
                                 </button>
                             </div>
                         </div>
@@ -397,14 +401,14 @@ function FieldFormModal({ eventId, field, existingFields, onClose, onSave }: Fie
                             onClick={onClose}
                             className="flex-1 py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
                         >
-                            Cancel
+                            {t('common.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={saving}
                             className="flex-1 py-2 px-4 rounded-lg bg-primary text-white font-medium hover:bg-primary-hover disabled:opacity-50"
                         >
-                            {saving ? 'Saving...' : (field ? 'Update' : 'Add Field')}
+                            {saving ? t('common.saving') : (field ? 'Update' : t('common.add'))}
                         </button>
                     </div>
                 </form>

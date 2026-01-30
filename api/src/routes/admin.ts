@@ -174,6 +174,84 @@ admin.put('/organizations/:id', async (c) => {
     return c.json({ message: 'Organization updated successfully' })
 })
 
+// Delete organization (super admin only)
+admin.delete('/organizations/:id', async (c) => {
+    const { id } = c.req.param()
+
+    // Prevent deleting org_system
+    if (id === 'org_system') {
+        return c.json({ error: 'Cannot delete system organization' }, 403)
+    }
+
+    // Check if organization exists
+    const org = await c.env.DB.prepare(
+        'SELECT id FROM organizations WHERE id = ?'
+    ).bind(id).first()
+
+    if (!org) {
+        return c.json({ error: 'Organization not found' }, 404)
+    }
+
+    // Cascading Delete Implementation
+    try {
+        // 1. Delete Users
+        await c.env.DB.prepare('DELETE FROM users WHERE organization_id = ?').bind(id).run()
+
+        // 2. Delete Settings
+        await c.env.DB.prepare('DELETE FROM settings WHERE organization_id = ?').bind(id).run()
+
+        // 3. Get Event IDs to cleanup event-related tables
+        const events = await c.env.DB.prepare('SELECT id FROM events WHERE organization_id = ?').bind(id).all()
+        const eventIds = events.results.map((e: any) => e.id)
+
+        if (eventIds.length > 0) {
+            // Delete dependent event data
+            for (const eventId of eventIds) {
+                // Delete Donations (No CASCADE in schema, must delete manually)
+                await c.env.DB.prepare('DELETE FROM donations WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)').bind(eventId).run()
+
+                // Delete Payments (linked to participants - acts as backup to cascade)
+                await c.env.DB.prepare('DELETE FROM payments WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)').bind(eventId).run()
+
+                // Delete Participant Responses
+                await c.env.DB.prepare('DELETE FROM participant_field_responses WHERE participant_id IN (SELECT id FROM participants WHERE event_id = ?)').bind(eventId).run()
+
+                // Delete Participants
+                await c.env.DB.prepare('DELETE FROM participants WHERE event_id = ?').bind(eventId).run()
+
+                // Delete Ticket Types
+                await c.env.DB.prepare('DELETE FROM ticket_types WHERE event_id = ?').bind(eventId).run()
+                // Delete Custom Fields
+                await c.env.DB.prepare('DELETE FROM event_custom_fields WHERE event_id = ?').bind(eventId).run()
+                // Delete Bulk Discounts (if exist)
+                try {
+                    await c.env.DB.prepare('DELETE FROM bulk_discounts WHERE event_id = ?').bind(eventId).run()
+                } catch (e) {
+                    // Ignore if table doesn't exist
+                }
+            }
+        }
+
+        // 4. Delete Events
+        await c.env.DB.prepare('DELETE FROM events WHERE organization_id = ?').bind(id).run()
+
+        // 5. Delete Subscription Payments
+        await c.env.DB.prepare('DELETE FROM subscription_payments WHERE organization_id = ?').bind(id).run()
+
+        // 6. Delete Subscriptions
+        await c.env.DB.prepare('DELETE FROM subscriptions WHERE organization_id = ?').bind(id).run()
+
+        // 7. Delete Organization
+        await c.env.DB.prepare('DELETE FROM organizations WHERE id = ?').bind(id).run()
+
+        return c.json({ message: 'Organization and all related data deleted successfully' })
+
+    } catch (e: any) {
+        console.error('Delete organization error:', e)
+        return c.json({ error: `Failed to delete organization: ${e.message}` }, 500)
+    }
+})
+
 // List all users
 admin.get('/users', async (c) => {
     const { organization_id, limit = '100', offset = '0' } = c.req.query()

@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../LanguageSwitcher'
 
 interface SidebarProps {
     currentPage?: string
     isOpen?: boolean
     onClose?: () => void
     organization?: {
+        id: string
         name: string
         logo_url?: string
     } | null
@@ -28,18 +31,19 @@ interface NavItem {
 }
 
 export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onClose, organization }: SidebarProps) {
+    const { t } = useTranslation()
     const userRole = getUserRole()
     const isSuperAdmin = userRole === 'super_admin'
     const isAdmin = userRole === 'admin' || userRole === 'super_admin'
 
     const allNavItems: NavItem[] = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', href: '/dashboard' },
-        { id: 'events', label: 'Events', icon: 'calendar_today', href: '/events' },
-        { id: 'participants', label: 'Participants', icon: 'group', href: '/participants' },
-        { id: 'payments', label: 'Payments', icon: 'credit_card', href: '/payments' },
-        { id: 'organization', label: 'Organization', icon: 'apartment', href: '/organization' },
-        { id: 'donations', label: 'Donations', icon: 'volunteer_activism', href: '/donations' },
-        { id: 'settings', label: 'Settings', icon: 'settings', href: '/settings' },
+        { id: 'dashboard', label: t('sidebar.dashboard'), icon: 'dashboard', href: '/dashboard' },
+        { id: 'events', label: t('sidebar.events'), icon: 'calendar_today', href: '/events' },
+        { id: 'participants', label: t('sidebar.participants'), icon: 'group', href: '/participants' },
+        { id: 'payments', label: t('sidebar.payments'), icon: 'credit_card', href: '/payments' },
+        { id: 'organization', label: t('sidebar.organization'), icon: 'apartment', href: '/organization' },
+        { id: 'donations', label: t('sidebar.donations'), icon: 'volunteer_activism', href: '/donations' },
+        { id: 'settings', label: t('sidebar.settings'), icon: 'settings', href: '/settings' },
 
     ]
 
@@ -48,10 +52,10 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
 
     // Super admin menu items
     const superAdminItems: NavItem[] = [
-        { id: 'super-dashboard', label: 'Dashboard', icon: 'admin_panel_settings', href: '/super-admin' },
-        { id: 'super-orgs', label: 'Organizations', icon: 'apartment', href: '/super-admin/organizations' },
-        { id: 'super-users', label: 'Users', icon: 'manage_accounts', href: '/super-admin/users' },
-        { id: 'landing-editor', label: 'Landing Page', icon: 'web', href: '/super-admin/landing' },
+        { id: 'super-dashboard', label: t('sidebar.super_dashboard'), icon: 'admin_panel_settings', href: '/super-admin' },
+        { id: 'super-orgs', label: t('sidebar.super_orgs'), icon: 'apartment', href: '/super-admin/organizations' },
+        { id: 'super-users', label: t('sidebar.super_users'), icon: 'manage_accounts', href: '/super-admin/users' },
+        { id: 'landing-editor', label: t('sidebar.landing_page'), icon: 'web', href: '/super-admin/landing' },
     ]
 
     return (
@@ -142,7 +146,14 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
                     </div>
                 )}
 
-                <div className="p-4 border-t border-border-light">
+                <div className="p-4 border-t border-border-light space-y-2">
+                    {/* Language Switcher - Super Admin Only as requested */}
+                    {isSuperAdmin && (
+                        <LanguageSwitcher
+                            className="w-full justify-center !bg-gray-100 !border-gray-200 !text-gray-600"
+                            orgId={(organization as any)?.id}
+                        />
+                    )}
                     <button
                         onClick={() => {
                             localStorage.removeItem('auth_token')
@@ -153,7 +164,7 @@ export default function Sidebar({ currentPage = 'dashboard', isOpen = false, onC
                         className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-main hover:bg-border-light font-medium transition-colors w-full"
                     >
                         <span className="material-symbols-outlined text-[24px]">logout</span>
-                        <span>Sign Out</span>
+                        <span>{t('sidebar.sign_out')}</span>
                     </button>
                 </div>
             </aside>

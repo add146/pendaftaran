@@ -414,7 +414,7 @@ events.get('/:id/broadcast-targets', authMiddleware, async (c) => {
 
   // 3. Get Paid Participants
   const participants = await c.env.DB.prepare(`
-    SELECT id, registration_id, full_name, phone, whatsapp_status 
+    SELECT id, registration_id, full_name, phone, whatsapp_status, attendance_type
     FROM participants 
     WHERE event_id = ? AND payment_status = 'paid' AND phone IS NOT NULL
   `).bind(id).all()

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import AdminLayout from '../components/layout/AdminLayout'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { publicAPI, type Event } from '../lib/api'
 
 // Stat card component
@@ -38,6 +39,7 @@ function EventRow({ id, title, event_date, status, registered_count, capacity }:
     registered_count: number
     capacity: number | null
 }) {
+    const { t } = useTranslation()
     const statusStyles: Record<string, string> = {
         open: 'bg-green-100 text-green-800',
         draft: 'bg-gray-100 text-gray-800',
@@ -46,7 +48,10 @@ function EventRow({ id, title, event_date, status, registered_count, capacity }:
 
     const quota = capacity || 100
     const progress = Math.round((registered_count / quota) * 100)
-    const formattedDate = new Date(event_date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' })
+    const formattedDate = new Date(event_date).toLocaleDateString(t('common.locale_date'), { month: 'short', day: 'numeric', year: 'numeric' })
+    const statusLabel = status === 'open' ? t('admin.events.filter.open') :
+        status === 'closed' ? t('admin.events.filter.closed') :
+            t('admin.events.filter.draft')
 
     return (
         <tr className="hover:bg-background-light transition-colors">
@@ -62,13 +67,13 @@ function EventRow({ id, title, event_date, status, registered_count, capacity }:
             <td className="px-6 py-4">
                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyles[status] || statusStyles.draft}`}>
                     <span className="size-1.5 rounded-full bg-current"></span>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {statusLabel}
                 </span>
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between text-xs font-medium">
-                        <span className="text-text-sub">{registered_count}/{quota} Registered</span>
+                        <span className="text-text-sub">{registered_count}/{quota}</span>
                         <span className="text-primary">{progress}%</span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-border-light">
@@ -93,6 +98,7 @@ function EventRow({ id, title, event_date, status, registered_count, capacity }:
 }
 
 export default function Dashboard() {
+    const { t } = useTranslation()
     const [stats, setStats] = useState<{
         active_events: number
         total_participants: number
@@ -119,7 +125,7 @@ export default function Dashboard() {
     }
 
     return (
-        <AdminLayout title="Dashboard Overview" currentPage="dashboard">
+        <AdminLayout title={t('dashboard.overview')} currentPage="dashboard">
             <div className="p-4 sm:p-6 lg:p-8 space-y-8">
                 {loading ? (
                     <div className="flex items-center justify-center h-64">
@@ -131,18 +137,18 @@ export default function Dashboard() {
                     <>
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                            <StatCard icon="event_available" label="Active Events" value={String(stats?.active_events || 0)} />
-                            <StatCard icon="diversity_3" label="Total Participants" value={String(stats?.total_participants || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
-                            <StatCard icon="payments" label="Total Revenue" value={formatCurrency(stats?.total_revenue || 0)} />
+                            <StatCard icon="event_available" label={t('dashboard.active_events')} value={String(stats?.active_events || 0)} />
+                            <StatCard icon="diversity_3" label={t('dashboard.total_participants')} value={String(stats?.total_participants || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} />
+                            <StatCard icon="payments" label={t('dashboard.total_revenue')} value={formatCurrency(stats?.total_revenue || 0)} />
                         </div>
 
                         {/* Recent Events Section */}
                         <div className="flex flex-col gap-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-xl font-bold text-text-main">Recent Events</h3>
-                                <a className="text-sm font-medium text-primary hover:text-primary-hover hover:underline" href="/events">
-                                    View All
-                                </a>
+                                <h3 className="text-xl font-bold text-text-main">{t('dashboard.recent_events')}</h3>
+                                <Link className="text-sm font-medium text-primary hover:text-primary-hover hover:underline" to="/events">
+                                    {t('dashboard.view_details')}
+                                </Link>
                             </div>
 
                             <div className="overflow-hidden rounded-xl border border-border-light bg-surface-light shadow-sm">
@@ -150,14 +156,21 @@ export default function Dashboard() {
                                     <table className="w-full text-left text-sm whitespace-nowrap">
                                         <thead className="border-b border-border-light bg-background-light/50">
                                             <tr>
-                                                <th className="px-6 py-4 font-semibold text-text-main w-1/3">Event Name</th>
-                                                <th className="px-6 py-4 font-semibold text-text-main">Date</th>
-                                                <th className="px-6 py-4 font-semibold text-text-main">Status</th>
-                                                <th className="px-6 py-4 font-semibold text-text-main w-1/4">Quota Progress</th>
-                                                <th className="px-6 py-4 font-semibold text-text-main text-right">Actions</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main w-1/3">{t('dashboard.event_name')}</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main">{t('dashboard.date')}</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main">{t('dashboard.status')}</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main w-1/4">{t('dashboard.quota')}</th>
+                                                <th className="px-6 py-4 font-semibold text-text-main text-right">{t('dashboard.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-border-light">
+                                            {stats?.recent_events?.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-8 text-center text-text-sub">
+                                                        {t('dashboard.no_events')}
+                                                    </td>
+                                                </tr>
+                                            )}
                                             {stats?.recent_events?.map((event) => (
                                                 <EventRow
                                                     key={event.id}

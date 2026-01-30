@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import AdminLayout from '../components/layout/AdminLayout'
 import { eventsAPI, participantsAPI, type Participant, type Event } from '../lib/api'
+import { formatDateWIB } from '../lib/timezone'
 
 export default function AllParticipants() {
+    const { t } = useTranslation()
     const [participants, setParticipants] = useState<Participant[]>([])
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
@@ -48,17 +51,11 @@ export default function AllParticipants() {
     })
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        })
+        return formatDateWIB(dateStr, { dateFormat: 'DD MMM YYYY' })
     }
 
     return (
-        <AdminLayout title="All Participants" currentPage="participants" showCreateButton={false}>
+        <AdminLayout title={t('admin.participants.title')} currentPage="participants" showCreateButton={false}>
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -69,7 +66,7 @@ export default function AllParticipants() {
                             </div>
                             <div>
                                 <p className="text-2xl font-bold text-text-main">{participants.length}</p>
-                                <p className="text-sm text-gray-500">Total Participants</p>
+                                <p className="text-sm text-gray-500">{t('admin.participants.total')}</p>
                             </div>
                         </div>
                     </div>
@@ -82,7 +79,7 @@ export default function AllParticipants() {
                                 <p className="text-2xl font-bold text-text-main">
                                     {participants.filter(p => p.check_in_status === 'checked_in').length}
                                 </p>
-                                <p className="text-sm text-gray-500">Checked In</p>
+                                <p className="text-sm text-gray-500">{t('admin.participants.checked_in')}</p>
                             </div>
                         </div>
                     </div>
@@ -95,7 +92,7 @@ export default function AllParticipants() {
                                 <p className="text-2xl font-bold text-text-main">
                                     {participants.filter(p => p.payment_status === 'paid').length}
                                 </p>
-                                <p className="text-sm text-gray-500">Paid</p>
+                                <p className="text-sm text-gray-500">{t('admin.participants.payment_status.paid')}</p>
                             </div>
                         </div>
                     </div>
@@ -108,7 +105,7 @@ export default function AllParticipants() {
                                 <p className="text-2xl font-bold text-text-main">
                                     {participants.filter(p => p.payment_status === 'pending').length}
                                 </p>
-                                <p className="text-sm text-gray-500">Pending Payment</p>
+                                <p className="text-sm text-gray-500">{t('admin.participants.payment_status.pending')}</p>
                             </div>
                         </div>
                     </div>
@@ -120,7 +117,7 @@ export default function AllParticipants() {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400">search</span>
                         <input
                             type="text"
-                            placeholder="Search by name, email, or registration ID..."
+                            placeholder={t('admin.participants.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
@@ -131,7 +128,7 @@ export default function AllParticipants() {
                         onChange={(e) => setSelectedEvent(e.target.value)}
                         className="px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white"
                     >
-                        <option value="all">All Events</option>
+                        <option value="all">{t('admin.participants.all_events')}</option>
                         {events.map(e => (
                             <option key={e.id} value={e.id}>{e.title}</option>
                         ))}
@@ -149,13 +146,13 @@ export default function AllParticipants() {
                             <table className="w-full text-left">
                                 <thead className="bg-gray-50 border-b border-gray-100">
                                     <tr>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Participant</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Registration ID</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Event</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Payment</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Check-in</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Date</th>
-                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">Action</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.participant')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.reg_id')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.event')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.payment')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.checkin')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.date')}</th>
+                                        <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">{t('admin.participants.table.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
@@ -167,7 +164,8 @@ export default function AllParticipants() {
                                                     <p className="text-sm text-gray-500">{p.email}</p>
                                                     {(p as any).attendance_type && (
                                                         <div className={`text-[10px] font-bold uppercase mt-1 ${(p as any).attendance_type === 'online' ? 'text-purple-600' : 'text-blue-600'}`}>
-                                                            {(p as any).attendance_type}
+                                                            {/* {(p as any).attendance_type} */}
+                                                            {(p as any).attendance_type === 'online' ? t('registration.online') : t('registration.offline')}
                                                         </div>
                                                     )}
                                                 </div>
@@ -186,7 +184,7 @@ export default function AllParticipants() {
                                                         p.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                                             'bg-red-100 text-red-800'
                                                         }`}>
-                                                        {p.payment_status.charAt(0).toUpperCase() + p.payment_status.slice(1)}
+                                                        {t(`admin.participants.payment_status.${p.payment_status}`)}
                                                     </span>
                                                     {/* WhatsApp status indicator */}
                                                     {p.payment_status === 'paid' && (
@@ -194,7 +192,7 @@ export default function AllParticipants() {
                                                             {p.whatsapp_status === 'sent' ? (
                                                                 <span
                                                                     className="material-symbols-outlined text-green-500 text-[18px]"
-                                                                    title={`WhatsApp terkirim ${p.whatsapp_sent_at ? new Date(p.whatsapp_sent_at).toLocaleString('id-ID') : ''}`}
+                                                                    title={`WhatsApp terkirim ${p.whatsapp_sent_at ? formatDateWIB(p.whatsapp_sent_at) : ''}`}
                                                                 >
                                                                     check_circle
                                                                 </span>
@@ -215,7 +213,7 @@ export default function AllParticipants() {
                                                     ? 'bg-green-100 text-green-800'
                                                     : 'bg-gray-100 text-gray-600'
                                                     }`}>
-                                                    {p.check_in_status === 'checked_in' ? 'Checked In' : 'Not Arrived'}
+                                                    {t(`admin.participants.status.${p.check_in_status}`)}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-500">{formatDate(p.created_at)}</td>
@@ -224,7 +222,7 @@ export default function AllParticipants() {
                                                     to={`/events/${p.event_id}/participants`}
                                                     className="inline-flex items-center justify-center px-3 py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
                                                 >
-                                                    View Event
+                                                    {t('admin.participants.actions.show_id')}
                                                 </Link>
                                             </td>
                                         </tr>
@@ -235,7 +233,7 @@ export default function AllParticipants() {
                     ) : (
                         <div className="p-12 text-center text-gray-500">
                             <span className="material-symbols-outlined text-[48px] mb-4 opacity-50">groups</span>
-                            <p className="font-medium">No participants found</p>
+                            <p className="font-medium">{t('admin.participants.no_data')}</p>
                             <p className="text-sm mt-1">
                                 {search ? 'Try a different search term' : 'Participants will appear here when they register for your events.'}
                             </p>

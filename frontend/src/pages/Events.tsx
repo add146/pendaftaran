@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import AdminLayout from '../components/layout/AdminLayout'
 import { eventsAPI, type Event } from '../lib/api'
 
@@ -14,6 +15,7 @@ const getUserRole = () => {
 }
 
 export default function Events() {
+    const { t } = useTranslation()
     const [events, setEvents] = useState<Event[]>([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
@@ -47,14 +49,14 @@ export default function Events() {
     }
 
     const handleDelete = async (id: string, title: string) => {
-        if (!confirm(`Are you sure you want to delete event "${title}"?\nThis action cannot be undone.`)) return
+        if (!confirm(t('admin.events.delete_confirm_title', { title }) + '\n' + t('admin.events.delete_confirm'))) return
 
         try {
             await eventsAPI.delete(id)
             setEvents(prev => prev.filter(e => e.id !== id))
         } catch (err) {
             console.error(err)
-            alert('Failed to delete event')
+            alert(t('admin.events.delete_error'))
         }
     }
 
@@ -62,9 +64,9 @@ export default function Events() {
     const handleToggleStatus = async (id: string, currentStatus: string, title: string) => {
         const isClosed = currentStatus === 'closed'
         const newStatus = isClosed ? 'open' : 'closed'
-        const action = isClosed ? 'Open' : 'Close'
+        const action = isClosed ? t('admin.events.confirm_open') : t('admin.events.confirm_close')
 
-        if (!confirm(`Are you sure you want to ${action} event "${title}"?`)) return
+        if (!confirm(t('admin.events.confirm_status_title', { action, title }))) return
 
         try {
             await eventsAPI.update(id, {
@@ -80,12 +82,12 @@ export default function Events() {
             }))
         } catch (err) {
             console.error(err)
-            alert(`Failed to ${action} event`)
+            alert(t('admin.events.status_error'))
         }
     }
 
     return (
-        <AdminLayout title="Events" currentPage="events">
+        <AdminLayout title={t('admin.events.title')} currentPage="events">
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
                 {/* Filters */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
@@ -99,7 +101,7 @@ export default function Events() {
                                     : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                                     }`}
                             >
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                                {t(`admin.events.filter.${status}`)}
                             </button>
                         ))}
                     </div>
@@ -110,7 +112,7 @@ export default function Events() {
                             className="flex items-center gap-2 bg-teal-800 hover:bg-teal-900 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors"
                         >
                             <span className="material-symbols-outlined text-[20px]">add</span>
-                            Create Event
+                            {t('admin.events.create')}
                         </Link>
                     )}
                 </div>
@@ -160,12 +162,12 @@ export default function Events() {
                                                     e.preventDefault()
                                                     const url = `${window.location.origin}/event/${event.slug || event.id}`
                                                     navigator.clipboard.writeText(url)
-                                                    alert('Link copied: ' + url)
+                                                    alert(t('admin.events.share_success') + url)
                                                 }}
                                                 className="bg-white text-primary px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md text-sm font-bold flex items-center gap-1.5 transition-all active:scale-95"
                                             >
                                                 <span className="material-symbols-outlined text-[18px]">share</span>
-                                                Share
+                                                {t('admin.events.table.share')}
                                             </button>
                                         </div>
 
@@ -178,7 +180,7 @@ export default function Events() {
                                                         ? 'bg-green-600 hover:bg-green-700 text-white'
                                                         : 'bg-amber-500 hover:bg-amber-600 text-white'
                                                         }`}
-                                                    title={event.status === 'closed' ? 'Open Event' : 'Close Event'}
+                                                    title={event.status === 'closed' ? t('admin.events.filter.open') : t('admin.events.filter.closed')}
                                                 >
                                                     <span className="material-symbols-outlined text-[20px]">
                                                         {event.status === 'closed' ? 'lock_open' : 'block'}
@@ -189,7 +191,7 @@ export default function Events() {
                                                 <button
                                                     onClick={() => handleDelete(event.id, event.title)}
                                                     className="bg-red-600 text-white w-9 h-9 rounded-lg shadow-sm hover:shadow-md flex items-center justify-center transition-all active:scale-95 hover:bg-red-700"
-                                                    title="Delete Event"
+                                                    title={t('common.delete')}
                                                 >
                                                     <span className="material-symbols-outlined text-[20px]">delete</span>
                                                 </button>
@@ -203,7 +205,7 @@ export default function Events() {
                                                 event.status === 'draft' ? 'bg-gray-100 text-gray-800' :
                                                     'bg-red-100 text-red-800'
                                                 }`}>
-                                                {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                                {t(`admin.events.filter.${event.status}`)}
                                             </span>
                                         </div>
 
@@ -228,7 +230,7 @@ export default function Events() {
                                                 className="flex-[7] flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-orange-500 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
                                             >
                                                 <span className="material-symbols-outlined text-[18px] sm:text-[16px]">group</span>
-                                                <span>Participants</span>
+                                                <span>{t('admin.events.table.participants')}</span>
                                             </Link>
 
                                             {/* Edit (Blue) - Admin Only */}
@@ -236,10 +238,10 @@ export default function Events() {
                                                 <Link
                                                     to={`/events/${event.id}/edit`}
                                                     className="flex-[3] flex items-center justify-center p-2 sm:px-3 sm:py-2 bg-green-100 text-green-800 hover:bg-green-200 text-xs sm:text-sm font-bold rounded-lg transition-colors shadow-sm text-center gap-1"
-                                                    title="Edit Event"
+                                                    title={t('common.edit')}
                                                 >
                                                     <span className="material-symbols-outlined text-[18px] sm:text-[16px]">edit</span>
-                                                    <span>Edit</span>
+                                                    <span>{t('common.edit')}</span>
                                                 </Link>
                                             )}
                                         </div>
@@ -251,7 +253,7 @@ export default function Events() {
                         {filteredEvents.length === 0 && (
                             <div className="col-span-full text-center py-12 text-gray-500">
                                 <span className="material-symbols-outlined text-[48px] mb-4 opacity-50">event_busy</span>
-                                <p>No events found</p>
+                                <p>{t('dashboard.no_events')}</p>
                             </div>
                         )}
                     </div>

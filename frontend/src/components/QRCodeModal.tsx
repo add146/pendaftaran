@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import { eventsAPI, participantsAPI, type Participant } from '../lib/api'
+import { useTranslation } from 'react-i18next'
 
 interface IdCardDesign {
     primaryColor: string
@@ -17,6 +18,7 @@ interface QRCodeModalProps {
 }
 
 export default function QRCodeModal({ isOpen, onClose, eventId, participant }: QRCodeModalProps) {
+    const { t } = useTranslation()
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const cardCanvasRef = useRef<HTMLCanvasElement>(null)
     const [cardDataUrl, setCardDataUrl] = useState<string>('')
@@ -122,7 +124,17 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         // Calculate height based on content
         // Base height 550. Add extra for each custom field showing on ID.
         const customFieldsToShow = fullParticipant.custom_fields?.filter(f => f.show_on_id) || []
-        const extraHeight = customFieldsToShow.length * 25
+        let extraHeight = customFieldsToShow.length * 25
+
+        // Add extra height for online details
+        const isOnline = (fullParticipant as any).attendance_type === 'online' || (fullParticipant as any).event_type === 'online'
+        if (isOnline) {
+            extraHeight += 120 // Space for Platform, URL, Password
+            if (fullParticipant.online_instructions) {
+                extraHeight += 60 // Rough estimate for instructions
+            }
+        }
+
         const width = 400
         const height = 550 + extraHeight
 
@@ -175,13 +187,17 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         // Load and draw QR code
         const qrImage = new Image()
         qrImage.onload = () => {
-            // QR background
-            ctx.fillStyle = '#1f2937'
-            roundRect(ctx, (width - 200) / 2, 120, 200, 200, 16)
-            ctx.fill()
+            const isOnline = (fullParticipant as any).attendance_type === 'online'
 
-            // QR image
-            ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
+            if (!isOnline) {
+                // QR background
+                ctx.fillStyle = '#1f2937'
+                roundRect(ctx, (width - 200) / 2, 120, 200, 200, 16)
+                ctx.fill()
+
+                // QR image
+                ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
+            }
 
             // Participant name
             ctx.fillStyle = '#1f2937'
@@ -193,14 +209,18 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
                 nameFontSize -= 1
                 ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
             }
-            ctx.fillText(name, width / 2, 360)
+
+            // Adjust positions based on online status
+            const nameY = isOnline ? 180 : 360
+            ctx.fillText(name, width / 2, nameY)
 
             // Ticket type with primary color
             ctx.fillStyle = design.primaryColor
             ctx.font = 'bold 14px Arial, sans-serif'
-            ctx.fillText((fullParticipant.ticket_name || 'PARTICIPANT').toUpperCase(), width / 2, 390)
+            const ticketY = isOnline ? 210 : 390
+            ctx.fillText((fullParticipant.ticket_name || t('id_card.participant')).toUpperCase(), width / 2, ticketY)
 
-            let currentY = 420
+            let currentY = isOnline ? 240 : 420
 
             // Custom Fields (Above City, Bold)
             if (customFieldsToShow.length > 0) {
@@ -265,8 +285,66 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
 
             currentY += 55
 
-            // Note with Icon (if present)
+            // Draw Online Event Details if Online
+            if (isOnline) {
+                // Draw a light blue background for online details
+                ctx.fillStyle = '#eff6ff' // blue-50
+
+                ctx.fillStyle = '#1e40af' // blue-800
+                ctx.font = 'bold 16px Arial, sans-serif'
+                ctx.fillText((t('ticket.online_event_details') || 'Online Event Details').toUpperCase(), width / 2, currentY + 10)
+                currentY += 30
+
+                ctx.font = '14px Arial, sans-serif'
+                ctx.fillStyle = '#374151' // gray-700
+
+                if (fullParticipant.online_platform) {
+                    ctx.fillText(`Platform: ${fullParticipant.online_platform.replace('_', ' ')}`.toUpperCase(), width / 2, currentY)
+                    currentY += 25
+                }
+
+                if (fullParticipant.online_url) {
+                    ctx.fillStyle = design.primaryColor
+                    ctx.font = 'bold 12px Arial, sans-serif'
+                    const urlText = fullParticipant.online_url.replace(/^https?:\/\//, '')
+                    // Turncate URL if too long
+                    let displayUrl = urlText
+                    if (displayUrl.length > 40) displayUrl = displayUrl.substring(0, 37) + '...'
+
+                    ctx.fillText(displayUrl, width / 2, currentY)
+                    currentY += 25
+                }
+
+                if (fullParticipant.online_password) {
+                    ctx.fillStyle = '#374151'
+                    ctx.font = '14px Arial, sans-serif'
+                    ctx.fillText(`Pass: ${fullParticipant.online_password}`, width / 2, currentY)
+                    currentY += 25
+                }
+
+                if (fullParticipant.online_instructions) {
+                    // Simple wrapping for instructions at plain text
+                    currentY += 10
+                    ctx.font = 'italic 12px Arial, sans-serif'
+                    ctx.fillStyle = '#6b7280'
+                    // We won't complex wrap here on canvas for now, just first line or truncate
+                    let instructions = fullParticipant.online_instructions
+                    if (instructions.length > 50) instructions = instructions.substring(0, 47) + '...'
+                    ctx.fillText(instructions, width / 2, currentY)
+                    currentY += 25
+                }
+                currentY += 20 // Spacer
+            }
+
+            // Note with Icon (if present) - Only if NOT online to avoid clutter? 
+            // Or render it still. Let's render it if space allows, but user prioritized online details.
+            // If online, maybe skip note or push it down? 
+            // The user said "posisinya dibawah nomer registrasi", so online details go there.
+            // Note logic below:
+
             if (fullParticipant.note) {
+                // ... note logic existing ...
+                // Adjust currentY usage in note logic if we want to keep it
                 const iconMap: Record<string, string> = {
                     info: 'ℹ️',
                     warning: '⚠️',
@@ -338,7 +416,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         if (!dateStr) return ''
         try {
             const date = new Date(dateStr)
-            return date.toLocaleDateString('id-ID', {
+            return date.toLocaleDateString(t('common.locale_date'), {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'short',
@@ -361,7 +439,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
 
     const handleSendWhatsApp = async () => {
         if (!fullParticipant?.phone) {
-            setWaMessage({ type: 'error', text: 'No phone number found for this participant' })
+            setWaMessage({ type: 'error', text: t('ticket.no_phone') })
             setTimeout(() => setWaMessage(null), 3000)
             return
         }
@@ -372,27 +450,34 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         // Generate ticket link
         const ticketLink = `https://etiket.my.id/ticket/${fullParticipant.registration_id}`
 
-        // Create message matching WAHA gateway format
-        let message = `🎉 *PENDAFTARAN BERHASIL!*
-    
-Terima kasih telah mendaftar untuk:
-📌 *Event:* ${fullParticipant.event_title || 'Event'}
+        // Exact format from backend (api/src/lib/whatsapp.ts)
+        let message = `🎉 *PENDAFTARAN BERHASIL!*\n\n`
+        message += `Terima kasih telah mendaftar untuk:\n`
+        message += `📌 *Event:* ${fullParticipant.event_title || 'Event'}\n\n`
 
-👤 *Nama:* ${fullParticipant.full_name}
-🔖 *ID Registrasi:* ${fullParticipant.registration_id}`
+        message += `👤 *Nama:* ${fullParticipant.full_name}\n`
+        message += `🔖 *ID Registrasi:* ${fullParticipant.registration_id}`
 
         if (fullParticipant.ticket_name) {
             message += `\n🎫 *Tiket:* ${fullParticipant.ticket_name}`
         }
 
-        message += `
+        if (fullParticipant.ticket_price && fullParticipant.ticket_price > 0) {
+            message += `\n💰 *Harga:* Rp ${fullParticipant.ticket_price.toLocaleString('id-ID')}`
+        }
 
-🎫 *E-Ticket & QR Code:*
-${ticketLink}
+        // Custom Fields
+        if (fullParticipant.custom_fields && fullParticipant.custom_fields.length > 0) {
+            message += `\n\n📋 *Informasi Tambahan:*`
+            for (const field of fullParticipant.custom_fields) {
+                // Backend ensures label is present
+                message += `\n• *${field.label}:* ${field.response}`
+            }
+        }
 
-Tunjukkan QR Code saat check-in.
-
-Sampai jumpa di acara! 🙏`
+        message += `\n\n🎫 *E-Ticket & QR Code:*\n${ticketLink}\n\n`
+        message += `Tunjukkan QR Code saat check-in.\n\n`
+        message += `Sampai jumpa di acara! 🙏`
 
         // Open WhatsApp with the participant's phone number
         window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank')
@@ -486,7 +571,7 @@ Sampai jumpa di acara! 🙏`
 
         } catch (err) {
             console.error('Certificate generation failed:', err)
-            alert('Gagal mengunduh sertifikat. Silakan coba lagi.')
+            alert(t('ticket.certificate_failed'))
         } finally {
             setDownloadingCertificate(false)
         }
@@ -505,27 +590,7 @@ Sampai jumpa di acara! 🙏`
             {/* ID Card */}
             <div ref={cardCanvasRef as any} className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden max-h-[90vh] overflow-y-auto">
                 {/* Header with event color */}
-                <div className="px-6 py-5 text-center" style={{ backgroundColor: design.primaryColor }}>
-                    <h2 className="text-white font-black text-xl tracking-wider uppercase">
-                        {fullParticipant.event_title || 'EVENT REGISTRATION'}
-                    </h2>
-                    {fullParticipant.event_date && (
-                        <div className="mt-3 inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full">
-                            <span className="material-symbols-outlined text-white text-[18px]">calendar_month</span>
-                            <span className="text-white text-sm font-bold uppercase tracking-wide">
-                                {formatDate(fullParticipant.event_date)}
-                            </span>
-                            {fullParticipant.event_time && (
-                                <>
-                                    <span className="text-white/50 mx-1 font-light text-lg">|</span>
-                                    <span className="text-white text-sm font-bold uppercase tracking-wide">
-                                        {fullParticipant.event_time}
-                                    </span>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
+
 
                 {/* Card Body */}
                 <img src={cardDataUrl} alt="ID Card" className="w-full" />
@@ -544,7 +609,7 @@ Sampai jumpa di acara! 🙏`
                             ) : (
                                 <span className="material-symbols-outlined text-[20px]">workspace_premium</span>
                             )}
-                            {downloadingCertificate ? 'Generating...' : 'Download Certificate'}
+                            {downloadingCertificate ? t('common.generating') : t('ticket.download_certificate')}
                         </button>
                     )}
 
@@ -558,6 +623,19 @@ Sampai jumpa di acara! 🙏`
                         </div>
                     )}
 
+                    {/* Online Join Button */}
+                    {fullParticipant?.online_url && ((fullParticipant as any).attendance_type === 'online' || (fullParticipant as any).event_type === 'online') && (
+                        <a
+                            href={fullParticipant.online_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full mb-3 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">videocam</span>
+                            Join Meeting
+                        </a>
+                    )}
+
                     <div className="flex gap-3">
                         {(fullParticipant as any).attendance_type !== 'online' && (
                             <button
@@ -566,17 +644,17 @@ Sampai jumpa di acara! 🙏`
                                 className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-hover transition-colors disabled:opacity-50"
                             >
                                 <span className="material-symbols-outlined text-[20px]">download</span>
-                                Download
+                                {t('common.download')}
                             </button>
                         )}
                         <button
                             onClick={handleSendWhatsApp}
                             disabled={!fullParticipant?.phone}
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title={!fullParticipant?.phone ? 'No phone number available' : 'Send ticket via WhatsApp'}
+                            title={!fullParticipant?.phone ? t('ticket.no_phone') : t('ticket.send_wa')}
                         >
                             <span className="material-symbols-outlined text-[20px]">send</span>
-                            Send WA
+                            {t('ticket.send_wa_button')}
                         </button>
                     </div>
                 </div>

@@ -1,18 +1,21 @@
-import { useState, useRef, useEffect } from 'react'
-import { eventsAPI, uploadAPI } from '../lib/api'
+import { useState, useEffect } from 'react'
+import { eventsAPI } from '../lib/api'
 
 interface IDCardEditorProps {
     eventId: string
 }
 
+import { useTranslation } from 'react-i18next'
+
 export default function IDCardEditor({ eventId }: IDCardEditorProps) {
+    const { t } = useTranslation()
     const [primaryColor, setPrimaryColor] = useState('#1e7b49')
     const [backgroundColor, setBackgroundColor] = useState('#ffffff')
     const [sponsorLogo, setSponsorLogo] = useState<string | null>(null)
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-    const sponsorLogoInputRef = useRef<HTMLInputElement>(null)
+    // const sponsorLogoInputRef = useRef<HTMLInputElement>(null)
 
     // Load existing design on mount
     useEffect(() => {
@@ -32,40 +35,9 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
             })
     }, [eventId])
 
-    const handleSponsorLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
-        // Limit to 20MB (as requested) because it will be compressed
-        if (file.size > 20 * 1024 * 1024) {
-            setMessage({ type: 'error', text: 'File too large. Max 20MB.' })
-            return
-        }
-
-        try {
-            setSaving(true)
-            setMessage(null)
-
-            // Upload and compress image automatically (max 0.5MB for D1 storage)
-            const result = await uploadAPI.uploadImage(file, { maxSizeMB: 0.5 })
-            setSponsorLogo(result.url)
-
-            setMessage({ type: 'success', text: 'Logo uploaded and compressed successfully!' })
-            setTimeout(() => setMessage(null), 3000)
-        } catch (error: any) {
-            console.error('Upload error:', error)
-            setMessage({ type: 'error', text: error.message || 'Failed to upload logo' })
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const removeSponsorLogo = () => {
-        setSponsorLogo(null)
-        if (sponsorLogoInputRef.current) {
-            sponsorLogoInputRef.current.value = ''
-        }
-    }
+    // Sponsor logo functions removed
+    // const handleSponsorLogoUpload = ...
+    // const removeSponsorLogo = ...
 
     const handleSaveDesign = async () => {
         if (!eventId) return
@@ -79,11 +51,11 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                 backgroundColor,
                 sponsorLogo
             })
-            setMessage({ type: 'success', text: 'Design saved successfully!' })
+            setMessage({ type: 'success', text: t('id_card.messages.save_success') })
             setTimeout(() => setMessage(null), 3000)
         } catch (err: any) {
             console.error('Save error:', err)
-            setMessage({ type: 'error', text: err.message || 'Failed to save design' })
+            setMessage({ type: 'error', text: err.message || t('id_card.messages.save_error') })
         } finally {
             setSaving(false)
         }
@@ -99,7 +71,7 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-bold mb-6">ID Card Configuration</h2>
+            <h2 className="text-xl font-bold mb-6">{t('id_card.configuration')}</h2>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* Left: Card Preview Canvas */}
@@ -157,7 +129,7 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                                     </div>
                                 </div>
                             </div>
-                            <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">Scan for Check-in</p>
+                            <p className="text-[10px] text-gray-400 font-mono tracking-widest uppercase mb-1">{t('id_card.scan_checkin')}</p>
                         </div>
 
                         {/* Participant Details - Apply background color here too */}
@@ -166,7 +138,7 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                             style={{ backgroundColor }}
                         >
                             <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-1">AHMAD FAUZI</h2>
-                            <p className="text-xs font-bold tracking-widest uppercase mb-3 border-b border-gray-200 pb-3" style={{ color: primaryColor }}>Participant</p>
+                            <p className="text-xs font-bold tracking-widest uppercase mb-3 border-b border-gray-200 pb-3" style={{ color: primaryColor }}>{t('id_card.participant')}</p>
                             <div className="flex flex-col gap-1 text-gray-500">
                                 <div className="flex items-center justify-center gap-1 text-xs font-medium">
                                     <span className="material-symbols-outlined text-[14px] text-gray-400">apartment</span>
@@ -178,16 +150,8 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                             </div>
                         </div>
 
-                        {/* Sponsor Logo Section */}
-                        {sponsorLogo && (
-                            <div className="px-6 pb-3 flex items-center justify-center" style={{ backgroundColor }}>
-                                <img
-                                    src={sponsorLogo}
-                                    alt="Sponsor Logo"
-                                    className="max-h-12 max-w-[150px] object-contain"
-                                />
-                            </div>
-                        )}
+                        {/* Sponsor Logo Section - REMOVED */}
+                        {/* {sponsorLogo && ( ... )} */}
 
                         {/* Footer Accent */}
                         <div className="h-2 w-full" style={{ backgroundColor: primaryColor }}></div>
@@ -203,13 +167,13 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                 <div className="lg:col-span-5 flex flex-col gap-6">
                     {/* Configuration Panel */}
                     <div>
-                        <h3 className="text-gray-900 tracking-tight text-lg font-bold leading-tight mb-4">Design Settings</h3>
+                        <h3 className="text-gray-900 tracking-tight text-lg font-bold leading-tight mb-4">{t('id_card.settings')}</h3>
 
                         {/* Color Pickers */}
                         <div className="space-y-4 mb-6">
                             {/* Primary Color */}
                             <div>
-                                <label className="text-sm font-semibold text-gray-700 mb-2 block">Primary Color</label>
+                                <label className="text-sm font-semibold text-gray-700 mb-2 block">{t('id_card.primary_color')}</label>
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="color"
@@ -229,7 +193,7 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
 
                             {/* Background Color */}
                             <div>
-                                <label className="text-sm font-semibold text-gray-700 mb-2 block">Background Color</label>
+                                <label className="text-sm font-semibold text-gray-700 mb-2 block">{t('id_card.background_color')}</label>
                                 <div className="flex items-center gap-3">
                                     <input
                                         type="color"
@@ -248,44 +212,8 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                             </div>
                         </div>
 
-                        {/* Sponsor Logo Upload */}
-                        <div className="mb-6">
-                            <label className="text-sm font-semibold text-gray-700 mb-2 block">Sponsor Logo</label>
-                            <input
-                                ref={sponsorLogoInputRef}
-                                type="file"
-                                accept="image/*"
-                                onChange={handleSponsorLogoUpload}
-                                className="hidden"
-                                id="sponsorLogoInput"
-                            />
-
-                            {sponsorLogo ? (
-                                <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
-                                    <img
-                                        src={sponsorLogo}
-                                        alt="Sponsor Logo Preview"
-                                        className="h-10 max-w-[80px] object-contain"
-                                    />
-                                    <span className="flex-1 text-sm text-gray-600 truncate">Logo uploaded</span>
-                                    <button
-                                        onClick={removeSponsorLogo}
-                                        className="p-1 text-red-500 hover:bg-red-50 rounded"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                                    </button>
-                                </div>
-                            ) : (
-                                <label
-                                    htmlFor="sponsorLogoInput"
-                                    className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 cursor-pointer transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-gray-400">add_photo_alternate</span>
-                                    <span className="text-sm text-gray-500">Upload Sponsor Logo</span>
-                                </label>
-                            )}
-                            <p className="text-xs text-gray-400 mt-2">Max 20MB (auto-compressed), appears at bottom of ID card</p>
-                        </div>
+                        {/* Sponsor Logo Upload - REMOVED as per request */}
+                        {/* <div className="mb-6">...</div> */}
 
                         {/* Message */}
                         {message && (
@@ -301,13 +229,13 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                                     setPrimaryColor('#1e7b49')
                                     setBackgroundColor('#ffffff')
                                     setSponsorLogo(null)
-                                    setMessage({ type: 'success', text: 'Reset to default design' })
+                                    setMessage({ type: 'success', text: t('id_card.messages.reset_success') })
                                     setTimeout(() => setMessage(null), 2000)
                                 }}
                                 className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-all"
                             >
                                 <span className="material-symbols-outlined text-[18px]">restart_alt</span>
-                                Reset
+                                {t('common.reset')}
                             </button>
                             <button
                                 onClick={handleSaveDesign}
@@ -317,12 +245,12 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                                 {saving ? (
                                     <>
                                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                        Saving...
+                                        {t('common.saving')}
                                     </>
                                 ) : (
                                     <>
                                         <span className="material-symbols-outlined">save</span>
-                                        Save Design
+                                        {t('id_card.save_design')}
                                     </>
                                 )}
                             </button>

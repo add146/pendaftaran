@@ -100,6 +100,22 @@ export default function Organizations() {
         }
     }
 
+    const handleDelete = async (id: string, name: string) => {
+        if (!window.confirm(`Are you sure you want to delete organization "${name}"? This action cannot be undone.`)) {
+            return
+        }
+
+        try {
+            setLoading(true)
+            await superAdminAPI.deleteOrganization(id)
+            setSuccess(`Organization "${name}" deleted successfully`)
+            await loadData()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete organization')
+            setLoading(false)
+        }
+    }
+
     if (loading) {
         return (
             <AdminLayout title="Manage Organizations" currentPage="super-orgs">
@@ -338,13 +354,22 @@ export default function Organizations() {
                                 <div className="text-xs text-gray-400">
                                     Created: {new Date(org.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                 </div>
-                                <button
-                                    onClick={() => handleEdit(org)}
-                                    className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
-                                >
-                                    <span className="material-symbols-outlined text-[16px]">edit</span>
-                                    Edit
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleEdit(org)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(org.id, org.name)}
+                                        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                                        title="Delete Organization"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -355,6 +380,6 @@ export default function Organizations() {
                     )}
                 </div>
             </div>
-        </AdminLayout>
+        </AdminLayout >
     )
 }
