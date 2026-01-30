@@ -482,7 +482,7 @@ ${bankSection}`
                         <span className="material-symbols-outlined text-[40px] text-green-600">check_circle</span>
                     </div>
                     <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                        {paymentInfo && paymentInfo.ticket_price > 0 && paymentInfo.payment_mode === 'manual'
+                        {paymentInfo && paymentInfo.ticket_price > 0 && (paymentInfo.payment_mode === 'manual' || paymentInfo.payment_mode === 'auto')
                             ? 'Lanjutkan Pembayaran'
                             : t('registration.success')}
                     </h1>
@@ -512,20 +512,20 @@ ${bankSection}`
                                 <div className="space-y-3">
                                     <p className="text-sm text-gray-600">{t('registration.continue_online')}</p>
                                     <button
-                                        className="flex items-center justify-center gap-2 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex flex-col items-center justify-center gap-1 w-full py-3 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={handleMidtransPayment}
                                         disabled={(!orderId && !participantId)}
                                     >
-                                        <span className="material-symbols-outlined">credit_card</span>
-                                        {t('registration.pay_now')} - Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}
+                                        <span className="text-sm font-normal">Total Pembayaran</span>
+                                        <span className="text-xl">Rp {paymentInfo.ticket_price.toLocaleString('id-ID')}</span>
                                     </button>
                                 </div>
                             ) : null}
                         </div>
                     )}
 
-                    {/* Only show home button if NOT manual payment */}
-                    {!(paymentInfo && paymentInfo.ticket_price > 0 && paymentInfo.payment_mode === 'manual') && (
+                    {/* Only show home button if NOT manual OR auto payment (meaning free or done) */}
+                    {!(paymentInfo && paymentInfo.ticket_price > 0 && (paymentInfo.payment_mode === 'manual' || paymentInfo.payment_mode === 'auto')) && (
                         <Link
                             to="/"
                             className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary-hover"
