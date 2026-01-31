@@ -72,9 +72,22 @@ export default function EventRegistration() {
         publicAPI.event(slug)
             .then(data => {
                 setEvent(data)
-                // Set default ticket if available
+
+                // Set default attendance type
+                const defaultAttendance = data.event_type === 'online' ? 'online' : 'offline'
+
+                // Set default ticket if available and update attendance type
                 if (data.ticket_types && data.ticket_types.length > 0) {
-                    setParticipants(prev => prev.map(p => ({ ...p, ticket_type_id: data.ticket_types![0].id })))
+                    setParticipants(prev => prev.map(p => ({
+                        ...p,
+                        ticket_type_id: data.ticket_types![0].id,
+                        attendance_type: defaultAttendance
+                    })))
+                } else {
+                    setParticipants(prev => prev.map(p => ({
+                        ...p,
+                        attendance_type: defaultAttendance
+                    })))
                 }
 
                 // Fetch custom fields using the event ID
