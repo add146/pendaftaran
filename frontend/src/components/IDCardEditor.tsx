@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { eventsAPI } from '../lib/api'
+import { useState, useEffect, useRef } from 'react'
+import { eventsAPI, uploadAPI } from '../lib/api'
 
 interface IDCardEditorProps {
     eventId: string
@@ -15,7 +15,7 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
     const [saving, setSaving] = useState(false)
     const [loading, setLoading] = useState(true)
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-    // const sponsorLogoInputRef = useRef<HTMLInputElement>(null)
+    const sponsorLogoInputRef = useRef<HTMLInputElement>(null)
 
     // Load existing design on mount
     useEffect(() => {
@@ -35,9 +35,30 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
             })
     }, [eventId])
 
-    // Sponsor logo functions removed
-    // const handleSponsorLogoUpload = ...
-    // const removeSponsorLogo = ...
+    const handleSponsorLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
+
+        const file = files[0]
+        // Use a temporary loading state specifically for upload if needed, or just reuse saving
+        // But better to not block the whole UI excessively
+
+        try {
+            const result = await uploadAPI.uploadImage(file)
+            setSponsorLogo(result.url)
+            setMessage({ type: 'success', text: 'Logo berhasil diupload' })
+        } catch (err: any) {
+            console.error('Upload error:', err)
+            setMessage({ type: 'error', text: 'Gagal mengupload logo: ' + err.message })
+        }
+
+        // Reset input
+        e.target.value = ''
+    }
+
+    const removeSponsorLogo = () => {
+        setSponsorLogo(null)
+    }
 
     const handleSaveDesign = async () => {
         if (!eventId) return
@@ -150,8 +171,14 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                             </div>
                         </div>
 
-                        {/* Sponsor Logo Section - REMOVED */}
-                        {/* {sponsorLogo && ( ... )} */}
+                        {/* Sponsor Logo Section at the bottom */}
+                        {sponsorLogo && (
+                            <div className="pb-4 flex justify-center w-full" style={{ backgroundColor }}>
+                                <div className="h-10">
+                                    <img src={sponsorLogo} alt="Logo" className="h-full object-contain" />
+                                </div>
+                            </div>
+                        )}
 
                         {/* Footer Accent */}
                         <div className="h-2 w-full" style={{ backgroundColor: primaryColor }}></div>
@@ -212,8 +239,48 @@ export default function IDCardEditor({ eventId }: IDCardEditorProps) {
                             </div>
                         </div>
 
-                        {/* Sponsor Logo Upload - REMOVED as per request */}
-                        {/* <div className="mb-6">...</div> */}
+                        {/* Sponsor Logo Upload */}
+                        <div className="mb-6">
+                            <label className="text-sm font-semibold text-gray-700 mb-2 block">Upload Logo Organisasi / Event</label>
+
+                            {sponsorLogo ? (
+                                <div className="relative w-full aspect-[3/1] bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center group overflow-hidden">
+                                    <img src={sponsorLogo} alt="Sponsor Logo" className="h-full w-full object-contain p-2" />
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => sponsorLogoInputRef.current?.click()}
+                                            className="p-2 bg-white rounded-full text-gray-700 hover:text-primary transition-colors"
+                                            title="Ganti Logo"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">edit</span>
+                                        </button>
+                                        <button
+                                            onClick={removeSponsorLogo}
+                                            className="p-2 bg-white rounded-full text-red-500 hover:text-red-700 transition-colors"
+                                            title="Hapus Logo"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div
+                                    onClick={() => sponsorLogoInputRef.current?.click()}
+                                    className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all group"
+                                >
+                                    <span className="material-symbols-outlined text-[32px] text-gray-400 group-hover:text-primary mb-2">add_photo_alternate</span>
+                                    <span className="text-xs text-gray-500 font-medium">Klik untuk upload logo</span>
+                                    <span className="text-[10px] text-gray-400 mt-1">PNG, JPG (Max 1MB)</span>
+                                </div>
+                            )}
+                            <input
+                                type="file"
+                                ref={sponsorLogoInputRef}
+                                onChange={handleSponsorLogoUpload}
+                                accept="image/*"
+                                className="hidden"
+                            />
+                        </div>
 
                         {/* Message */}
                         {message && (

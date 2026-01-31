@@ -225,7 +225,28 @@ participants.post('/register', async (c) => {
         const registrationId = generateRegId()
         const qrCode = `${eventId}:${participantId}:${registrationId}`
 
-        const ticketTypeId = p.ticket_type_id || body.ticket_type_id // Allow global or per-person ticket
+        let ticketTypeId = p.ticket_type_id || body.ticket_type_id // Allow global or per-person ticket
+
+        // Validate ticket_type_id if provided (and not empty)
+        if (ticketTypeId) {
+            const ticketExists = await c.env.DB.prepare('SELECT id FROM ticket_types WHERE id = ?').bind(ticketTypeId).first()
+            if (!ticketExists) {
+                // If it doesn't exist, we can either error out or fallback to null (if free event). 
+                // However, safe bet is to error out because the user expected a specific ticket.
+                // UNLESS it was an empty string that got through?
+                // Let's coerce empty strings to null first.
+            }
+        }
+
+        if (!ticketTypeId || ticketTypeId.trim() === '') {
+            ticketTypeId = null
+        } else {
+            // Verify it exists in DB to prevent FK error
+            const ticketExists = await c.env.DB.prepare('SELECT id FROM ticket_types WHERE id = ?').bind(ticketTypeId).first()
+            if (!ticketExists) {
+                return c.json({ error: 'Ticket type no longer exists. Please refresh the page.' }, 400)
+            }
+        }
 
         batchStmts.push(c.env.DB.prepare(`
             INSERT INTO participants (id, event_id, ticket_type_id, registration_id, full_name, email, phone, city, gender, payment_status, qr_code, attendance_type, order_id)
@@ -233,7 +254,7 @@ participants.post('/register', async (c) => {
         `).bind(
             participantId,
             eventId,
-            ticketTypeId || null,
+            ticketTypeId,
             registrationId,
             p.full_name,
             p.email,
@@ -272,7 +293,15 @@ participants.post('/register', async (c) => {
     }
 
     // Execute Batch
-    await c.env.DB.batch(batchStmts)
+    try {
+        await c.env.DB.batch(batchStmts)
+    } catch (e: any) {
+        console.error('[REGISTRATION] Batch Insert Error:', e)
+        if (e.message && (e.message.includes('FOREIGN KEY') || e.message.includes('SQLITE_CONSTRAINT'))) {
+            return c.json({ error: 'Terjadi kesalahan validasi data. Kemungkinan tipe tiket atau data event telah berubah. Silakan refresh halaman dan coba lagi.' }, 400)
+        }
+        return c.json({ error: 'Gagal memproses pendaftaran. Silakan coba lagi.' }, 500)
+    }
 
     // Handle WhatsApp (Only for FREE events immediately)
     // For PAID events, it waits for payment.
