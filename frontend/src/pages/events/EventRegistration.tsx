@@ -568,6 +568,20 @@ ${bankSection}`
             <Helmet>
                 <title>{event?.title || 'E-TIKET'}</title>
                 <meta name="description" content={event?.description?.substring(0, 160).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
+
+                {/* Open Graph / Facebook */}
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content={window.location.href} />
+                <meta property="og:title" content={event?.title || 'E-TIKET'} />
+                <meta property="og:description" content={event?.description?.substring(0, 160).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
+                {images.length > 0 && <meta property="og:image" content={images[0]} />}
+
+                {/* Twitter */}
+                <meta property="twitter:card" content="summary_large_image" />
+                <meta property="twitter:url" content={window.location.href} />
+                <meta property="twitter:title" content={event?.title || 'E-TIKET'} />
+                <meta property="twitter:description" content={event?.description?.substring(0, 160).replace(/\n/g, ' ') || 'Daftar event di sini.'} />
+                {images.length > 0 && <meta property="twitter:image" content={images[0]} />}
             </Helmet>
 
             {/* Header */}
