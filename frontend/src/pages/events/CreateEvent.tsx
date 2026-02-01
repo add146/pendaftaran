@@ -9,6 +9,7 @@ interface EventFormData {
     event_date: string
     event_time: string
     location: string
+    location_map_url: string
     capacity: string
     event_mode: 'free' | 'paid'
     payment_mode: 'manual' | 'auto'
@@ -58,6 +59,7 @@ export default function CreateEvent() {
         event_date: '',
         event_time: '',
         location: '',
+        location_map_url: '',
         capacity: '',
         event_mode: 'free',
         payment_mode: 'manual',
@@ -124,6 +126,7 @@ export default function CreateEvent() {
                 event_date: formData.event_date,
                 event_time: formData.event_time,
                 location: formData.location,
+                location_map_url: formData.location_map_url,
                 capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
                 event_mode: formData.event_mode,
                 payment_mode: formData.payment_mode,
@@ -260,6 +263,18 @@ export default function CreateEvent() {
                                     </div>
 
                                     <div>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.location_map_url') || 'Link Google Maps'}</label>
+                                        <input
+                                            type="url"
+                                            value={formData.location_map_url}
+                                            onChange={(e) => updateField('location_map_url', e.target.value)}
+                                            placeholder="https://goo.gl/maps/..."
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Link Google Maps untuk lokasi event (Offline/Hybrid)</p>
+                                    </div>
+
+                                    <div>
                                         <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.capacity')}</label>
                                         <input
                                             type="number"
@@ -269,6 +284,21 @@ export default function CreateEvent() {
                                             min="1"
                                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                         />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.whatsapp_cs')} *</label>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-gray-500">+62</span>
+                                            <input
+                                                type="tel"
+                                                value={formData.whatsapp_cs}
+                                                onChange={(e) => updateField('whatsapp_cs', e.target.value)}
+                                                placeholder="81234567890"
+                                                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">{t('admin.event_form.hints.whatsapp_cs')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -584,20 +614,7 @@ export default function CreateEvent() {
 
                                         {formData.payment_mode === 'manual' && (
                                             <>
-                                                <div>
-                                                    <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.whatsapp_cs')} *</label>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-gray-500">+62</span>
-                                                        <input
-                                                            type="tel"
-                                                            value={formData.whatsapp_cs}
-                                                            onChange={(e) => updateField('whatsapp_cs', e.target.value)}
-                                                            placeholder="81234567890"
-                                                            className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-gray-500 mt-1">{t('admin.event_form.hints.whatsapp_cs')}</p>
+
 
                                                 <div className="pt-4 border-t border-gray-200">
                                                     <h4 className="font-medium mb-3 flex items-center gap-2">

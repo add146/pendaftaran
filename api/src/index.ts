@@ -23,6 +23,7 @@ export type Bindings = {
 	MIDTRANS_SERVER_KEY: string
 	MIDTRANS_CLIENT_KEY: string
 	MIDTRANS_IS_PRODUCTION: string
+	GOOGLE_MAPS_API_KEY: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()

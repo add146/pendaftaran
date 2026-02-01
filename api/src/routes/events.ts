@@ -81,7 +81,8 @@ events.get('/:id', authMiddleware, async (c) => {
     ...event,
     ticket_types: tickets.results,
     bulk_discounts: discounts.results,
-    stats
+    stats,
+    google_maps_api_key: c.env.GOOGLE_MAPS_API_KEY
   })
 })
 
@@ -89,7 +90,7 @@ events.get('/:id', authMiddleware, async (c) => {
 events.post('/', authMiddleware, async (c) => {
   const user = c.get('user')
   const body = await c.req.json()
-  const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions, auto_close, donation_enabled, donation_min_amount, donation_description } = body
+  const { title, description, event_date, event_time, location, location_map_url, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, images, event_type, online_platform, online_url, online_password, online_instructions, auto_close, donation_enabled, donation_min_amount, donation_description } = body
 
   if (!title || !event_date) {
     return c.json({ error: 'Title and event date required' }, 400)
@@ -103,16 +104,16 @@ events.post('/', authMiddleware, async (c) => {
   await c.env.DB.prepare(`
         INSERT INTO events (
             id, organization_id, title, description, event_date, event_time, 
-            location, capacity, event_mode, payment_mode, whatsapp_cs, 
+            location, location_map_url, capacity, event_mode, payment_mode, whatsapp_cs, 
             bank_name, account_holder_name, account_number, visibility, status, 
             slug, image_url, event_type, online_platform, online_url, 
             online_password, online_instructions, note, icon_type, auto_close,
             donation_enabled, donation_min_amount, donation_description
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
     eventId, user.orgId, title, description || null, event_date, event_time || null,
-    location || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null,
+    location || null, location_map_url || null, capacity || null, event_mode || 'free', payment_mode || 'manual', whatsapp_cs || null,
     bank_name || null, account_holder_name || null, account_number || null, visibility || 'public',
     slug, imageUrl, event_type || 'offline', online_platform || null, online_url || null,
     online_password || null, online_instructions || null, body.note || null, body.icon_type || 'info',
@@ -136,7 +137,7 @@ events.put('/:id', authMiddleware, async (c) => {
       certificateConfigLength: body.certificate_config ? body.certificate_config.length : 0
     })
 
-    const { title, description, event_date, event_time, location, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close, bulk_discounts } = body
+    const { title, description, event_date, event_time, location, location_map_url, capacity, event_mode, payment_mode, whatsapp_cs, bank_name, account_holder_name, account_number, visibility, status, images, ticket_types, event_type, online_platform, online_url, online_password, online_instructions, note, icon_type, auto_close, bulk_discounts } = body
 
     const existing = await c.env.DB.prepare('SELECT id FROM events WHERE id = ? AND organization_id = ?').bind(id, user.orgId).first()
     if (!existing) {
@@ -180,7 +181,9 @@ events.put('/:id', authMiddleware, async (c) => {
             description = COALESCE(?, description),
             event_date = COALESCE(?, event_date),
             event_time = COALESCE(?, event_time),
+            event_time = COALESCE(?, event_time),
             location = COALESCE(?, location),
+            location_map_url = COALESCE(?, location_map_url),
             capacity = COALESCE(?, capacity),
             event_mode = COALESCE(?, event_mode),
             payment_mode = COALESCE(?, payment_mode),
@@ -209,7 +212,9 @@ events.put('/:id', authMiddleware, async (c) => {
         description ?? null,
         event_date ?? null,
         event_time ?? null,
+        event_time ?? null,
         location ?? null,
+        location_map_url ?? null,
         capacity ?? null,
         event_mode ?? null,
         payment_mode ?? null,

@@ -458,6 +458,7 @@ export interface Event {
     location?: string
     location_map_url?: string
     capacity?: number
+    google_maps_api_key?: string
     event_mode: 'free' | 'paid'
     payment_mode?: 'manual' | 'auto'
     whatsapp_cs?: string
@@ -494,6 +495,7 @@ export interface PublicEvent extends Event {
     organization_name?: string
     midtrans_client_key?: string
     midtrans_environment?: string
+    google_maps_api_key?: string
 }
 
 export interface TicketType {
@@ -538,6 +540,7 @@ export interface Participant {
     event_title?: string
     event_date?: string
     event_time?: string
+    location?: string
     note?: string
     icon_type?: 'info' | 'warning' | 'danger'
     whatsapp_status?: 'pending' | 'sent' | 'failed'

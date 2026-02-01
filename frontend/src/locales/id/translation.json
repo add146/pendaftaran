@@ -447,7 +447,7 @@
                 "upload_size": "Unggah hingga 3 gambar untuk slider event. Ukuran yang disarankan: 1080 x 1350 px (rasio 4:5)",
                 "manual_payment": "Kirim nota ke WhatsApp CS",
                 "auto_payment": "Pembayaran online langsung",
-                "whatsapp_cs": "Nomor ini akan menerima nota pembayaran dari pendaftar",
+                "whatsapp_cs": "*Nomor ini sebagai pusat informasi dan akan menerima nota pembayaran dari pendaftar dengan pembayaran manual",
                 "midtrans_warning": "Kunci Produksi Midtrans diperlukan. Buka Pengaturan untuk mengonfigurasi."
             },
             "options": {

@@ -113,7 +113,8 @@ publicRoutes.get('/events/:slug', async (c) => {
     bulk_discounts: discounts.results,
     registration_available: isAvailable,
     midtrans_client_key: midtransClientKey,
-    midtrans_environment: midtransEnvironment
+    midtrans_environment: midtransEnvironment,
+    google_maps_api_key: c.env.GOOGLE_MAPS_API_KEY
   })
 })
 
@@ -173,7 +174,7 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     SELECT p.*, t.name as ticket_name, t.price as ticket_price,
            e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design, e.certificate_config,
            e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions,
-           e.note, e.icon_type
+           e.note, e.icon_type, e.whatsapp_cs
     FROM participants p
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     JOIN events e ON p.event_id = e.id
@@ -236,8 +237,10 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     attendance_type: participant.attendance_type,
     note: participant.note,
     icon_type: participant.icon_type,
+    whatsapp_cs: participant.whatsapp_cs,
     certificate_config: participant.certificate_config,
-    custom_fields: formattedCustomFields
+    custom_fields: formattedCustomFields,
+    google_maps_api_key: c.env.GOOGLE_MAPS_API_KEY
   })
 })
 // Get landing page configuration

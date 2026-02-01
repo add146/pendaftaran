@@ -20,5 +20,7 @@
 		}
 	],
 	// Environment Variables
-	"vars": {}
+	"vars": {
+		"GOOGLE_MAPS_API_KEY": "" // To be set via dashboard or secret
+	}
 }

@@ -28,6 +28,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         backgroundColor: '#ffffff',
         sponsorLogo: null
     })
+    const [googleMapsApiKey, setGoogleMapsApiKey] = useState<string>('')
     const [certificateConfig, setCertificateConfig] = useState<any>(null)
     const [downloadingCertificate, setDownloadingCertificate] = useState(false)
     const [fullParticipant, setFullParticipant] = useState<Partial<Participant> | null>(null)
@@ -68,6 +69,9 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
             // Fetch Event Details (for certificate config)
             eventsAPI.get(eventId)
                 .then(event => {
+                    if (event.google_maps_api_key) {
+                        setGoogleMapsApiKey(event.google_maps_api_key)
+                    }
                     if (event.certificate_config) {
                         try {
                             setCertificateConfig(JSON.parse(event.certificate_config))
@@ -136,7 +140,12 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         }
 
         const width = 400
-        const height = 550 + extraHeight
+        let height = 550 + extraHeight
+
+        // Add height for map if available
+        if (fullParticipant.location && googleMapsApiKey) {
+            height += 210
+        }
 
         canvas.width = width
         canvas.height = height
@@ -186,218 +195,212 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
 
         // Load and draw QR code
         const qrImage = new Image()
-        qrImage.onload = () => {
-            const isOnline = (fullParticipant as any).attendance_type === 'online'
+        qrImage.src = qrImageUrl
+        await new Promise((resolve) => { qrImage.onload = resolve })
 
-            if (!isOnline) {
-                // QR background
-                ctx.fillStyle = '#1f2937'
-                roundRect(ctx, (width - 200) / 2, 120, 200, 200, 16)
-                ctx.fill()
-
-                // QR image
-                ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
-            }
-
-            // Participant name
+        if (!isOnline) {
+            // QR background
             ctx.fillStyle = '#1f2937'
-            ctx.font = 'bold 24px Arial, sans-serif'
-            const name = (fullParticipant.full_name || '').toUpperCase()
-            let nameFontSize = 24
+            roundRect(ctx, (width - 200) / 2, 120, 200, 200, 16)
+            ctx.fill()
+
+            // QR image
+            ctx.drawImage(qrImage, (width - 180) / 2, 130, 180, 180)
+        }
+
+        // Participant name
+        ctx.fillStyle = '#1f2937'
+        ctx.font = 'bold 24px Arial, sans-serif'
+        const name = (fullParticipant.full_name || '').toUpperCase()
+        let nameFontSize = 24
+        ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
+        while (ctx.measureText(name).width > width - 40 && nameFontSize > 14) {
+            nameFontSize -= 1
             ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
-            while (ctx.measureText(name).width > width - 40 && nameFontSize > 14) {
-                nameFontSize -= 1
-                ctx.font = `bold ${nameFontSize}px Arial, sans-serif`
-            }
+        }
 
-            // Adjust positions based on online status
-            const nameY = isOnline ? 180 : 360
-            ctx.fillText(name, width / 2, nameY)
+        // Adjust positions based on online status
+        const nameY = isOnline ? 180 : 360
+        ctx.fillText(name, width / 2, nameY)
 
-            // Ticket type with primary color
-            ctx.fillStyle = design.primaryColor
+        // Ticket type with primary color
+        ctx.fillStyle = design.primaryColor
+        ctx.font = 'bold 14px Arial, sans-serif'
+        const ticketY = isOnline ? 210 : 390
+        ctx.fillText((fullParticipant.ticket_name || t('id_card.participant')).toUpperCase(), width / 2, ticketY)
+
+        let currentY = isOnline ? 240 : 420
+
+        // Custom Fields (Above City, Bold)
+        if (customFieldsToShow.length > 0) {
+            ctx.fillStyle = '#374151'
             ctx.font = 'bold 14px Arial, sans-serif'
-            const ticketY = isOnline ? 210 : 390
-            ctx.fillText((fullParticipant.ticket_name || t('id_card.participant')).toUpperCase(), width / 2, ticketY)
-
-            let currentY = isOnline ? 240 : 420
-
-            // Custom Fields (Above City, Bold)
-            if (customFieldsToShow.length > 0) {
-                ctx.fillStyle = '#374151'
-                ctx.font = 'bold 14px Arial, sans-serif'
-                for (const field of customFieldsToShow) {
-                    // Check if response is valid
-                    if (field.response) {
-                        // Truncate if too long
-                        let text = field.response.toString()
-                        if (text.length > 35) text = text.substring(0, 32) + '...'
-                        ctx.fillText(text.toUpperCase(), width / 2, currentY)
-                        currentY += 25
-                    }
+            for (const field of customFieldsToShow) {
+                // Check if response is valid
+                if (field.response) {
+                    // Truncate if too long
+                    let text = field.response.toString()
+                    if (text.length > 35) text = text.substring(0, 32) + '...'
+                    ctx.fillText(text.toUpperCase(), width / 2, currentY)
+                    currentY += 25
                 }
             }
+        }
 
-            // City
-            if (fullParticipant.city) {
-                ctx.fillStyle = '#6b7280'
-                ctx.font = '13px Arial, sans-serif'
-                ctx.fillText(`🏢 ${fullParticipant.city}`, width / 2, currentY)
+        // City
+        if (fullParticipant.city) {
+            ctx.fillStyle = '#6b7280'
+            ctx.font = '13px Arial, sans-serif'
+            ctx.fillText(`🏢 ${fullParticipant.city}`, width / 2, currentY)
+            currentY += 25
+        }
+
+        // Space before badge
+        currentY += 15
+
+        // Registration ID badge
+        // Convert hex to rgba
+        const hexToRgba = (hex: string, alpha: number) => {
+            const r = parseInt(hex.slice(1, 3), 16)
+            const g = parseInt(hex.slice(3, 5), 16)
+            const b = parseInt(hex.slice(5, 7), 16)
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`
+        }
+        ctx.fillStyle = hexToRgba(design.primaryColor, 0.1)
+        const regBadgeWidth = 200
+        const regBadgeHeight = 40
+        roundRect(ctx, (width - regBadgeWidth) / 2, currentY, regBadgeWidth, regBadgeHeight, 10)
+        ctx.fill()
+
+        ctx.fillStyle = design.primaryColor
+        ctx.font = 'bold 14px, Courier, monospace'
+        ctx.fillText(fullParticipant.registration_id || '', width / 2, currentY + 25)
+
+        currentY += 55
+
+        // Draw Online Event Details if Online
+        if (isOnline) {
+            // Draw a light blue background for online details
+            ctx.fillStyle = '#eff6ff' // blue-50
+
+            ctx.fillStyle = '#1e40af' // blue-800
+            ctx.font = 'bold 16px Arial, sans-serif'
+            ctx.fillText((t('ticket.online_event_details') || 'Online Event Details').toUpperCase(), width / 2, currentY + 10)
+            currentY += 30
+
+            ctx.font = '14px Arial, sans-serif'
+            ctx.fillStyle = '#374151' // gray-700
+
+            if (fullParticipant.online_platform) {
+                ctx.fillText(`Platform: ${fullParticipant.online_platform.replace('_', ' ')}`.toUpperCase(), width / 2, currentY)
                 currentY += 25
             }
 
-            // Custom Fields
-            if (customFieldsToShow.length > 0) {
+            if (fullParticipant.online_url) {
+                ctx.fillStyle = design.primaryColor
+                ctx.font = 'bold 12px Arial, sans-serif'
+                const urlText = fullParticipant.online_url.replace(/^https?:\/\//, '')
+                // Turncate URL if too long
+                let displayUrl = urlText
+                if (displayUrl.length > 40) displayUrl = displayUrl.substring(0, 37) + '...'
+
+                ctx.fillText(displayUrl, width / 2, currentY)
+                currentY += 25
+            }
+
+            if (fullParticipant.online_password) {
                 ctx.fillStyle = '#374151'
-                ctx.font = 'bold 13px Arial, sans-serif'
-                for (const field of customFieldsToShow) {
-                    // Check if response is valid
-                    if (field.response) {
-                        // Truncate if too long
-                        let text = field.response.toString()
-                        if (text.length > 35) text = text.substring(0, 32) + '...'
-                        ctx.fillText(text.toUpperCase(), width / 2, currentY)
-                        currentY += 25
-                    }
-                }
+                ctx.font = '14px Arial, sans-serif'
+                ctx.fillText(`Pass: ${fullParticipant.online_password}`, width / 2, currentY)
+                currentY += 25
             }
 
-            // Space before badge
-            currentY += 15
-
-            // Registration ID badge
-            // Convert hex to rgba
-            const hexToRgba = (hex: string, alpha: number) => {
-                const r = parseInt(hex.slice(1, 3), 16)
-                const g = parseInt(hex.slice(3, 5), 16)
-                const b = parseInt(hex.slice(5, 7), 16)
-                return `rgba(${r}, ${g}, ${b}, ${alpha})`
+            if (fullParticipant.online_instructions) {
+                // Simple wrapping for instructions at plain text
+                currentY += 10
+                ctx.font = 'italic 12px Arial, sans-serif'
+                ctx.fillStyle = '#6b7280'
+                // We won't complex wrap here on canvas for now, just first line or truncate
+                let instructions = fullParticipant.online_instructions
+                if (instructions.length > 50) instructions = instructions.substring(0, 47) + '...'
+                ctx.fillText(instructions, width / 2, currentY)
+                currentY += 25
             }
-            ctx.fillStyle = hexToRgba(design.primaryColor, 0.1)
-            const regBadgeWidth = 200
-            const regBadgeHeight = 40
-            roundRect(ctx, (width - regBadgeWidth) / 2, currentY, regBadgeWidth, regBadgeHeight, 10)
+            currentY += 20 // Spacer
+        }
+
+        // Note with Icon (if present)
+        if (fullParticipant.note) {
+            // ... note logic existing ...
+            const iconMap: Record<string, string> = {
+                info: 'ℹ️',
+                warning: '⚠️',
+                danger: '🛑'
+            }
+            const icon = iconMap[fullParticipant.icon_type || 'info']
+            const noteText = `${icon} ${fullParticipant.note}`.toUpperCase()
+
+            // Background for note
+            const noteColorMap: Record<string, string> = {
+                info: '#e0f2fe',    // blue-100
+                warning: '#ffedd5', // orange-100
+                danger: '#fee2e2'   // red-100
+            }
+            const noteTextColorMap: Record<string, string> = {
+                info: '#0369a1',    // blue-700
+                warning: '#c2410c', // orange-700
+                danger: '#b91c1c'   // red-700
+            }
+
+            ctx.fillStyle = noteColorMap[fullParticipant.icon_type || 'info'] || '#f3f4f6'
+            roundRect(ctx, 40, currentY, width - 80, 40, 8)
             ctx.fill()
 
-            ctx.fillStyle = design.primaryColor
-            ctx.font = 'bold 14px, Courier, monospace'
-            ctx.fillText(fullParticipant.registration_id || '', width / 2, currentY + 25)
-
-            currentY += 55
-
-            // Draw Online Event Details if Online
-            if (isOnline) {
-                // Draw a light blue background for online details
-                ctx.fillStyle = '#eff6ff' // blue-50
-
-                ctx.fillStyle = '#1e40af' // blue-800
-                ctx.font = 'bold 16px Arial, sans-serif'
-                ctx.fillText((t('ticket.online_event_details') || 'Online Event Details').toUpperCase(), width / 2, currentY + 10)
-                currentY += 30
-
-                ctx.font = '14px Arial, sans-serif'
-                ctx.fillStyle = '#374151' // gray-700
-
-                if (fullParticipant.online_platform) {
-                    ctx.fillText(`Platform: ${fullParticipant.online_platform.replace('_', ' ')}`.toUpperCase(), width / 2, currentY)
-                    currentY += 25
-                }
-
-                if (fullParticipant.online_url) {
-                    ctx.fillStyle = design.primaryColor
-                    ctx.font = 'bold 12px Arial, sans-serif'
-                    const urlText = fullParticipant.online_url.replace(/^https?:\/\//, '')
-                    // Turncate URL if too long
-                    let displayUrl = urlText
-                    if (displayUrl.length > 40) displayUrl = displayUrl.substring(0, 37) + '...'
-
-                    ctx.fillText(displayUrl, width / 2, currentY)
-                    currentY += 25
-                }
-
-                if (fullParticipant.online_password) {
-                    ctx.fillStyle = '#374151'
-                    ctx.font = '14px Arial, sans-serif'
-                    ctx.fillText(`Pass: ${fullParticipant.online_password}`, width / 2, currentY)
-                    currentY += 25
-                }
-
-                if (fullParticipant.online_instructions) {
-                    // Simple wrapping for instructions at plain text
-                    currentY += 10
-                    ctx.font = 'italic 12px Arial, sans-serif'
-                    ctx.fillStyle = '#6b7280'
-                    // We won't complex wrap here on canvas for now, just first line or truncate
-                    let instructions = fullParticipant.online_instructions
-                    if (instructions.length > 50) instructions = instructions.substring(0, 47) + '...'
-                    ctx.fillText(instructions, width / 2, currentY)
-                    currentY += 25
-                }
-                currentY += 20 // Spacer
-            }
-
-            // Note with Icon (if present) - Only if NOT online to avoid clutter? 
-            // Or render it still. Let's render it if space allows, but user prioritized online details.
-            // If online, maybe skip note or push it down? 
-            // The user said "posisinya dibawah nomer registrasi", so online details go there.
-            // Note logic below:
-
-            if (fullParticipant.note) {
-                // ... note logic existing ...
-                // Adjust currentY usage in note logic if we want to keep it
-                const iconMap: Record<string, string> = {
-                    info: 'ℹ️',
-                    warning: '⚠️',
-                    danger: '🛑'
-                }
-                const icon = iconMap[fullParticipant.icon_type || 'info']
-                const noteText = `${icon} ${fullParticipant.note}`.toUpperCase()
-
-                // Background for note
-                const noteColorMap: Record<string, string> = {
-                    info: '#e0f2fe',    // blue-100
-                    warning: '#ffedd5', // orange-100
-                    danger: '#fee2e2'   // red-100
-                }
-                const noteTextColorMap: Record<string, string> = {
-                    info: '#0369a1',    // blue-700
-                    warning: '#c2410c', // orange-700
-                    danger: '#b91c1c'   // red-700
-                }
-
-                ctx.fillStyle = noteColorMap[fullParticipant.icon_type || 'info'] || '#f3f4f6'
-                roundRect(ctx, 40, currentY, width - 80, 40, 8)
-                ctx.fill()
-
-                ctx.fillStyle = noteTextColorMap[fullParticipant.icon_type || 'info'] || '#374151'
-                ctx.font = 'bold 12px Arial, sans-serif'
-                ctx.fillText(noteText, width / 2, currentY + 25)
-            } else if (design.sponsorLogo) {
-                // If no note, show sponsor logo
-                // We load it here, but drawing image is async.
-                // Since this is already in an onload, we need to load another image.
-                // Nesting callbacks or using await (if we made this an async function and used promises for image loading)
-                // But simplified:
+            ctx.fillStyle = noteTextColorMap[fullParticipant.icon_type || 'info'] || '#374151'
+            ctx.font = 'bold 12px Arial, sans-serif'
+            ctx.fillText(noteText, width / 2, currentY + 25)
+        } else if (design.sponsorLogo) {
+            // If no note, show sponsor logo
+            try {
                 const logoImg = new Image()
-                logoImg.crossOrigin = "Anonymous" // Important for canvas export
-                logoImg.onload = () => {
-                    const aspect = logoImg.width / logoImg.height
-                    const logoHeight = 40
-                    const logoWidth = logoHeight * aspect
-                    ctx.drawImage(logoImg, (width - logoWidth) / 2, currentY + 5, logoWidth, logoHeight)
-                    setCardDataUrl(canvas.toDataURL('image/png'))
-                }
-                logoImg.onerror = () => {
-                    // If logo fails, just save what we have
-                    setCardDataUrl(canvas.toDataURL('image/png'))
-                }
+                logoImg.crossOrigin = "Anonymous"
                 logoImg.src = design.sponsorLogo
-                return
+                await new Promise((resolve) => {
+                    logoImg.onload = resolve
+                    logoImg.onerror = resolve // proceed anyway
+                })
+                const aspect = logoImg.width / logoImg.height
+                const logoHeight = 40
+                const logoWidth = logoHeight * aspect
+                ctx.drawImage(logoImg, (width - logoWidth) / 2, currentY + 5, logoWidth, logoHeight)
+            } catch (e) {
+                // ignore
             }
-
-            // Generate data URL
-            setCardDataUrl(canvas.toDataURL('image/png'))
         }
+
+        // Event Location with Static Map
+        if (fullParticipant.location && googleMapsApiKey) {
+            // Try to load static map
+            try {
+                const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(fullParticipant.location)}&zoom=15&size=400x200&maptype=roadmap&markers=color:red%7C${encodeURIComponent(fullParticipant.location)}&key=${googleMapsApiKey}`
+
+                const mapImg = new Image()
+                mapImg.crossOrigin = "Anonymous"
+                mapImg.src = mapUrl
+                await new Promise((resolve) => {
+                    mapImg.onload = resolve
+                    mapImg.onerror = resolve
+                })
+
+                ctx.drawImage(mapImg, 0, currentY, width, 200)
+                currentY += 210
+            } catch (e) {
+                // console.error(e)
+            }
+        }
+
+        // Generate data URL
+        setCardDataUrl(canvas.toDataURL('image/png'))
         qrImage.src = qrImageUrl
     }
 
