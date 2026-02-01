@@ -185,8 +185,11 @@ export default function EventRegistration() {
     const { subtotal, discount, donation, total } = calculateTotals()
 
     // Determine effective payment mode (mirroring handleSubmit logic)
+    // Use the SAME logic for clientKey availability as the script loader to ensure consistency
+    const hasMidtrans = !!(event && (event.midtrans_client_key || import.meta.env.VITE_MIDTRANS_CLIENT_KEY || 'SB-Mid-client-TEST'))
+
     const effectivePaymentMode = event && (
-        (event.event_mode === 'free' && total > 0 && event.midtrans_client_key)
+        (event.event_mode === 'free' && total > 0 && hasMidtrans)
             ? 'auto'
             : (event.payment_mode || 'manual')
     )
