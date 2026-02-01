@@ -366,7 +366,7 @@ export default function PublicTicket() {
                                             (ticket.icon_type || 'info') === 'warning' ? '⚠️' :
                                                 '🛑'}
                                     </span>
-                                    <span className="font-bold text-sm uppercase tracking-wide whitespace-pre-wrap break-words">
+                                    <span className="font-bold text-sm uppercase tracking-wide whitespace-pre-wrap break-words w-full">
                                         {ticket.note.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
                                             part.match(/^https?:\/\//) ? (
                                                 <a
@@ -374,7 +374,7 @@ export default function PublicTicket() {
                                                     href={part}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="underline font-bold hover:opacity-75 transition-opacity"
+                                                    className="underline font-bold hover:opacity-75 transition-opacity break-all text-blue-600"
                                                     onClick={(e) => e.stopPropagation()}
                                                 >
                                                     {part}
@@ -386,6 +386,7 @@ export default function PublicTicket() {
                                     </span>
                                 </div>
                             </div>
+
                         )}
 
                         {/* Event Location */}
@@ -411,18 +412,63 @@ export default function PublicTicket() {
                                         </div>
                                     )}
 
-                                    {ticket.online_url ? (
-                                        <a
-                                            href={ticket.online_url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                                            style={{ backgroundColor: design.primaryColor }}
-                                        >
-                                            <span className="material-symbols-outlined">link</span>
-                                            Join Meeting
-                                        </a>
-                                    ) : (
+                                    {ticket.online_url ? (() => {
+                                        // Calculate if button should be active (1 hour before event)
+                                        let isButtonActive = true
+                                        // Only check time if we have valid date and time
+                                        if (ticket.event_date && ticket.event_time) {
+                                            try {
+                                                const eventDateTimeStr = `${ticket.event_date}T${ticket.event_time}:00`
+                                                const eventTime = new Date(eventDateTimeStr).getTime()
+                                                // Adjust for timezone if needed - assuming server returns local time or handling properly
+                                                // Ideally strictly parse content. For now assuming event_date/time are correct ISO parts.
+
+                                                // Create a cutoff time: 1 hour (3600000 ms) before event
+                                                const activationTime = eventTime - 3600000
+                                                const userTime = new Date().getTime()
+                                                // Note: userTime is client browser time. eventTime should be looked at carefuly.
+                                                // Since event_date/time are just strings, "new Date('YYYY-MM-DDTHH:MM:00')" creates a Date in LOCAL browser timezone.
+                                                // This is effectively comparing "Event Time in User's Timezone" vs "User's Current Time".
+                                                // This works if the user is in the same timezone or if we ignore timezone differences (which is risky but standard for simple implementations).
+
+                                                if (userTime < activationTime) {
+                                                    isButtonActive = false
+                                                }
+                                            } catch (e) {
+                                                console.error("Date parse error", e)
+                                            }
+                                        }
+
+                                        return (
+                                            <>
+                                                {isButtonActive ? (
+                                                    <a
+                                                        href={ticket.online_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="block w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                                                        style={{ backgroundColor: design.primaryColor }}
+                                                    >
+                                                        <span className="material-symbols-outlined">link</span>
+                                                        Join Meeting
+                                                    </a>
+                                                ) : (
+                                                    <button
+                                                        disabled
+                                                        className="block w-full py-2 bg-gray-300 text-gray-500 font-bold rounded-lg cursor-not-allowed flex items-center justify-center gap-2"
+                                                    >
+                                                        <span className="material-symbols-outlined">link_off</span>
+                                                        Join Meeting
+                                                    </button>
+                                                )}
+                                                {!isButtonActive && (
+                                                    <p className="text-[10px] text-gray-500 italic mt-1 bg-gray-50 py-1 px-2 rounded">
+                                                        *link akan aktif menjelang acara (1 jam sebelum jadwal)
+                                                    </p>
+                                                )}
+                                            </>
+                                        )
+                                    })() : (
                                         <div className="text-gray-500 italic text-sm">Link belum tersedia</div>
                                     )}
 
