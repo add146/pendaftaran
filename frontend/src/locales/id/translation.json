@@ -379,6 +379,7 @@
                 "date": "Tanggal Event",
                 "time": "Waktu Mulai",
                 "location": "Lokasi",
+                "location_map_url": "Link Google Maps",
                 "capacity": "Kapasitas",
                 "platform": "Platform",
                 "url": "URL Meeting (Opsional)",
