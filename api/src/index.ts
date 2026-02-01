@@ -57,7 +57,7 @@ app.get('/', (c) => {
 	return c.json({
 		status: 'ok',
 		message: 'E-TIKET API',
-		version: '1.2.0'
+		version: '1.2.1-fix-migration'
 	})
 })
 
