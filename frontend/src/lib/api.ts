@@ -496,6 +496,7 @@ export interface PublicEvent extends Event {
     midtrans_client_key?: string
     midtrans_environment?: string
     google_maps_api_key?: string
+    location_map_url?: string
 }
 
 export interface TicketType {
