@@ -430,6 +430,7 @@ export const publicAPI = {
             event_date: string
             event_time?: string
             location?: string
+            location_map_url?: string
         }>(`/api/public/ticket/${registrationId}`),
 
     getLandingConfig: () =>

@@ -389,10 +389,10 @@ export default function EditEvent() {
                                                     type="url"
                                                     value={formData.location_map_url}
                                                     onChange={(e) => updateField('location_map_url', e.target.value)}
-                                                    placeholder="https://goo.gl/maps/..."
+                                                    placeholder="https://www.google.com/maps/place/..."
                                                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
                                                 />
-                                                <p className="text-xs text-gray-500 mt-1">Link Google Maps untuk lokasi event (Offline/Hybrid)</p>
+                                                <p className="text-xs text-gray-500 mt-1">Link Google Maps untuk lokasi event (Offline/Hybrid). <b>Gunakan Link Panjang</b> dari address bar browser, jangan gunakan link share (pendek).</p>
                                             </div>
 
                                             <div>
