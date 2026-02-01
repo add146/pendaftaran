@@ -454,7 +454,9 @@ events.post('/:id/broadcast-single', authMiddleware, async (c) => {
 📅 *Waktu:* ${event.event_date} ${event.event_time || ''}
 
 💻 *Join via:* ${platformName.charAt(0).toUpperCase() + platformName.slice(1)}
-🔗 *Link:* ${event.online_url}`
+
+Silahkan cek Virtual ID Card (E-Tiket) masing-masing:
+https://etiket.my.id/ticket/${participant.registration_id}`
 
   if (event.online_password) {
     message += `\n🔑 *Password:* ${event.online_password}`
