@@ -682,7 +682,7 @@ ${bankSection}`
                             </div>
 
                             {/* Map Embed */}
-                            {event?.event_type !== 'online' && event?.google_maps_api_key && (event.location || event.location_map_url) && (
+                            {event?.event_type !== 'online' && event?.google_maps_api_key && event.location_map_url && (
                                 <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm mt-4 custom-map-container" style={{ height: '300px' }}>
                                     <iframe
                                         width="100%"

@@ -24,6 +24,7 @@ interface TicketData {
     event_date: string
     event_time?: string
     location?: string
+    location_map_url?: string
     id_card_design?: IdCardDesign
     event_type?: 'offline' | 'online' | 'hybrid'
     online_platform?: 'google_meet' | 'zoom' | 'youtube' | 'custom'
@@ -396,7 +397,7 @@ export default function PublicTicket() {
                             <div className="text-center text-sm text-gray-500">
                                 <span className="material-symbols-outlined text-[16px] align-middle mr-1">place</span>
                                 {ticket.location}
-                                {ticket.google_maps_api_key && (
+                                {ticket.google_maps_api_key && ticket.location_map_url && (
                                     <div className="mt-3 rounded-xl overflow-hidden shadow-sm h-32 w-full">
                                         <iframe
                                             width="100%"
