@@ -183,7 +183,20 @@ export default function Donations() {
                                     <tr key={donation.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="py-4 px-6">
                                             <div className="font-medium text-gray-900">{donation.donor_name || 'Anonymous'}</div>
-                                            <div className="text-sm text-gray-500">{donation.donor_email}</div>
+                                            {donation.donor_phone ? (
+                                                <a
+                                                    href={`https://wa.me/${donation.donor_phone.replace(/^0/, '62').replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1 mt-0.5"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" className="w-3 h-3" />
+                                                    {donation.donor_phone}
+                                                </a>
+                                            ) : (
+                                                <div className="text-sm text-gray-500">{donation.donor_email}</div>
+                                            )}
                                         </td>
                                         <td className="py-4 px-6 text-sm text-gray-600">{donation.event_title}</td>
                                         <td className="py-4 px-6 font-medium text-gray-900">{formatRp(donation.amount)}</td>

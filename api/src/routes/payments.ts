@@ -242,9 +242,20 @@ payments.post('/create', async (c) => {
 
         const paymentId = `pay_${crypto.randomUUID().slice(0, 8)}`
         await c.env.DB.prepare(`
-            INSERT INTO payments (id, participant_id, order_id, amount, status, midtrans_response)
-            VALUES (?, ?, ?, ?, 'pending', ?)
-        `).bind(paymentId, firstParticipant.id, orderId, finalAmount, JSON.stringify(data)).run()
+            INSERT INTO payments (id, participant_id, order_id, amount, status, payment_type, event_id, customer_name, customer_email, customer_phone, midtrans_response)
+            VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)
+        `).bind(
+            paymentId,
+            firstParticipant.id,
+            orderId,
+            finalAmount,
+            'midtrans',
+            eventId,
+            customerName || firstParticipant.full_name,
+            customerEmail || firstParticipant.email,
+            customerPhone || firstParticipant.phone || '',
+            JSON.stringify(data)
+        ).run()
 
         // Update ALL participants payment status
         const placeholders = participants.map(() => '?').join(',')
@@ -256,9 +267,9 @@ payments.post('/create', async (c) => {
         if (donationAmount && typeof donationAmount === 'number' && donationAmount > 0) {
             const donationId = `don_${crypto.randomUUID().slice(0, 8)}`
             await c.env.DB.prepare(`
-                INSERT INTO donations (id, participant_id, order_id, amount, status, payment_type)
-                VALUES (?, ?, ?, ?, 'pending', 'midtrans')
-            `).bind(donationId, firstParticipant.id, orderId, donationAmount).run()
+                INSERT INTO donations (id, participant_id, order_id, amount, status, payment_type, event_id, donor_name, donor_email, donor_phone)
+                VALUES (?, ?, ?, ?, 'pending', 'midtrans', ?, ?, ?, ?)
+            `).bind(donationId, firstParticipant.id, orderId, donationAmount, eventId, firstParticipant.full_name, firstParticipant.email, firstParticipant.phone).run()
         }
 
         return c.json({
@@ -447,10 +458,14 @@ payments.get('/', authMiddleware, async (c) => {
     const offset = parseInt(c.req.query('offset') || '0')
 
     const payments = await c.env.DB.prepare(`
-        SELECT p.*, pa.full_name, pa.email, e.title as event_title
+        SELECT p.*, 
+        COALESCE(p.customer_name, pa.full_name) as full_name, 
+        COALESCE(p.customer_email, pa.email) as email, 
+        COALESCE(p.customer_phone, pa.phone) as customer_phone,
+        e.title as event_title
         FROM payments p
         LEFT JOIN participants pa ON p.participant_id = pa.id
-        LEFT JOIN events e ON pa.event_id = e.id
+        LEFT JOIN events e ON p.event_id = e.id
         WHERE e.organization_id = ?
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?

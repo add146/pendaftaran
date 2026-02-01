@@ -582,6 +582,7 @@ export interface Payment {
     created_at: string
     full_name?: string
     email?: string
+    customer_phone?: string
     event_title?: string
 }
 
@@ -671,6 +672,7 @@ export interface Donation {
     created_at: string
     donor_name?: string
     donor_email?: string
+    donor_phone?: string
     event_title?: string
 }
 

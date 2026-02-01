@@ -147,7 +147,19 @@ export default function Payments() {
                                             <td className="px-6 py-4">
                                                 <div>
                                                     <p className="font-medium">{payment.full_name || '-'}</p>
-                                                    <p className="text-sm text-gray-500">{payment.email || '-'}</p>
+                                                    {payment.customer_phone ? (
+                                                        <a
+                                                            href={`https://wa.me/${payment.customer_phone.replace(/^0/, '62').replace(/\D/g, '')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1 mt-0.5"
+                                                        >
+                                                            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" className="w-3 h-3" />
+                                                            {payment.customer_phone}
+                                                        </a>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500">{payment.email || '-'}</p>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">{payment.event_title || '-'}</td>

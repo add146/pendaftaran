@@ -11,10 +11,14 @@ donations.get('/', authMiddleware, async (c) => {
     const { event_id, start_date, end_date, limit = '20', offset = '0' } = c.req.query()
 
     let query = `
-        SELECT d.*, p.full_name as donor_name, p.email as donor_email, e.title as event_title
+        SELECT d.*, 
+        COALESCE(d.donor_name, p.full_name) as donor_name, 
+        COALESCE(d.donor_email, p.email) as donor_email, 
+        COALESCE(d.donor_phone, p.phone) as donor_phone, 
+        e.title as event_title
         FROM donations d
-        JOIN participants p ON d.participant_id = p.id
-        JOIN events e ON p.event_id = e.id
+        LEFT JOIN participants p ON d.participant_id = p.id
+        JOIN events e ON d.event_id = e.id
         WHERE e.organization_id = ?
     `
     const params: any[] = [user.orgId]
@@ -43,8 +47,8 @@ donations.get('/', authMiddleware, async (c) => {
     let countQuery = `
         SELECT COUNT(*) as total
         FROM donations d
-        JOIN participants p ON d.participant_id = p.id
-        JOIN events e ON p.event_id = e.id
+        LEFT JOIN participants p ON d.participant_id = p.id
+        JOIN events e ON d.event_id = e.id
         WHERE e.organization_id = ?
     `
     const countParams: any[] = [user.orgId]
@@ -85,8 +89,8 @@ donations.get('/stats', authMiddleware, async (c) => {
             COUNT(*) as total_donors, 
             COALESCE(SUM(amount), 0) as total_amount 
         FROM donations d
-        JOIN participants p ON d.participant_id = p.id
-        JOIN events e ON p.event_id = e.id
+        LEFT JOIN participants p ON d.participant_id = p.id
+        JOIN events e ON d.event_id = e.id
         WHERE e.organization_id = ? AND d.status = 'paid'
     `
     const params: any[] = [user.orgId]
@@ -118,10 +122,14 @@ donations.get('/export-csv', authMiddleware, async (c) => {
     const { event_id, start_date, end_date } = c.req.query()
 
     let query = `
-        SELECT d.*, p.full_name as donor_name, p.email as donor_email, e.title as event_title
+        SELECT d.*, 
+        COALESCE(d.donor_name, p.full_name) as donor_name, 
+        COALESCE(d.donor_email, p.email) as donor_email, 
+        COALESCE(d.donor_phone, p.phone) as donor_phone, 
+        e.title as event_title
         FROM donations d
-        JOIN participants p ON d.participant_id = p.id
-        JOIN events e ON p.event_id = e.id
+        LEFT JOIN participants p ON d.participant_id = p.id
+        JOIN events e ON d.event_id = e.id
         WHERE e.organization_id = ?
     `
     const params: any[] = [user.orgId]

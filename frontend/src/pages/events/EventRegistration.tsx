@@ -184,6 +184,13 @@ export default function EventRegistration() {
 
     const { subtotal, discount, donation, total } = calculateTotals()
 
+    // Determine effective payment mode (mirroring handleSubmit logic)
+    const effectivePaymentMode = event && (
+        (event.event_mode === 'free' && total > 0 && event.midtrans_client_key)
+            ? 'auto'
+            : (event.payment_mode || 'manual')
+    )
+
 
     const addParticipant = () => {
         setParticipants(prev => [...prev, {
@@ -931,39 +938,41 @@ ${bankSection}`
 
 
                                             {/* Price Calculation (Summary) */}
-                                            <div className="bg-gray-50 p-4 rounded-xl space-y-2">
-                                                {event.event_mode === 'paid' && (
-                                                    <div className="flex justify-between text-gray-600">
-                                                        <span>Total Tiket ({participants.length}x)</span>
-                                                        <span>{formatRp(subtotal)}</span>
-                                                    </div>
-                                                )}
-                                                {discount > 0 && (
-                                                    <div className="flex justify-between text-green-600 font-medium">
-                                                        <span>Diskon Group</span>
-                                                        <span>- {formatRp(discount)}</span>
-                                                    </div>
-                                                )}
-                                                {(donation || 0) > 0 && (
-                                                    <div className="flex justify-between text-pink-600 font-medium">
-                                                        <span>Donasi</span>
-                                                        <span>+ {formatRp(donation || 0)}</span>
-                                                    </div>
-                                                )}
+                                            {total > 0 && (
+                                                <div className="bg-gray-50 p-4 rounded-xl space-y-2">
+                                                    {event.event_mode === 'paid' && (
+                                                        <div className="flex justify-between text-gray-600">
+                                                            <span>Total Tiket ({participants.length}x)</span>
+                                                            <span>{formatRp(subtotal)}</span>
+                                                        </div>
+                                                    )}
+                                                    {discount > 0 && (
+                                                        <div className="flex justify-between text-green-600 font-medium">
+                                                            <span>Diskon Group</span>
+                                                            <span>- {formatRp(discount)}</span>
+                                                        </div>
+                                                    )}
+                                                    {(donation || 0) > 0 && (
+                                                        <div className="flex justify-between text-pink-600 font-medium">
+                                                            <span>Donasi</span>
+                                                            <span>+ {formatRp(donation || 0)}</span>
+                                                        </div>
+                                                    )}
 
-                                                <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
-                                                    <span>Total Bayar</span>
-                                                    <span>{formatRp(total)}</span>
+                                                    <div className="flex justify-between text-lg font-bold text-gray-800 pt-2 border-t border-gray-200">
+                                                        <span>Total Bayar</span>
+                                                        <span>{formatRp(total)}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
 
                                             {/* Payment Method Notes */}
-                                            {total > 0 && event.payment_mode === 'manual' && (
+                                            {total > 0 && effectivePaymentMode === 'manual' && (
                                                 <p className="text-xs text-gray-500 text-center italic">
                                                     *transfer antar rekening
                                                 </p>
                                             )}
-                                            {total > 0 && event.payment_mode === 'auto' && (
+                                            {total > 0 && effectivePaymentMode === 'auto' && (
                                                 <p className="text-xs text-gray-500 text-center italic">
                                                     *menggunakan QRIS / Virtual Account
                                                 </p>

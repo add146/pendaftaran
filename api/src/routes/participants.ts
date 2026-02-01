@@ -673,9 +673,18 @@ participants.delete('/:id', authMiddleware, async (c) => {
         return c.json({ error: 'Participant not found' }, 404)
     }
 
+    // Unlink related donations and payments instead of deleting them to preserve financial history
     await c.env.DB.prepare(`
-    DELETE FROM participants WHERE id = ?
-  `).bind(participant.id).run()
+        UPDATE donations SET participant_id = NULL WHERE participant_id = ?
+    `).bind(participant.id).run()
+
+    await c.env.DB.prepare(`
+        UPDATE payments SET participant_id = NULL WHERE participant_id = ?
+    `).bind(participant.id).run()
+
+    await c.env.DB.prepare(`
+        DELETE FROM participants WHERE id = ?
+    `).bind(participant.id).run()
 
     return c.json({
         message: 'Participant deleted successfully'
