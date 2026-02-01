@@ -26,3 +26,13 @@ debug.get('/test-delay', async (c) => {
         status: 'success'
     })
 })
+
+// 3. Manual Migration for Map URL
+debug.get('/run-migration-016', async (c) => {
+    try {
+        await c.env.DB.prepare('ALTER TABLE events ADD COLUMN location_map_url TEXT').run()
+        return c.json({ status: 'success', message: 'Migration 016 applied: Added location_map_url column' })
+    } catch (e: any) {
+        return c.json({ status: 'error', message: e.message, hint: 'Column might already exist' })
+    }
+})
