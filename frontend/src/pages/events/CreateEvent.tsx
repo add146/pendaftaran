@@ -262,17 +262,19 @@ export default function CreateEvent() {
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.location_map_url') || 'Link Google Maps'}</label>
-                                        <input
-                                            type="url"
-                                            value={formData.location_map_url}
-                                            onChange={(e) => updateField('location_map_url', e.target.value)}
-                                            placeholder="https://www.google.com/maps/place/..."
-                                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">Link Google Maps untuk lokasi event (Offline/Hybrid). <b>Gunakan Link Panjang</b> dari address bar browser, jangan gunakan link share (pendek).</p>
-                                    </div>
+                                    {formData.event_type !== 'online' && (
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.location_map_url') || 'Link Google Maps'}</label>
+                                            <input
+                                                type="url"
+                                                value={formData.location_map_url}
+                                                onChange={(e) => updateField('location_map_url', e.target.value)}
+                                                placeholder="https://www.google.com/maps/place/..."
+                                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary bg-white text-gray-900"
+                                            />
+                                            <p className="text-xs text-gray-500 mt-1">Link Google Maps untuk lokasi event (Offline/Hybrid). <b>Gunakan Link Panjang</b> dari address bar browser, jangan gunakan link share (pendek).</p>
+                                        </div>
+                                    )}
 
                                     <div>
                                         <label className="block text-sm font-medium mb-2">{t('admin.event_form.labels.capacity')}</label>
