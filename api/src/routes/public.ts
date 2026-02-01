@@ -8,7 +8,7 @@ publicRoutes.get('/events', async (c) => {
   const { limit = '10', offset = '0' } = c.req.query()
 
   const result = await c.env.DB.prepare(`
-    SELECT id, title, description, event_date, event_time, location, capacity, event_mode, image_url, slug, event_type,
+    SELECT id, title, description, event_date, event_time, location, location_map_url, capacity, event_mode, image_url, slug, event_type,
       (SELECT COUNT(*) FROM participants WHERE event_id = events.id AND payment_status = 'paid') as registered_count
     FROM events 
     WHERE visibility = 'public' AND status = 'open'
@@ -172,7 +172,7 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
 
   const participant = await c.env.DB.prepare(`
     SELECT p.*, t.name as ticket_name, t.price as ticket_price,
-           e.title as event_title, e.event_date, e.event_time, e.location, e.id_card_design, e.certificate_config,
+           e.title as event_title, e.event_date, e.event_time, e.location, e.location_map_url, e.id_card_design, e.certificate_config,
            e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions,
            e.note, e.icon_type, e.whatsapp_cs
     FROM participants p
@@ -228,6 +228,7 @@ publicRoutes.get('/ticket/:registrationId', async (c) => {
     event_date: participant.event_date,
     event_time: participant.event_time,
     location: participant.location,
+    location_map_url: participant.location_map_url,
     id_card_design: idCardDesign,
     event_type: participant.event_type,
     online_platform: participant.online_platform,
