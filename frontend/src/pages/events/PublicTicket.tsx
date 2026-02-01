@@ -398,7 +398,7 @@ export default function PublicTicket() {
                             <div className="text-center text-sm text-gray-500">
                                 <span className="material-symbols-outlined text-[16px] align-middle mr-1">place</span>
                                 {ticket.location}
-                                {ticket.google_maps_api_key && ticket.location_map_url && (
+                                {ticket.google_maps_api_key && ticket.location_map_url && (ticket as any).attendance_type !== 'online' && (
                                     <div className="mt-3 rounded-xl overflow-hidden shadow-sm h-32 w-full">
                                         <iframe
                                             width="100%"
