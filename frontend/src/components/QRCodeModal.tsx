@@ -144,7 +144,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         let height = 550 + extraHeight
 
         // Add height for map if available
-        if ((fullParticipant.location || fullParticipant.location_map_url) && googleMapsApiKey) {
+        if (!isOnline && (fullParticipant.location || fullParticipant.location_map_url) && googleMapsApiKey) {
             height += 210
         }
 
@@ -380,7 +380,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         }
 
         // Event Location with Static Map
-        if ((fullParticipant.location || fullParticipant.location_map_url) && googleMapsApiKey) {
+        if (!isOnline && (fullParticipant.location || fullParticipant.location_map_url) && googleMapsApiKey) {
             // Try to load static map
             try {
                 const mapQuery = getMapQuery(fullParticipant.location, fullParticipant.location_map_url)
