@@ -446,6 +446,13 @@ export default function PublicTicket() {
                                                         href={ticket.online_url}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
+                                                        onClick={() => {
+                                                            // Fire and forget check-in
+                                                            import('../../lib/api').then(({ participantsAPI }) => {
+                                                                participantsAPI.checkIn(ticket.registration_id)
+                                                                    .catch(e => console.log('Check-in background sync:', e))
+                                                            })
+                                                        }}
                                                         className="block w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                                                         style={{ backgroundColor: design.primaryColor }}
                                                     >
