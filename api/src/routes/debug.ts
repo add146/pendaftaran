@@ -36,3 +36,14 @@ debug.get('/run-migration-016', async (c) => {
         return c.json({ status: 'error', message: e.message, hint: 'Column might already exist' })
     }
 })
+
+// 4. Check Table Schema
+debug.get('/schema/:table', async (c) => {
+    const { table } = c.req.param()
+    try {
+        const info = await c.env.DB.prepare(`PRAGMA table_info(${table})`).all()
+        return c.json({ table, columns: info.results })
+    } catch (e: any) {
+        return c.json({ error: e.message })
+    }
+})
