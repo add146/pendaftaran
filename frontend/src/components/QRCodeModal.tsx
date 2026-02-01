@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import { eventsAPI, participantsAPI, type Participant } from '../lib/api'
 import { useTranslation } from 'react-i18next'
+import { getMapQuery } from '../lib/maps'
 
 interface IdCardDesign {
     primaryColor: string
@@ -143,7 +144,7 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         let height = 550 + extraHeight
 
         // Add height for map if available
-        if (fullParticipant.location && googleMapsApiKey) {
+        if ((fullParticipant.location || fullParticipant.location_map_url) && googleMapsApiKey) {
             height += 210
         }
 
@@ -379,10 +380,11 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         }
 
         // Event Location with Static Map
-        if (fullParticipant.location && googleMapsApiKey) {
+        if ((fullParticipant.location || fullParticipant.location_map_url) && googleMapsApiKey) {
             // Try to load static map
             try {
-                const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(fullParticipant.location)}&zoom=15&size=400x200&maptype=roadmap&markers=color:red%7C${encodeURIComponent(fullParticipant.location)}&key=${googleMapsApiKey}`
+                const mapQuery = getMapQuery(fullParticipant.location, fullParticipant.location_map_url)
+                const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(mapQuery)}&zoom=15&size=400x200&maptype=roadmap&markers=color:red%7C${encodeURIComponent(mapQuery)}&key=${googleMapsApiKey}`
 
                 const mapImg = new Image()
                 mapImg.crossOrigin = "Anonymous"

@@ -100,7 +100,7 @@ participants.get('/:id', authMiddleware, async (c) => {
 
     const participant = await c.env.DB.prepare(`
     SELECT p.*, t.name as ticket_name, t.price as ticket_price, e.title as event_title,
-           e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions
+           e.event_type, e.online_platform, e.online_url, e.online_password, e.online_instructions, e.location_map_url
     FROM participants p 
     LEFT JOIN ticket_types t ON p.ticket_type_id = t.id
     LEFT JOIN events e ON p.event_id = e.id

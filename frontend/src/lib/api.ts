@@ -542,6 +542,7 @@ export interface Participant {
     event_date?: string
     event_time?: string
     location?: string
+    location_map_url?: string
     note?: string
     icon_type?: 'info' | 'warning' | 'danger'
     whatsapp_status?: 'pending' | 'sent' | 'failed'

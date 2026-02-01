@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField, type RegisterParticipantData } from '../../lib/api'
 import { useTranslation } from 'react-i18next'
+import { getMapQuery } from '../../lib/maps'
 
 interface ParticipantFormData {
     full_name: string
@@ -690,7 +691,7 @@ ${bankSection}`
                                         className="border-0"
                                         loading="lazy"
                                         allowFullScreen
-                                        src={`https://www.google.com/maps/embed/v1/place?key=${event.google_maps_api_key}&q=${encodeURIComponent(event.location || '')}`}
+                                        src={`https://www.google.com/maps/embed/v1/place?key=${event.google_maps_api_key}&q=${encodeURIComponent(getMapQuery(event.location, event.location_map_url))}`}
                                     ></iframe>
                                 </div>
                             )}

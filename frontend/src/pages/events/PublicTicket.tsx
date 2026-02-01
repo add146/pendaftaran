@@ -4,6 +4,7 @@ import { publicAPI } from '../../lib/api'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
 import { useTranslation } from 'react-i18next'
+import { getMapQuery } from '../../lib/maps'
 
 interface IdCardDesign {
     primaryColor: string
@@ -405,7 +406,7 @@ export default function PublicTicket() {
                                             className="border-0"
                                             loading="lazy"
                                             allowFullScreen
-                                            src={`https://www.google.com/maps/embed/v1/place?key=${ticket.google_maps_api_key}&q=${encodeURIComponent(ticket.location)}`}
+                                            src={`https://www.google.com/maps/embed/v1/place?key=${ticket.google_maps_api_key}&q=${encodeURIComponent(getMapQuery(ticket.location, ticket.location_map_url))}`}
                                         ></iframe>
                                     </div>
                                 )}
