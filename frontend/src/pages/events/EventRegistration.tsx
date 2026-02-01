@@ -64,7 +64,15 @@ export default function EventRegistration() {
     const [orderId, setOrderId] = useState('')
     const [participantId, setParticipantId] = useState('') // Fallback for single
     const [donationAmount, setDonationAmount] = useState<number | ''>('')
+    const [showDonation, setShowDonation] = useState(false) // Toggle state for donation
 
+
+    // Reset donation when toggle is turned off
+    useEffect(() => {
+        if (!showDonation) {
+            setDonationAmount('')
+        }
+    }, [showDonation])
 
     useEffect(() => {
         if (!slug) return
@@ -954,33 +962,88 @@ ${bankSection}`
 
                                             {/* Donation Section */}
                                             {event.donation_enabled === 1 && (
-                                                <div className="bg-pink-500/5 rounded-xl p-6 shadow-sm border border-pink-200 mt-6">
-                                                    <h3 className="font-bold flex items-center gap-2 mb-2 text-gray-800">
-                                                        <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
-                                                        Donasi (Sukarela)
-                                                    </h3>
-                                                    {event.donation_description && (
-                                                        <p className="text-sm text-gray-600 mb-4">{event.donation_description}</p>
-                                                    )}
-                                                    <div className="space-y-2">
-                                                        <label className="block text-xs font-bold text-gray-500 uppercase">Jumlah Donasi</label>
-                                                        <div className="relative">
-                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                                <span className="text-gray-500 font-bold">Rp</span>
+                                                <div className="mt-6">
+                                                    {/* CASE 1: Minimal donasi > 0 → Langsung tampilkan card tanpa toggle */}
+                                                    {(event.donation_min_amount || 0) > 0 ? (
+                                                        <div className="bg-pink-500/5 rounded-xl p-6 shadow-sm border border-pink-200">
+                                                            <h3 className="font-bold flex items-center gap-2 mb-2 text-gray-800">
+                                                                <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
+                                                                Donasi (Sukarela)
+                                                            </h3>
+                                                            {event.donation_description && (
+                                                                <p className="text-sm text-gray-600 mb-4">{event.donation_description}</p>
+                                                            )}
+                                                            <div className="space-y-2">
+                                                                <label className="block text-xs font-bold text-gray-500 uppercase">Jumlah Donasi</label>
+                                                                <div className="relative">
+                                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                        <span className="text-gray-500 font-bold">Rp</span>
+                                                                    </div>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={donationAmount}
+                                                                        onChange={(e) => setDonationAmount(e.target.value ? parseInt(e.target.value) : '')}
+                                                                        placeholder={`Minimal Rp ${(event.donation_min_amount || 0).toLocaleString('id-ID')}`}
+                                                                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                                        min={event.donation_min_amount || 0}
+                                                                    />
+                                                                </div>
+                                                                <p className="text-xs text-gray-500">
+                                                                    Donasi Anda akan ditambahkan ke total pembayaran.
+                                                                </p>
                                                             </div>
-                                                            <input
-                                                                type="number"
-                                                                value={donationAmount}
-                                                                onChange={(e) => setDonationAmount(e.target.value ? parseInt(e.target.value) : '')}
-                                                                placeholder={`Minimal Rp ${(event.donation_min_amount || 0).toLocaleString('id-ID')}`}
-                                                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
-                                                                min={event.donation_min_amount || 0}
-                                                            />
                                                         </div>
-                                                        <p className="text-xs text-gray-500">
-                                                            Donasi Anda akan ditambahkan ke total pembayaran.
-                                                        </p>
-                                                    </div>
+                                                    ) : (
+                                                        /* CASE 2: Minimal donasi = 0 → Tampilkan toggle + conditional card */
+                                                        <>
+                                                            {/* Toggle Button */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowDonation(!showDonation)}
+                                                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-pink-50 to-pink-100 hover:from-pink-100 hover:to-pink-200 rounded-xl border-2 border-pink-200 transition-all"
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
+                                                                    <span className="font-bold text-gray-800">Ingin Berdonasi?</span>
+                                                                </div>
+                                                                <div className={`relative w-14 h-7 rounded-full transition-colors ${showDonation ? 'bg-pink-500' : 'bg-gray-300'}`}>
+                                                                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-sm transition-transform ${showDonation ? 'translate-x-7' : 'translate-x-0'}`} />
+                                                                </div>
+                                                            </button>
+
+                                                            {/* Donation Card - Show when toggled ON */}
+                                                            {showDonation && (
+                                                                <div className="bg-pink-500/5 rounded-xl p-6 shadow-sm border border-pink-200 mt-4">
+                                                                    <h3 className="font-bold flex items-center gap-2 mb-2 text-gray-800">
+                                                                        <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
+                                                                        Donasi (Sukarela)
+                                                                    </h3>
+                                                                    {event.donation_description && (
+                                                                        <p className="text-sm text-gray-600 mb-4">{event.donation_description}</p>
+                                                                    )}
+                                                                    <div className="space-y-2">
+                                                                        <label className="block text-xs font-bold text-gray-500 uppercase">Jumlah Donasi</label>
+                                                                        <div className="relative">
+                                                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                                <span className="text-gray-500 font-bold">Rp</span>
+                                                                            </div>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={donationAmount}
+                                                                                onChange={(e) => setDonationAmount(e.target.value ? parseInt(e.target.value) : '')}
+                                                                                placeholder={`Minimal Rp ${(event.donation_min_amount || 0).toLocaleString('id-ID')}`}
+                                                                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
+                                                                                min={event.donation_min_amount || 0}
+                                                                            />
+                                                                        </div>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            Donasi Anda akan ditambahkan ke total pembayaran.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </div>
                                             )}
 
