@@ -455,7 +455,8 @@ events.post('/:id/broadcast-single', authMiddleware, async (c) => {
 
 💻 *Join via:* ${platformName.charAt(0).toUpperCase() + platformName.slice(1)}
 
-Silahkan cek Virtual ID Card (E-Tiket) masing-masing:
+Silahkan cek Virtual ID Card (E-Tiket) dibawah ini:
+
 https://etiket.my.id/ticket/${participant.registration_id}`
 
   if (event.online_password) {
