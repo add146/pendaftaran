@@ -1102,15 +1102,20 @@ ${bankSection}`
                                 </div>
                             </div>
                         </div>
-                    </div >
-                </div >
-            </main >
+                    </div>
+                </div>
+            </main>
 
             {/* WhatsApp Contact Button - Fixed Position */}
             {
                 event?.whatsapp_cs && (
                     <a
-                        href={`https://wa.me/${event.whatsapp_cs.replace(/^0/, '62').replace(/\D/g, '')}`}
+                        href={`https://wa.me/${(() => {
+                            let num = event.whatsapp_cs.replace(/\D/g, '')
+                            if (num.startsWith('0')) num = '62' + num.slice(1)
+                            else if (!num.startsWith('62')) num = '62' + num
+                            return num
+                        })()}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="fixed bottom-6 right-6 bg-[#25D366] text-white p-3 rounded-full shadow-lg hover:scale-110 transition-transform z-50 flex items-center justify-center"
@@ -1126,6 +1131,6 @@ ${bankSection}`
                     </a>
                 )
             }
-        </div >
+        </div>
     )
 }
