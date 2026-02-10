@@ -150,7 +150,12 @@ export default function Settings() {
                 }
             })
             .catch((err) => {
-                console.log('No notification preferences found or error:', err.message)
+                console.log('No notification preferences found, auto-saving defaults:', err.message)
+                // Auto-save default preferences so backend knows whatsapp is enabled
+                const defaults = { email: true, whatsapp: true, daily: true }
+                settingsAPI.save('notification_preferences', defaults)
+                    .then(() => console.log('Default notification preferences saved'))
+                    .catch(e => console.warn('Failed to save default prefs:', e))
             })
 
         // Load organization settings

@@ -142,7 +142,9 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     }
 
     // Check organization WAHA toggle
-    let orgEnabled = false
+    // Default to ENABLED (matches whatsapp.ts behavior)
+    let orgEnabled = true
+    let hasExplicitPref = false
     try {
         const prefResult = await c.env.DB.prepare(
             'SELECT value FROM settings WHERE key = ? AND organization_id = ?'
@@ -150,21 +152,22 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
 
         if (prefResult && prefResult.value) {
             const prefs = JSON.parse(prefResult.value as string)
-            if (prefs.whatsapp === true) {
-                orgEnabled = true
+            hasExplicitPref = true
+            if (prefs.whatsapp === false) {
+                orgEnabled = false
             }
         }
     } catch (e) {
         console.warn('Error verifying org preferences:', e)
     }
 
-    // Legacy Fallback
-    if (!orgEnabled) {
+    // Legacy Fallback (only if no explicit preference found)
+    if (!hasExplicitPref) {
         const org = await c.env.DB.prepare(
             'SELECT waha_enabled FROM organizations WHERE id = ?'
         ).bind(id).first() as { waha_enabled: number } | null
-        if (org?.waha_enabled === 1) {
-            orgEnabled = true
+        if (org?.waha_enabled === 0) {
+            orgEnabled = false
         }
     }
 
