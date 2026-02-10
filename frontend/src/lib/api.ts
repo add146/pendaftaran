@@ -642,7 +642,7 @@ export const organizationsAPI = {
         }),
 
     getWahaStatus: (id: string) =>
-        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string; connected: boolean; working: boolean; session_status: string; last_error?: string }>(
+        fetchAPI<{ global_enabled: boolean; org_enabled: boolean; available: boolean; api_url: string; connected: boolean; working: boolean; session_status: string; last_error?: string; config_mode: 'isolated' | 'global'; has_own_config: boolean }>(
             `/api/organizations/${id}/waha-status`
         ),
 }

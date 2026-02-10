@@ -85,8 +85,35 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
         return { config: null, error: 'Organization has disabled WhatsApp notifications in Settings' }
     }
 
-    // 2. Fetch System Configuration
-    // TODO: In the future, we could check for Org-specific overrides here
+    // 2. Check for org-specific WAHA config (isolated mode)
+    const orgWahaResult = await db.prepare(`
+        SELECT key, value FROM settings 
+        WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session')
+        AND organization_id = ?
+    `).bind(organizationId).all()
+
+    const orgWahaConfig = new Map(orgWahaResult.results.map((s: any) => [s.key, s.value]))
+    const orgApiUrl = (orgWahaConfig.get('waha_api_url') || '').replace(/\/+$/, '')
+    const orgApiKey = orgWahaConfig.get('waha_api_key') || ''
+
+    // If org has both API URL and API Key → use isolated config
+    if (orgApiUrl && orgApiKey) {
+        const orgSession = orgWahaConfig.get('waha_session') || 'default'
+        console.log('[WAHA] Using ISOLATED config for org:', organizationId)
+        console.log('[WAHA] Isolated API URL:', orgApiUrl)
+        console.log('[WAHA] Isolated Session:', orgSession)
+        return {
+            config: {
+                apiUrl: orgApiUrl,
+                apiKey: orgApiKey,
+                session: orgSession,
+                enabled: true
+            }
+        }
+    }
+
+    // 3. Fallback to global config from org_system
+    console.log('[WAHA] No org-specific config found, using GLOBAL config')
     const result = await db.prepare(`
         SELECT key, value FROM settings 
         WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session', 'waha_enabled')
@@ -96,8 +123,6 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
     const config = new Map(result.results.map((s: any) => [s.key, s.value]))
 
     // Check if System is globally enabled
-    // If waha_enabled is explicitly 'false', then it's disabled.
-    // If it's missing but API URL is present, we assume it's enabled (legacy/robustness).
     const globalEnabledStr = config.get('waha_enabled')
     if (globalEnabledStr === 'false') {
         console.log('[WAHA] WAHA globally disabled (explicitly set to false)')
@@ -113,8 +138,6 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
     console.log('[WAHA] API URL:', apiUrl ? apiUrl : 'NOT SET')
     console.log('[WAHA] API Key:', apiKey ? 'SET (hidden)' : 'NOT SET')
 
-    // Robustness: If API URL is set and enabled is not explicitly false, assume true
-    // This allows it to work even if waha_enabled is null/undefined in the settings
     if (!apiUrl) {
         console.log('[WAHA] Missing API URL')
         return { config: null, error: 'WAHA API URL is not configured by Super Admin' }
@@ -125,8 +148,6 @@ async function getWAHAConfig(db: D1Database, organizationId: string): Promise<WA
         return { config: null, error: 'WAHA API Key is not configured by Super Admin' }
     }
 
-    // Default session is 'default' unless specified in system config
-    // We could also allow org-specific session names if needed
     const session = config.get('waha_session') || 'default'
 
     return {

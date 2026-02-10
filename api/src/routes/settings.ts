@@ -13,11 +13,15 @@ settings.use('*', authMiddleware)
 
 // Keys that should be stored globally (org_system)
 const SYSTEM_SETTINGS_KEYS = [
-    'waha_api_url',
-    'waha_api_key',
-    'waha_session',
     'waha_enabled',
     'public_registration_enabled'
+]
+
+// Keys that are hybrid: super_admin saves to org_system, regular admin saves to their own org
+const HYBRID_SETTINGS_KEYS = [
+    'waha_api_url',
+    'waha_api_key',
+    'waha_session'
 ]
 
 // Get all settings for current organization (and system settings if super_admin)
@@ -90,11 +94,15 @@ settings.post('/', async (c) => {
     const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
     // Determine target organization ID
-    // Determine target organization ID
     let targetOrgId = user.orgId
 
     // System settings always go to org_system
     if (SYSTEM_SETTINGS_KEYS.includes(key)) {
+        targetOrgId = 'org_system'
+    }
+
+    // Hybrid settings: super_admin saves to org_system, regular admin saves to their own org
+    if (HYBRID_SETTINGS_KEYS.includes(key) && user.role === 'super_admin') {
         targetOrgId = 'org_system'
     }
 
@@ -131,11 +139,15 @@ settings.post('/bulk', async (c) => {
         const valueStr = typeof value === 'string' ? value : JSON.stringify(value)
 
         // Determine target organization ID
-        // Determine target organization ID
         let targetOrgId = user.orgId
 
         // System settings always go to org_system
         if (SYSTEM_SETTINGS_KEYS.includes(key)) {
+            targetOrgId = 'org_system'
+        }
+
+        // Hybrid settings: super_admin saves to org_system, regular admin saves to their own org
+        if (HYBRID_SETTINGS_KEYS.includes(key) && user.role === 'super_admin') {
             targetOrgId = 'org_system'
         }
 

@@ -88,7 +88,7 @@ organizations.put('/:id/waha-toggle', authMiddleware, async (c) => {
     return c.json({ message: 'WAHA setting updated', waha_enabled: enabled })
 })
 
-// Get WAHA status
+// Get WAHA status (hybrid: checks org-specific config first, then global)
 organizations.get('/:id/waha-status', authMiddleware, async (c) => {
     const user = c.get('user')
     const { id } = c.req.param()
@@ -97,7 +97,19 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
         return c.json({ error: 'Unauthorized' }, 403)
     }
 
-    // Check global WAHA config from settings table
+    // 1. Check for org-specific WAHA config (isolated mode)
+    const orgWahaSettings = await c.env.DB.prepare(`
+        SELECT key, value FROM settings 
+        WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session')
+        AND organization_id = ?
+    `).bind(id).all()
+
+    const orgSettingsMap = new Map(orgWahaSettings.results.map((s: any) => [s.key, s.value]))
+    const orgApiUrl = (orgSettingsMap.get('waha_api_url') || '').replace(/\/+$/, '')
+    const orgApiKey = orgSettingsMap.get('waha_api_key') || ''
+    const hasOwnConfig = !!(orgApiUrl && orgApiKey)
+
+    // 2. Check global WAHA config from settings table
     const wahaSettings = await c.env.DB.prepare(`
         SELECT key, value FROM settings 
         WHERE key IN ('waha_api_url', 'waha_api_key', 'waha_session', 'waha_enabled')
@@ -106,31 +118,30 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
 
     const settingsMap = new Map(wahaSettings.results.map((s: any) => [s.key, s.value]))
 
-    // Robust Global Check:
-    // If waha_enabled is explicitly 'false', then it's disabled.
-    // If it's missing but API URL is present, we assume it's enabled.
     const globalEnabledStr = settingsMap.get('waha_enabled')
     let globalEnabled = globalEnabledStr === 'true'
 
-    let apiUrl = settingsMap.get('waha_api_url') || ''
-    const apiKey = settingsMap.get('waha_api_key') || ''
-    const session = settingsMap.get('waha_session') || 'default'
+    const globalApiUrl = (settingsMap.get('waha_api_url') || '').replace(/\/+$/, '')
+    const globalApiKey = settingsMap.get('waha_api_key') || ''
+    const globalSession = settingsMap.get('waha_session') || 'default'
 
     // Robustness: If API URL is set and enabled is not explicitly false, assume true
-    if (apiUrl && globalEnabledStr !== 'false') {
+    if (globalApiUrl && globalEnabledStr !== 'false') {
         globalEnabled = true
     }
 
+    // Determine which config to use for live check
+    let activeApiUrl = hasOwnConfig ? orgApiUrl : globalApiUrl
+    let activeApiKey = hasOwnConfig ? orgApiKey : globalApiKey
+    let activeSession = hasOwnConfig ? (orgSettingsMap.get('waha_session') || 'default') : globalSession
+    const configMode = hasOwnConfig ? 'isolated' : 'global'
+
     // Normalize API URL
-    if (apiUrl && !apiUrl.startsWith('http')) {
-        apiUrl = `https://${apiUrl}`
-    }
-    if (apiUrl && apiUrl.endsWith('/')) {
-        apiUrl = apiUrl.slice(0, -1)
+    if (activeApiUrl && !activeApiUrl.startsWith('http')) {
+        activeApiUrl = `https://${activeApiUrl}`
     }
 
     // Check organization WAHA toggle
-    // 1. Check Notification Preferences (New Standard)
     let orgEnabled = false
     try {
         const prefResult = await c.env.DB.prepare(
@@ -147,7 +158,7 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
         console.warn('Error verifying org preferences:', e)
     }
 
-    // 2. Legacy Fallback
+    // Legacy Fallback
     if (!orgEnabled) {
         const org = await c.env.DB.prepare(
             'SELECT waha_enabled FROM organizations WHERE id = ?'
@@ -157,28 +168,27 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
         }
     }
 
-    // WAHA is available if global is configured AND enabled, AND organization has enabled it
-    // Note: 'configured' means URL and Key are present.
-    const available = globalEnabled && !!apiUrl && !!apiKey && orgEnabled
+    // For isolated mode, availability doesn't depend on global config
+    const isConfigured = !!(activeApiUrl && activeApiKey)
+    const available = hasOwnConfig
+        ? isConfigured && orgEnabled
+        : globalEnabled && isConfigured && orgEnabled
 
-    // Check live connection status - check if WAHA is globally configured (regardless of org toggle)
+    // Check live connection status
     let connected = false
     let working = false
     let sessionStatus = 'NOT_CONFIGURED'
     let lastError = ''
 
-    const globallyConfigured = !!apiUrl && !!apiKey && globalEnabled
-
-    if (globallyConfigured) {
+    if (isConfigured && (hasOwnConfig || globalEnabled)) {
         try {
-            // Check if WAHA API is working and session status
-            const fetchUrl = `${apiUrl}/api/sessions/${session}`
-            console.log(`[WAHA] Checking status: ${fetchUrl}`)
+            const fetchUrl = `${activeApiUrl}/api/sessions/${activeSession}`
+            console.log(`[WAHA] Checking status (${configMode}): ${fetchUrl}`)
 
             const response = await fetch(fetchUrl, {
                 method: 'GET',
                 headers: {
-                    'X-Api-Key': apiKey,
+                    'X-Api-Key': activeApiKey,
                     'Content-Type': 'application/json'
                 }
             })
@@ -186,20 +196,12 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
             if (response.ok) {
                 const data = await response.json() as any
                 sessionStatus = data?.status || 'UNKNOWN'
-                // Session is WORKING if status is WORKING
                 working = sessionStatus === 'WORKING'
-                // Session is connected if we have me.id (authenticated)
                 connected = !!(data?.me?.id || data?.me?.pushName)
             } else if (response.status === 422 || response.status === 404) {
-                // Session not found or not started
-                working = false
-                connected = false
                 sessionStatus = 'NOT_FOUND'
                 lastError = `Session not found (${response.status})`
             } else {
-                // API returned error
-                working = false
-                connected = false
                 sessionStatus = 'ERROR'
                 lastError = `API Error: ${response.status} ${response.statusText}`
                 try {
@@ -209,26 +211,25 @@ organizations.get('/:id/waha-status', authMiddleware, async (c) => {
             }
         } catch (error: any) {
             console.error('[WAHA] Status check error:', error)
-            // API not reachable
-            working = false
-            connected = false
             sessionStatus = 'UNREACHABLE'
             lastError = `Network Error: ${error.message}`
         }
     } else {
-        lastError = 'Not globally configured'
+        lastError = hasOwnConfig ? 'Incomplete org config' : 'Not globally configured'
     }
 
     return c.json({
         global_enabled: globalEnabled,
-        global_configured: !!apiUrl && !!apiKey,
+        global_configured: !!(globalApiUrl && globalApiKey),
         org_enabled: orgEnabled,
         available,
-        api_url: apiUrl,
+        api_url: activeApiUrl,
         connected,
         working,
         session_status: sessionStatus,
-        last_error: lastError
+        last_error: lastError,
+        config_mode: configMode,
+        has_own_config: hasOwnConfig
     })
 })
 

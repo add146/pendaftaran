@@ -57,13 +57,21 @@ export default function Settings() {
         account_number: ''
     })
 
-    // WAHA WhatsApp Gateway configuration
+    // WAHA WhatsApp Gateway configuration (global - super admin)
     const [wahaConfig, setWahaConfig] = useState({
         enabled: false,
         api_url: '',
         api_key: '',
         session: 'default'
     })
+
+    // WAHA WhatsApp Gateway configuration (org-specific - all admins)
+    const [orgWahaConfig, setOrgWahaConfig] = useState({
+        api_url: '',
+        api_key: '',
+        session: ''
+    })
+    const [wahaConfigMode, setWahaConfigMode] = useState<'global' | 'isolated'>('global')
 
     useEffect(() => {
         // Debug: check if token exists
@@ -106,7 +114,7 @@ export default function Settings() {
                 console.log('No Bank config found or error:', err.message)
             })
 
-        // Load WAHA settings
+        // Load WAHA settings (global)
         settingsAPI.get('waha_config')
             .then(data => {
                 console.log('Loaded WAHA config:', data)
@@ -116,6 +124,21 @@ export default function Settings() {
             })
             .catch((err) => {
                 console.log('No WAHA config found or error:', err.message)
+            })
+
+        // Load org-specific WAHA settings
+        settingsAPI.get('org_waha_config')
+            .then(data => {
+                console.log('Loaded Org WAHA config:', data)
+                if (data && data.value) {
+                    setOrgWahaConfig(data.value)
+                    if (data.value.api_url && data.value.api_key) {
+                        setWahaConfigMode('isolated')
+                    }
+                }
+            })
+            .catch((err) => {
+                console.log('No Org WAHA config found or error:', err.message)
             })
 
         // Load notification preferences
@@ -178,15 +201,24 @@ export default function Settings() {
             await settingsAPI.save('account_number', bankConfig.account_number)
             await settingsAPI.save('bank_config', bankConfig) // Keep for UI state
 
-            // Save WAHA keys individually - ONLY for super admin
-            // Regular admins should not save WAHA config (they can't see/edit it anyway)
-            // This prevents accidental overwrite of existing WAHA settings with empty values
+            // Save WAHA keys individually - ONLY for super admin (global config)
             if (isSuperAdmin) {
-                await settingsAPI.save('waha_enabled', wahaConfig.enabled.toString()) // Backend expects "true"/"false" string
+                await settingsAPI.save('waha_enabled', wahaConfig.enabled.toString())
                 await settingsAPI.save('waha_api_url', wahaConfig.api_url)
                 await settingsAPI.save('waha_api_key', wahaConfig.api_key)
                 await settingsAPI.save('waha_session', wahaConfig.session)
-                await settingsAPI.save('waha_config', wahaConfig) // Keep for UI state
+                await settingsAPI.save('waha_config', wahaConfig)
+            }
+
+            // Save org-specific WAHA config (for regular admins only, NOT super admin)
+            // Super admin's hybrid keys route to org_system, so we skip to avoid overwriting global config
+            if (isAdmin && !isSuperAdmin) {
+                await settingsAPI.save('waha_api_url', orgWahaConfig.api_url)
+                await settingsAPI.save('waha_api_key', orgWahaConfig.api_key)
+                await settingsAPI.save('waha_session', orgWahaConfig.session)
+                await settingsAPI.save('org_waha_config', orgWahaConfig)
+                // Update mode indicator
+                setWahaConfigMode(orgWahaConfig.api_url && orgWahaConfig.api_key ? 'isolated' : 'global')
             }
 
             // Save notification preferences
@@ -622,16 +654,94 @@ export default function Settings() {
                                         </div>
                                     )}
 
-                                    {/* WAHA WhatsApp Gateway - Super Admin only */}
-                                    {isSuperAdmin && (
+                                    {/* WAHA WhatsApp Gateway - Org-specific (all admins) */}
+                                    {isAdmin && (
                                         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
                                             <div className="flex items-center gap-3 mb-6">
                                                 <div className="size-12 rounded-lg bg-green-100 flex items-center justify-center">
                                                     <span className="material-symbols-outlined text-green-600">chat</span>
                                                 </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-bold text-text-main">WhatsApp Gateway (Organisasi)</h3>
+                                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${wahaConfigMode === 'isolated'
+                                                            ? 'bg-purple-100 text-purple-700'
+                                                            : 'bg-blue-100 text-blue-700'
+                                                            }`}>
+                                                            {wahaConfigMode === 'isolated' ? '🏢 Isolated' : '🌐 Global'}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-500">Konfigurasi WAHA khusus untuk organisasi Anda</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Info box */}
+                                            <div className={`p-3 rounded-lg mb-4 text-sm ${wahaConfigMode === 'isolated'
+                                                ? 'bg-purple-50 border border-purple-200 text-purple-700'
+                                                : 'bg-blue-50 border border-blue-200 text-blue-700'
+                                                }`}>
+                                                {wahaConfigMode === 'isolated' ? (
+                                                    <p>✅ Organisasi ini menggunakan konfigurasi WAHA sendiri (isolated). Semua notifikasi WA akan dikirim melalui instance WAHA organisasi Anda.</p>
+                                                ) : (
+                                                    <p>ℹ️ Organisasi ini menggunakan konfigurasi WAHA global dari Super Admin. Isi field di bawah untuk menggunakan instance WAHA sendiri.</p>
+                                                )}
+                                            </div>
+
+                                            {/* Configuration Fields */}
+                                            <div className="space-y-4">
                                                 <div>
-                                                    <h3 className="font-bold text-text-main">{t('settings.integrations.wa_title')}</h3>
-                                                    <p className="text-sm text-gray-500">{t('settings.integrations.wa_desc')}</p>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">API URL</label>
+                                                    <input
+                                                        type="url"
+                                                        placeholder="https://your-waha-instance.com"
+                                                        value={orgWahaConfig.api_url}
+                                                        onChange={(e) => setOrgWahaConfig({ ...orgWahaConfig, api_url: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Your WAHA API key"
+                                                        value={orgWahaConfig.api_key}
+                                                        onChange={(e) => setOrgWahaConfig({ ...orgWahaConfig, api_key: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800 font-mono"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="default"
+                                                        value={orgWahaConfig.session}
+                                                        onChange={(e) => setOrgWahaConfig({ ...orgWahaConfig, session: e.target.value })}
+                                                        className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-primary focus:ring-1 focus:ring-primary text-sm bg-white text-gray-800"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <p className="text-xs text-gray-500 mt-4">
+                                                Kosongkan semua field untuk menggunakan konfigurasi global dari Super Admin.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* WAHA WhatsApp Gateway - Global (Super Admin only) */}
+                                    {isSuperAdmin && (
+                                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="size-12 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-emerald-600">public</span>
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <h3 className="font-bold text-text-main">WhatsApp Gateway (Global)</h3>
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                                                            🌍 System-wide
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-gray-500">Konfigurasi default WAHA untuk semua organisasi yang tidak memiliki config sendiri</p>
                                                 </div>
                                             </div>
 
@@ -644,14 +754,14 @@ export default function Settings() {
                                                         onChange={(e) => setWahaConfig({ ...wahaConfig, enabled: e.target.checked })}
                                                         className="w-5 h-5 rounded text-primary focus:ring-primary border-gray-300"
                                                     />
-                                                    <span className="text-sm font-medium text-gray-700">Enable WhatsApp Notifications</span>
+                                                    <span className="text-sm font-medium text-gray-700">Enable WhatsApp Notifications (Global)</span>
                                                 </label>
                                             </div>
 
                                             {/* Configuration Fields */}
                                             <div className="space-y-4">
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.api_url')}</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">API URL</label>
                                                     <input
                                                         type="url"
                                                         placeholder="https://your-waha-instance.com"
@@ -671,7 +781,7 @@ export default function Settings() {
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.integrations.session_name')}</label>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">Session Name</label>
                                                     <input
                                                         type="text"
                                                         placeholder="default"
