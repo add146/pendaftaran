@@ -1,3 +1,4 @@
+// Re-deploy trigger: 2026-02-11T14:15:00
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'qrcode'
 import { jsPDF } from 'jspdf'
