@@ -456,13 +456,23 @@ export default function EventRegistration() {
         // Success Page (Group Friendly)
         const generateWhatsAppNota = () => {
             if (!paymentInfo) return ''
-            const e = (code: number) => String.fromCodePoint(code)
+
+            const P = {
+                CARD: '{{E_CARD}}',
+                CHECK: '{{E_CHECK}}',
+                PIN: '{{E_PIN}}',
+                USER: '{{E_USER}}',
+                USERS: '{{E_USERS}}',
+                TICKET: '{{E_TICKET}}',
+                MONEY: '{{E_MONEY}}',
+                ID: '{{E_ID}}'
+            }
 
             let bankSection = ''
             if (paymentInfo.bank_name && paymentInfo.account_holder_name && paymentInfo.account_number) {
                 bankSection = `
 ━━━━━━━━━━━━━━━━━━━━
-${e(0x1F4B3)} *${t('nota.transfer_info').toUpperCase()}*
+${P.CARD} *${t('nota.transfer_info').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
 ${t('nota.bank')}: *${paymentInfo.bank_name}*
@@ -477,22 +487,30 @@ ${t('nota.confirm_payment')} *Rp ${paymentInfo.ticket_price.toLocaleString('id-I
             }
 
             const nota = `━━━━━━━━━━━━━━━━━━━━
-${e(0x2705)} *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PEMBAYARAN' : t('nota.registration_success').toUpperCase()}*
+${P.CHECK} *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PEMBAYARAN' : t('nota.registration_success').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
-${e(0x1F4CC)} *Event:* ${paymentInfo.event_title}
-${e(0x1F464)} *${t('nota.registrant_name')}:* ${participants[0].full_name} (${participants[0].email})
-${e(0x1F465)} *${t('nota.participant_count')}:* ${participants.length} ${t('common.people')}
+${P.PIN} *Event:* ${paymentInfo.event_title}
+${P.USER} *${t('nota.registrant_name')}:* ${participants[0].full_name} (${participants[0].email})
+${P.USERS} *${t('nota.participant_count')}:* ${participants.length} ${t('common.people')}
 
-${registrationResult?.participants && registrationResult.participants.length > 0 ? `${e(0x1F465)} *${t('nota.participant_list')}:*
+${registrationResult?.participants && registrationResult.participants.length > 0 ? `${P.USERS} *${t('nota.participant_list')}:*
 ${registrationResult.participants.map((p, i) => `${i + 1}. ${p.full_name} (${p.registration_id})`).join('\n')}
 
-` : ''}${e(0x1F3AB)} *${t('nota.total_tickets')}:* ${paymentInfo.ticket_name}
-${e(0x1F4B0)} *${t('nota.total_bill')}:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
-${e(0x1F516)} *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
+` : ''}${P.TICKET} *${t('nota.total_tickets')}:* ${paymentInfo.ticket_name}
+${P.MONEY} *${t('nota.total_bill')}:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
+${P.ID} *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
 ${bankSection}`
 
             return encodeURIComponent(nota)
+                .replace(/%7B%7BE_CARD%7D%7D/g, '%F0%9F%92%B3')    // 💳
+                .replace(/%7B%7BE_CHECK%7D%7D/g, '%E2%9C%85')      // ✅
+                .replace(/%7B%7BE_PIN%7D%7D/g, '%F0%9F%93%8C')     // 📌
+                .replace(/%7B%7BE_USER%7D%7D/g, '%F0%9F%91%A4')    // 👤
+                .replace(/%7B%7BE_USERS%7D%7D/g, '%F0%9F%91%A5')   // 👥
+                .replace(/%7B%7BE_TICKET%7D%7D/g, '%F0%9F%8E%AB')  // 🎫
+                .replace(/%7B%7BE_MONEY%7D%7D/g, '%F0%9F%92%B0')   // 💰
+                .replace(/%7B%7BE_ID%7D%7D/g, '%F0%9F%94%96')      // 🔖
         }
 
         const formatWhatsAppNumber = (number: string) => {

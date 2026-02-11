@@ -455,41 +455,60 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         // Generate ticket link
         const ticketLink = `https://etiket.my.id/ticket/${fullParticipant.registration_id}`
 
-        // Helper for emojis to ensure ASCII-safe source code
-        const e = (code: number) => String.fromCodePoint(code)
+        // Define placeholders
+        const P = {
+            PARTY: '{{E_PARTY}}',
+            PIN: '{{E_PIN}}',
+            USER: '{{E_USER}}',
+            ID: '{{E_ID}}',
+            TICKET: '{{E_TICKET}}',
+            MONEY: '{{E_MONEY}}',
+            NOTE: '{{E_NOTE}}',
+            THANKS: '{{E_THANKS}}'
+        }
 
         // Exact format from backend (api/src/lib/whatsapp.ts)
-        let message = `${e(0x1F389)} *PENDAFTARAN BERHASIL!*\n\n`
+        let message = `${P.PARTY} *PENDAFTARAN BERHASIL!*\n\n`
         message += `Terima kasih telah mendaftar untuk:\n`
-        message += `${e(0x1F4CC)} *Event:* ${fullParticipant.event_title || 'Event'}\n\n`
+        message += `${P.PIN} *Event:* ${fullParticipant.event_title || 'Event'}\n\n`
 
-        message += `${e(0x1F464)} *Nama:* ${fullParticipant.full_name}\n`
-        message += `${e(0x1F516)} *ID Registrasi:* ${fullParticipant.registration_id}`
+        message += `${P.USER} *Nama:* ${fullParticipant.full_name}\n`
+        message += `${P.ID} *ID Registrasi:* ${fullParticipant.registration_id}`
 
         if (fullParticipant.ticket_name) {
-            message += `\n${e(0x1F3AB)} *Tiket:* ${fullParticipant.ticket_name}`
+            message += `\n${P.TICKET} *Tiket:* ${fullParticipant.ticket_name}`
         }
 
         if (fullParticipant.ticket_price && fullParticipant.ticket_price > 0) {
-            message += `\n${e(0x1F4B0)} *Harga:* Rp ${fullParticipant.ticket_price.toLocaleString('id-ID')}`
+            message += `\n${P.MONEY} *Harga:* Rp ${fullParticipant.ticket_price.toLocaleString('id-ID')}`
         }
 
         // Custom Fields
         if (fullParticipant.custom_fields && fullParticipant.custom_fields.length > 0) {
-            message += `\n\n${e(0x1F4CB)} *Informasi Tambahan:*`
+            message += `\n\n${P.NOTE} *Informasi Tambahan:*`
             for (const field of fullParticipant.custom_fields) {
-                // Backend ensures label is present
                 message += `\n• *${field.label}:* ${field.response}`
             }
         }
 
-        message += `\n\n${e(0x1F3AB)} *E-Ticket & QR Code:*\n${ticketLink}\n\n`
+        message += `\n\n${P.TICKET} *E-Ticket & QR Code:*\n${ticketLink}\n\n`
         message += `Tunjukkan QR Code saat check-in.\n\n`
-        message += `Sampai jumpa di acara! ${e(0x1F64F)}`
+        message += `Sampai jumpa di acara! ${P.THANKS}`
+
+        // Encode and then replace placeholders with UTF-8 percent codes
+        let encodedMessage = encodeURIComponent(message)
+            .replace(/%7B%7BE_PARTY%7D%7D/g, '%F0%9F%8E%89')  // 🎉
+            .replace(/%7B%7BE_PIN%7D%7D/g, '%F0%9F%93%8C')    // 📌
+            .replace(/%7B%7BE_USER%7D%7D/g, '%F0%9F%91%A4')   // 👤
+            .replace(/%7B%7BE_ID%7D%7D/g, '%F0%9F%94%96')     // 🔖
+            .replace(/%7B%7BE_TICKET%7D%7D/g, '%F0%9F%8E%AB') // 🎫
+            .replace(/%7B%7BE_MONEY%7D%7D/g, '%F0%9F%92%B0')  // 💰
+            .replace(/%7B%7BE_NOTE%7D%7D/g, '%F0%9F%93%8B')   // 📋
+            .replace(/%7B%7BE_THANKS%7D%7D/g, '%F0%9F%99%8F') // 🙏
 
         // Open WhatsApp with the participant's phone number
-        // Use api.whatsapp.com for better emoji/encoding support, especially on mobile
-        window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`, '_blank')
+        // Use api.whatsapp.com for better emoji/encoding support
+        window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodedMessage}`, '_blank')
     }
 
     const handleDownloadCertificate = async () => {
