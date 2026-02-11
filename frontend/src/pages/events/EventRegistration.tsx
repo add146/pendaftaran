@@ -461,7 +461,7 @@ export default function EventRegistration() {
             if (paymentInfo.bank_name && paymentInfo.account_holder_name && paymentInfo.account_number) {
                 bankSection = `
 ━━━━━━━━━━━━━━━━━━━━
-💳 *${t('nota.transfer_info').toUpperCase()}*
+\u{1F4B3} *${t('nota.transfer_info').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
 ${t('nota.bank')}: *${paymentInfo.bank_name}*
@@ -476,19 +476,19 @@ ${t('nota.confirm_payment')} *Rp ${paymentInfo.ticket_price.toLocaleString('id-I
             }
 
             const nota = `━━━━━━━━━━━━━━━━━━━━
-✅ *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PEMBAYARAN' : t('nota.registration_success').toUpperCase()}*
+\u2705 *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PEMBAYARAN' : t('nota.registration_success').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
-📌 *Event:* ${paymentInfo.event_title}
-👤 *${t('nota.registrant_name')}:* ${participants[0].full_name} (${participants[0].email})
-👥 *${t('nota.participant_count')}:* ${participants.length} ${t('common.people')}
+\u{1F4CC} *Event:* ${paymentInfo.event_title}
+\u{1F464} *${t('nota.registrant_name')}:* ${participants[0].full_name} (${participants[0].email})
+\u{1F465} *${t('nota.participant_count')}:* ${participants.length} ${t('common.people')}
 
-${registrationResult?.participants && registrationResult.participants.length > 0 ? `👥 *${t('nota.participant_list')}:*
+${registrationResult?.participants && registrationResult.participants.length > 0 ? `\u{1F465} *${t('nota.participant_list')}:*
 ${registrationResult.participants.map((p, i) => `${i + 1}. ${p.full_name} (${p.registration_id})`).join('\n')}
 
-` : ''}🎫 *${t('nota.total_tickets')}:* ${paymentInfo.ticket_name}
-💰 *${t('nota.total_bill')}:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
-🔖 *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
+` : ''}\u{1F3AB} *${t('nota.total_tickets')}:* ${paymentInfo.ticket_name}
+\u{1F4B0} *${t('nota.total_bill')}:* Rp ${paymentInfo.ticket_price.toLocaleString('id-ID')}
+\u{1F516} *Order ID:* ${registrationResult?.order_id || registrationResult?.registration_id}
 ${bankSection}`
 
             return encodeURIComponent(nota)
