@@ -469,7 +469,8 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         }
 
         // Exact format from backend (api/src/lib/whatsapp.ts)
-        let message = `${P.PARTY} *PENDAFTARAN BERHASIL!*\n\n`
+        // DEBUG: Changed text to verify if user receives new code
+        let message = `${P.PARTY} *REGISTRASI BERHASIL!*\n\n`
         message += `Terima kasih telah mendaftar untuk:\n`
         message += `${P.PIN} *Event:* ${fullParticipant.event_title || 'Event'}\n\n`
 

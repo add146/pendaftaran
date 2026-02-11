@@ -487,7 +487,7 @@ ${t('nota.confirm_payment')} *Rp ${paymentInfo.ticket_price.toLocaleString('id-I
             }
 
             const nota = `━━━━━━━━━━━━━━━━━━━━
-${P.CHECK} *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PEMBAYARAN' : t('nota.registration_success').toUpperCase()}*
+${P.CHECK} *${paymentInfo.payment_mode === 'manual' ? 'LANJUTKAN PAYMENT' : t('nota.registration_success').toUpperCase()}*
 ━━━━━━━━━━━━━━━━━━━━
 
 ${P.PIN} *Event:* ${paymentInfo.event_title}
