@@ -36,6 +36,7 @@ function ParticipantRow({
     onApprove,
     onShowQR,
     onDelete,
+    onShowInfo,
     onResendWhatsApp,
     isResending,
     eventDate,
@@ -46,6 +47,7 @@ function ParticipantRow({
     onApprove: (id: string) => void
     onShowQR: (participant: ParticipantType) => void
     onDelete: (id: string, name: string) => void
+    onShowInfo: (participant: ParticipantType) => void
     onResendWhatsApp: (id: string) => void
     isResending: boolean
     eventDate?: string
@@ -85,7 +87,7 @@ function ParticipantRow({
     const waMessage = encodeURIComponent(
         `Hi Kak ${participant.full_name}, ada yang bisa kami bantu?`
     )
-    const waLink = userPhone ? `https://wa.me/${userPhone}?text=${waMessage}` : ''
+    const waLink = userPhone ? `https://api.whatsapp.com/send?phone=${userPhone}&text=${waMessage}` : ''
 
     return (
         <tr className="hover:bg-gray-50 transition-colors group">
@@ -219,6 +221,15 @@ function ParticipantRow({
                         </div>
                     )}
 
+                    {/* Info button */}
+                    <button
+                        onClick={() => onShowInfo(participant)}
+                        className="px-3 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-600 flex items-center gap-1"
+                        title="Lihat detail peserta"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">info</span>
+                    </button>
+
                     {/* Delete button */}
                     <button
                         onClick={() => onDelete(participant.registration_id, participant.full_name)}
@@ -240,6 +251,10 @@ export default function Participants() {
     const [isQRModalOpen, setIsQRModalOpen] = useState(false)
     const [selectedParticipant, setSelectedParticipant] = useState<ParticipantType | null>(null)
     const [participants, setParticipants] = useState<ParticipantType[]>([])
+    const [infoParticipant, setInfoParticipant] = useState<ParticipantType | null>(null)
+    const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
+    const [infoLoading, setInfoLoading] = useState(false)
+    const [infoImagePopup, setInfoImagePopup] = useState<string | null>(null)
     const [event, setEvent] = useState<Event | null>(null)
     const [stats, setStats] = useState<{
         total: number
@@ -482,6 +497,20 @@ export default function Participants() {
         setIsQRModalOpen(true)
     }
 
+    const handleShowInfo = async (participant: ParticipantType) => {
+        setIsInfoModalOpen(true)
+        setInfoLoading(true)
+        try {
+            const detail = await participantsAPI.get(participant.registration_id)
+            setInfoParticipant(detail)
+        } catch (err) {
+            console.error('Failed to fetch participant details:', err)
+            setInfoParticipant(participant)
+        } finally {
+            setInfoLoading(false)
+        }
+    }
+
     const handleDelete = async (registrationId: string, name: string) => {
         if (!confirm(`Are you sure you want to delete participant "${name}"? This action cannot be undone.`)) {
             return
@@ -645,7 +674,7 @@ export default function Participants() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {participants.map((p) => (
-                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onDelete={handleDelete} onResendWhatsApp={handleResendWhatsApp} isResending={resendingIds.has(p.registration_id)} eventDate={event?.event_date} eventTime={event?.event_time} />
+                                            <ParticipantRow key={p.id} participant={p} onCheckIn={handleCheckIn} onApprove={handleApprove} onShowQR={handleShowQR} onShowInfo={handleShowInfo} onDelete={handleDelete} onResendWhatsApp={handleResendWhatsApp} isResending={resendingIds.has(p.registration_id)} eventDate={event?.event_date} eventTime={event?.event_time} />
                                         ))}
                                         {participants.length === 0 && (
                                             <tr>
@@ -809,6 +838,119 @@ export default function Participants() {
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Participant Info Modal */}
+            {isInfoModalOpen && (
+                <div className="fixed inset-0 z-[70] overflow-y-auto" role="dialog" aria-modal="true">
+                    <div className="flex items-center justify-center min-h-screen p-4">
+                        <div className="fixed inset-0 bg-black/60 transition-opacity" onClick={() => { setIsInfoModalOpen(false); setInfoParticipant(null) }} />
+                        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg z-10 overflow-hidden">
+                            {/* Header */}
+                            <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <span className="material-symbols-outlined">person</span>
+                                    Detail Peserta
+                                </h3>
+                                <button onClick={() => { setIsInfoModalOpen(false); setInfoParticipant(null) }} className="text-white/80 hover:text-white transition-colors">
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-6 max-h-[70vh] overflow-y-auto">
+                                {infoLoading ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-500" />
+                                    </div>
+                                ) : infoParticipant ? (
+                                    <div className="space-y-4">
+                                        {/* Basic Info */}
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {[
+                                                { icon: 'person', label: 'Nama', value: infoParticipant.full_name },
+                                                { icon: 'mail', label: 'Email', value: infoParticipant.email },
+                                                { icon: 'phone', label: 'Telepon', value: infoParticipant.phone || '-' },
+                                                { icon: 'location_city', label: 'Kota', value: infoParticipant.city || '-' },
+                                                { icon: 'confirmation_number', label: 'ID Registrasi', value: `#${infoParticipant.registration_id}` },
+                                                { icon: 'sell', label: 'Tiket', value: infoParticipant.ticket_name || '-' },
+                                                { icon: 'payments', label: 'Status Bayar', value: t(`admin.participants.payment_status.${infoParticipant.payment_status}`) },
+                                                { icon: 'event_available', label: 'Check-in', value: infoParticipant.check_in_status === 'checked_in' ? `✅ ${infoParticipant.check_in_time ? formatDateWIB(infoParticipant.check_in_time, { includeSeconds: false, dateFormat: 'DD/MM/YYYY' }) : 'Sudah'}` : '❌ Belum' },
+                                                { icon: 'calendar_month', label: 'Terdaftar', value: infoParticipant.created_at ? formatDateWIB(infoParticipant.created_at, { includeSeconds: false, dateFormat: 'DD/MM/YYYY' }) : '-' },
+                                            ].map((item, i) => (
+                                                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                                    <span className="material-symbols-outlined text-amber-500 text-[20px] mt-0.5 shrink-0">{item.icon}</span>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{item.label}</div>
+                                                        <div className="text-sm font-medium text-gray-900 break-words">{item.value}</div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Custom Fields */}
+                                        {infoParticipant.custom_fields && infoParticipant.custom_fields.length > 0 && (
+                                            <div className="border-t border-gray-200 pt-4">
+                                                <h4 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-[18px] text-amber-500">edit_note</span>
+                                                    Data Tambahan
+                                                </h4>
+                                                <div className="space-y-3">
+                                                    {infoParticipant.custom_fields.map((cf, i) => {
+                                                        // Check if response looks like an image URL (from ImgBB or similar)
+                                                        const isImage = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(cf.response) ||
+                                                            cf.response?.includes('i.ibb.co') ||
+                                                            cf.response?.includes('imgbb.com')
+
+                                                        return (
+                                                            <div key={i} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+                                                                <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{cf.label}</div>
+                                                                {isImage ? (
+                                                                    <div className="mt-2">
+                                                                        <img
+                                                                            src={cf.response}
+                                                                            alt={cf.label}
+                                                                            className="max-w-[200px] max-h-[200px] rounded-lg border border-gray-200 object-cover cursor-pointer hover:opacity-80 transition-opacity shadow-sm"
+                                                                            onClick={() => setInfoImagePopup(cf.response)}
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="text-sm font-medium text-gray-900 whitespace-pre-wrap break-words">{cf.response || '-'}</div>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 text-gray-400">Data tidak ditemukan</div>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            <div className="border-t border-gray-100 px-6 py-3 bg-gray-50 flex justify-end">
+                                <button
+                                    onClick={() => { setIsInfoModalOpen(false); setInfoParticipant(null) }}
+                                    className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-300 transition-colors"
+                                >
+                                    Tutup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Fullscreen Popup */}
+            {infoImagePopup && (
+                <div className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4" onClick={() => setInfoImagePopup(null)}>
+                    <button className="absolute top-4 right-4 text-white hover:text-gray-300 z-10">
+                        <span className="material-symbols-outlined text-[36px]">close</span>
+                    </button>
+                    <img src={infoImagePopup} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
                 </div>
             )}
         </AdminLayout>

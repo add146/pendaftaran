@@ -485,7 +485,8 @@ export default function QRCodeModal({ isOpen, onClose, eventId, participant }: Q
         message += `Sampai jumpa di acara! 🙏`
 
         // Open WhatsApp with the participant's phone number
-        window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank')
+        // Use api.whatsapp.com for better emoji/encoding support, especially on mobile
+        window.open(`https://api.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(message)}`, '_blank')
     }
 
     const handleDownloadCertificate = async () => {

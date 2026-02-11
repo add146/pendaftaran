@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
-import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, type PublicEvent, type TicketType, type CustomField, type RegisterParticipantData } from '../../lib/api'
+import { publicAPI, participantsAPI, paymentsAPI, customFieldsAPI, uploadAPI, type PublicEvent, type TicketType, type CustomField, type RegisterParticipantData } from '../../lib/api'
 import { useTranslation } from 'react-i18next'
 import { getMapQuery } from '../../lib/maps'
 
@@ -505,7 +505,8 @@ ${bankSection}`
         }
 
         const waNumber = formatWhatsAppNumber(paymentInfo?.whatsapp_cs || '')
-        const waLink = `https://wa.me/${waNumber}?text=${generateWhatsAppNota()}`
+        // Use api.whatsapp.com for better emoji/encoding support across devices
+        const waLink = `https://api.whatsapp.com/send?phone=${waNumber}&text=${generateWhatsAppNota()}`
 
         return (
             <div className="min-h-screen bg-background-light flex flex-col items-center justify-center p-4">
@@ -604,7 +605,7 @@ ${bankSection}`
             </header>
 
             <main className="flex-grow">
-                <div className="max-w-4xl mx-auto px-4 py-8">
+                <div className="max-w-[1600px] mx-auto px-4 py-8">
                     {/* Mobile Registration Button */}
                     <button
                         onClick={() => document.getElementById('registration-form')?.scrollIntoView({ behavior: 'smooth' })}
@@ -942,6 +943,56 @@ ${bankSection}`
                                                                                 })}
                                                                             </div>
                                                                         )}
+
+                                                                        {field.field_type === 'file' && (
+                                                                            <div className="space-y-2">
+                                                                                {(p.custom_fields[field.id] as string) ? (
+                                                                                    <div className="relative w-full max-w-[200px] aspect-square rounded-lg overflow-hidden border border-gray-200 group bg-gray-50">
+                                                                                        <img
+                                                                                            src={p.custom_fields[field.id] as string}
+                                                                                            alt="Preview"
+                                                                                            className="w-full h-full object-cover"
+                                                                                        />
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => updateParticipantCustomField(index, field.id, '')}
+                                                                                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                                                                                        >
+                                                                                            <span className="material-symbols-outlined">delete</span>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-50 transition-colors text-center cursor-pointer min-h-[120px] flex items-center justify-center">
+                                                                                        <input
+                                                                                            type="file"
+                                                                                            accept="image/*"
+                                                                                            onChange={async (e) => {
+                                                                                                const file = e.target.files?.[0]
+                                                                                                if (!file) return
+
+                                                                                                try {
+                                                                                                    e.target.disabled = true
+                                                                                                    const res = await uploadAPI.uploadToImgBB(file)
+                                                                                                    updateParticipantCustomField(index, field.id, res.url)
+                                                                                                } catch (err) {
+                                                                                                    alert('Gagal upload gambar. Silakan coba lagi.')
+                                                                                                    e.target.value = '' // Reset input
+                                                                                                } finally {
+                                                                                                    e.target.disabled = false
+                                                                                                }
+                                                                                            }}
+                                                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                                                            required={field.required}
+                                                                                        />
+                                                                                        <div className="flex flex-col items-center pointer-events-none p-2">
+                                                                                            <span className="material-symbols-outlined text-gray-400 text-3xl mb-1">cloud_upload</span>
+                                                                                            <span className="text-sm font-medium text-gray-600 block">{t('custom_fields.file_upload')}</span>
+                                                                                            <span className="text-xs text-gray-400 mt-1 block">JPG, PNG, GIF (Max 32MB)</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -1006,8 +1057,8 @@ ${bankSection}`
                                                                     <span className="material-symbols-outlined text-pink-500">volunteer_activism</span>
                                                                     <span className="font-bold text-gray-800">Ingin Berdonasi?</span>
                                                                 </div>
-                                                                <div className={`relative w-14 h-7 rounded-full transition-colors ${showDonation ? 'bg-pink-500' : 'bg-gray-300'}`}>
-                                                                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-sm transition-transform ${showDonation ? 'translate-x-7' : 'translate-x-0'}`} />
+                                                                <div className={`relative w-14 h-7 rounded-full transition-colors ${showDonation ? 'bg-pink-500' : 'bg-pink-200'}`}>
+                                                                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full shadow-sm transition-transform ${showDonation ? 'translate-x-7 bg-white' : 'translate-x-0 bg-pink-500'}`} />
                                                                 </div>
                                                             </button>
 
